@@ -86,22 +86,16 @@ QtObject {
 
   // Whether a chrome surface on `screen` (a ShellScreen or its name) leaves
   // its fill to the backing window. `onOverlay`: its window is on the Overlay
-  // layer, over fullscreen windows (where the backing window rises too:
-  // overFullscreen). Otherwise it's on Top, faded out under a fullscreen
-  // window, and its copy goes with it.
+  // layer, over fullscreen windows, where the backing window is too
+  // (LayerManager.layerOn). Otherwise it's on Top, faded out under a
+  // fullscreen window, and its copy goes with it.
   function backsOn(screen, onOverlay) {
     return BackingRule.backsOn({
       "backing": root.backingOn(screen),
       "fullscreen": CompositorManager.hasFullscreen(root._name(screen)),
-      "onOverlay": onOverlay
+      "onOverlay": onOverlay,
+      "backingOnOverlay": LayerManager.layerOn(root._name(screen), "axiom-blur-backing") === "overlay"
     });
-  }
-
-  // Whether the backing window on `screen` stands on the Overlay layer: a
-  // fullscreen window shown there hides the Top layer, and the surfaces
-  // over it still blur
-  function overFullscreen(screen) {
-    return root.backingOn(screen) && CompositorManager.hasFullscreen(root._name(screen));
   }
 
   // Whether the fill on `screen` goes solid, whichever window draws it (the

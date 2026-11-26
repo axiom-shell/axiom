@@ -304,7 +304,6 @@ Scope {
     LayerSlot {
       id: slot
       window: area
-      layer: WlrLayer.Overlay
     }
     color: "transparent"
     anchors {
@@ -313,7 +312,7 @@ Scope {
       left: true
       right: true
     }
-    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.layer: slot.layer
     readonly property string layerNamespace: "axiom-notifications"
     WlrLayershell.namespace: area.layerNamespace
     WlrLayershell.keyboardFocus: root.replyable && !root.attached ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
@@ -325,7 +324,7 @@ Scope {
     LayerOrigin {
       id: placeOnScreen
       window: area
-      layer: WlrLayer.Overlay
+      layer: slot.layer
     }
 
     mask: Region {
@@ -376,7 +375,7 @@ Scope {
         visible: !SurfaceManager.captureFrozen
         screenName: root.screenName
         covered: root.covered
-        backed: BlurManager.backsOn(root.screen, true) && placeOnScreen.origin !== null
+        backed: BlurManager.backsOn(root.screen, slot.onOverlayLayer) && placeOnScreen.origin !== null
 
         x: toastCard.place.x
         y: toastCard.place.y

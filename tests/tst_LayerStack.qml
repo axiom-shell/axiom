@@ -2,6 +2,7 @@ import QtQuick
 import QtTest
 import qs.components.methods
 import qs.components.methods.layer
+import "layer/LayerStack.js" as Rows
 
 // The stacking order of axiom's layer surfaces (LayerStack)
 TestCase {
@@ -12,6 +13,21 @@ TestCase {
   Shared {
     id: shared
     testCase: test
+  }
+
+  EngineRows {
+    id: rows
+    testCase: test
+    facade: LayerStack
+    rows: Rows.rows
+  }
+
+  function test_rows_data() {
+    return rows.data();
+  }
+
+  function test_rows(data) {
+    rows.run(data);
   }
 
   function order(ns) {
@@ -142,5 +158,40 @@ TestCase {
         "seq": seq++
       })]);
     compare(sequenceOf(all).remap, [], "opening and closing held windows, and an Overlay window mapping, maps no Top window again");
+  }
+
+  // Every row states its layer, in the four names
+  function test_every_row_has_a_layer() {
+    for (const l of LayerStack.layers)
+      verify(["top", "overlay", "bottom", "background"].includes(l.layer), l.namespace + " has a layer");
+  }
+
+  // Only a row on Top or Overlay over a fullscreen window states it: always,
+  // or while shown
+  function test_over_fullscreen_values() {
+    for (const l of LayerStack.layers)
+      verify(l.overFullscreen === undefined || ["always", "whileShown"].includes(l.overFullscreen), l.namespace + " overFullscreen");
+  }
+
+  // The instant action surfaces: five rows, one order, all on Overlay (the
+  // layer a wait for a modal compares with)
+  function test_modal_rows() {
+    const modal = LayerStack.layers.filter(l => l.modal === true);
+    compare(modal.length, 5);
+    compare(new Set(modal.map(l => l.order)).size, 1);
+    compare(modal[0].order, -30);
+    for (const l of modal)
+      compare(l.layer, "overlay", l.namespace);
+    verify(LayerStack.isModal("powermenu"));
+    verify(LayerStack.isModal("axiom-polkit"));
+    verify(!LayerStack.isModal("osd"));
+    verify(!LayerStack.isModal("notifications"));
+    verify(!LayerStack.isModal("someone-else"));
+  }
+
+  // Every row states that the compositor doesn't animate its window
+  function test_every_row_is_not_animated() {
+    for (const l of LayerStack.layers)
+      verify(l.noAnim === true, l.namespace + " has noAnim");
   }
 }

@@ -228,14 +228,14 @@ func (m *Manager) ScreenPower(ctx context.Context, on bool) error {
 
 // AddLayerRules adds Hyprland's layer rules for axiom's surfaces
 // (compositor.layerRules), which the shell waits for before mapping the
-// ones with an order; one Hyprland didn't take is logged.
-func (m *Manager) AddLayerRules(ctx context.Context) error {
+// ones with an order, and reports whether Hyprland took every one (axiom's
+// order is in only then); one it didn't take is logged.
+func (m *Manager) AddLayerRules(ctx context.Context) (ordered bool, err error) {
 	h, ok := m.w.(*hyprWriter)
 	if !ok {
-		return axerr.New(axerr.Unavailable, "layer rules are Hyprland's")
+		return false, axerr.New(axerr.Unavailable, "layer rules are Hyprland's")
 	}
-	h.addLayerRules(ctx)
-	return nil
+	return h.addLayerRules(ctx), nil
 }
 
 func (m *Manager) logf(format string, args ...any) {

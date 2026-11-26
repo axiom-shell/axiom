@@ -9,7 +9,7 @@ import qs.components.methods
 import qs.components.hosts.window
 
 // A full-screen window placed inside the border's and bars'
-// reserved area (the overlay on Top, the onboarder on Overlay). Normal exclusion with no zone
+// reserved area (the overlay, the onboarder). Normal exclusion with no zone
 // of its own puts it inside that area, wherever the bars are, so its content
 // centers in the free space and the bars stay reachable; the -borderWidth
 // margin lines it up with their inner stroke (as EdgePopout). A bare screen
@@ -25,9 +25,13 @@ PanelWindow {
 
   // Stepped aside: subclasses hide their content on it
   readonly property bool steppedAside: SurfaceManager.steppedAside
-  // Its layer: Overlay (the onboarder); the overlay sets Top, or Overlay
-  // over a fullscreen window
-  property int stackLayer: WlrLayer.Overlay
+  // Its slot's `wanted` and `held` (the overlay sets both; the onboarder
+  // neither: it is made while it runs)
+  property bool slotWanted: true
+  property bool slotHeld: false
+  // Its window's slot, which a file deriving from this one reads (an id
+  // here is not in scope there)
+  readonly property LayerSlot slot: layerSlot
   // Its layer-shell namespace
   required property string layerNamespace
   // Its top-left on its screen, or null while unknown (a wallpaper
@@ -68,16 +72,24 @@ PanelWindow {
   focusable: !root.steppedAside
   mask: root.steppedAside ? root._noInput : null
   WlrLayershell.keyboardFocus: root.steppedAside ? WlrKeyboardFocus.None : WlrKeyboardFocus.OnDemand
-  WlrLayershell.layer: root.stackLayer
+  visible: layerSlot.shown
+  WlrLayershell.layer: layerSlot.layer
   WlrLayershell.namespace: root.layerNamespace
   exclusionMode: ExclusionMode.Normal
   exclusiveZone: 0
 
   property Region _noInput: Region {}
 
+  LayerSlot {
+    id: layerSlot
+    window: root
+    wanted: root.slotWanted
+    held: root.slotHeld
+  }
+
   LayerOrigin {
     id: placeOnScreen
     window: root
-    layer: root.stackLayer
+    layer: layerSlot.layer
   }
 }

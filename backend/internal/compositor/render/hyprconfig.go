@@ -252,7 +252,7 @@ function M.blur()
 ` + part("blur") + `
 end
 
--- axiom's layer rules: no animation
+-- axiom's layer rules: order and no animation
 function M.layers()
 ` + part("layers") + `
 end

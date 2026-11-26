@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell.Wayland
 
 import qs.services.compositor
 
@@ -14,8 +13,12 @@ QtObject {
   id: root
 
   required property var window
-  // Its WlrLayershell.layer (an attached property, unreadable from here)
-  property int layer: WlrLayer.Top
+  // Its window's layer now, as the layer service answers it from its row:
+  // bind WlrLayershell.layer and LayerOrigin.layer to it
+  readonly property int layer: LayerManager.wlrLayerOf(LayerManager.slotOf(root).layer)
+  // Its window is on the Overlay layer now (BlurManager.backsOn's second
+  // argument; a host's `onOverlayLayer` reads it)
+  readonly property bool onOverlayLayer: LayerManager.slotOf(root).layer === "overlay"
   // Among windows of its order on its screen and layer, lower maps first
   // (the border's corner pieces after its strips, so they're drawn over
   // the strips' ends)
@@ -36,7 +39,6 @@ QtObject {
       return null;
     return {
       "outputName": outputName,
-      "layer": LayerManager.layerName(root.layer),
       "namespace": root.window?.layerNamespace ?? "",
       "rank": root.rank,
       "rankGroup": root.rankGroup,

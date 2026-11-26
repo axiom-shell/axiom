@@ -17,7 +17,7 @@ The first-run onboarder: a paged window that sets up the look, the compositor's 
 
 ### Window
 - `qml/shell/Onboarding` → `surfaces/onboarding/OnboardingWindow`, with pages in `onboarding/pages/`.
-- The window is a `hosts/overlay/ReservedAreaWindow`, like the overlay's (the overlay's is on Top under the chrome; this one keeps the default `stackLayer`, Overlay, over it).
+- The window is a `hosts/overlay/ReservedAreaWindow`, like the overlay's (the overlay's is on Top under the chrome; this one is on Overlay over it: its slot's layer, from its row).
 - It uses an `OverlayGrid` of the overlay's first Custom page's `sizing` (100% on a fresh config) and draws its pages in a `PageBox` at its `zoom`, so the Welcome page's `Widget.cardSize` and `Widget.contentSize` settings show on it.
 - Its pages shrink as much as the overlay's first page does there (`GridPlacement.fitScale`, the `PageBox`'s `fitCap`). Cards therefore show at the overlay's real size, even on a screen too small for it.
 - The step bar is the overlay's `OverlayPageNavigator`.

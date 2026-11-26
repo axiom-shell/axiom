@@ -446,6 +446,12 @@ QtObject {
     return e.mapped && root._peersOf(entries, e).some(o => o.mapped && root._before(o, e) && o.seq > e.seq && (!ordered || o.order === e.order));
   }
 
+  // Rule: a modal window (an instant action surface) is never mapped again:
+  // it is last on the Overlay layer, and a blink would show
+  function modalNeverRemaps(e) {
+    return e.modal === true;
+  }
+
   // Rule: where the compositor keeps the order, only windows of one order
   // can be out of place
   function orderedOnlyTiesByMapOrder(entries, e, ordered) {
@@ -474,6 +480,8 @@ QtObject {
   function _sequenceRuleOf(entries, e, ordered, remappingIds) {
     if (root.remappingHidden(e, remappingIds))
       return "remappingHidden";
+    if (root.modalNeverRemaps(e) && root.outOfPlaceRemaps(entries, e, ordered))
+      return "modalNeverRemaps";
     if (root.outOfPlaceRemaps(entries, e, ordered))
       return "outOfPlaceRemaps";
     if (root.orderedOnlyTiesByMapOrder(entries, e, ordered))
@@ -509,7 +517,7 @@ QtObject {
       ordered,
       remappingIds
     } = input;
-    const remap = entries.filter(e => root.outOfPlaceRemaps(entries, e, ordered)).map(e => e.id);
+    const remap = entries.filter(e => !root.modalNeverRemaps(e) && root.outOfPlaceRemaps(entries, e, ordered)).map(e => e.id);
     const show = entries.filter(e => root._wants(e) && !remap.includes(e.id) && !root.remappingHidden(e, remappingIds) && (root.showingStays(e) || root.showsAfterPredecessorsMapped(entries, e))).map(e => e.id);
     const rules = {};
     for (const e of entries) {

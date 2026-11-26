@@ -46,9 +46,8 @@ PanelWindow {
     return [look.shadowColor, look.shadowSize].join("|");
   }
 
-  // Its namespace and layer, set here so its LayerSlot can read them
+  // Its namespace, set here so its LayerSlot can read it
   required property string layerNamespace
-  property int stackLayer: WlrLayer.Top
 
   // Its watchdog has warned (once per window)
   property bool _warned: false
@@ -69,7 +68,6 @@ PanelWindow {
   LayerSlot {
     id: layerSlot
     window: backing
-    layer: backing.stackLayer
     held: true
   }
 
@@ -128,7 +126,7 @@ PanelWindow {
   }
 
   WlrLayershell.namespace: backing.layerNamespace
-  WlrLayershell.layer: backing.stackLayer
+  WlrLayershell.layer: layerSlot.layer
   WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
   exclusionMode: ExclusionMode.Ignore
   color: "transparent"

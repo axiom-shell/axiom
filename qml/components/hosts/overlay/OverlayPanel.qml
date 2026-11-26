@@ -9,7 +9,6 @@ import qs.services.compositor
 import qs.services.ui
 import qs.components.reusable
 import qs.components.hosts.popout
-import qs.components.hosts.window
 // Imported (though views load by URL) so qs scans what they import and
 // the folders whose files see each other (scripts/check_structure.py)
 import qs.components.content.Palette // qmllint disable unused-imports
@@ -63,21 +62,11 @@ ReservedAreaWindow {
   // The page switcher's on the top edge, not the bottom
   readonly property bool _navigatorTop: OverlayConfig.navigator === "top"
 
-  visible: slot.shown
   // Held once the layer rules are in (CompositorManager.surfacesReady), with the
   // chrome it keeps its place among; before that it maps only while open, as a
-  // window without a slot
-  LayerSlot {
-    id: slot
-    window: root
-    layer: root.stackLayer
-    wanted: root._wanted
-    held: CompositorManager.surfacesReady
-  }
-  // On Top under the chrome (LayerStack: after the backdrop, before the
-  // backing window), held while closed; on Overlay while a fullscreen
-  // window is on its screen, down once it's gone
-  stackLayer: root.fullscreenNow ? WlrLayer.Overlay : WlrLayer.Top
+  // window without a slot (its layer is its row's, LayerStack)
+  slotWanted: root._wanted
+  slotHeld: CompositorManager.surfacesReady
   // One namespace in every state: a held window whose namespace changed is
   // remade and lands last on its layer (its reduced blur is BlurManager's)
   layerNamespace: "axiom-overlay"
@@ -233,7 +222,7 @@ ReservedAreaWindow {
     id: slideContainer
     anchors.fill: parent
     // Held and idle it is a pixel: a kept page's changes draw no frames
-    visible: !slot.idle
+    visible: !root.slot.idle
     opacity: root.steppedAside || (root.fades && !root.isOpen) ? 0 : 1
     Glide on opacity {
       duration: Appearance.animNormal
@@ -288,9 +277,9 @@ ReservedAreaWindow {
       // until the first map, estimate from the screen less its margins
       property real roomWidth: root.screen.width - root.margins.left - root.margins.right
       property real roomHeight: root.screen.height - root.margins.top - root.margins.bottom - OverlayConfig.navigatorRoom
-      onWidthChanged: if (!slot.idle && pageArea.width > 0)
+      onWidthChanged: if (!root.slot.idle && pageArea.width > 0)
         pageArea.roomWidth = pageArea.width
-      onHeightChanged: if (!slot.idle && pageArea.height > 0)
+      onHeightChanged: if (!root.slot.idle && pageArea.height > 0)
         pageArea.roomHeight = pageArea.height
 
       OverlayPages {

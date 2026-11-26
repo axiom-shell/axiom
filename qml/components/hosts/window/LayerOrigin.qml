@@ -19,7 +19,8 @@ QtObject {
   required property var window
   // The window's edge: where it's estimated to be while it has no origin
   property int edge: ScreenEdge.Top
-  // Its WlrLayershell.layer (an attached property, unreadable from here)
+  // Its WlrLayershell.layer (an attached property, unreadable from here):
+  // bound to its window's slot's `layer`
   property int layer: WlrLayer.Top
   // Where it most likely starts along its edge while it has no origin,
   // when its owner knows better than centred (a bar, BarManager.

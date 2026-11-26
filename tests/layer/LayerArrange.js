@@ -507,5 +507,93 @@ var rows = [
         "corner": "rankWithinOrder"
       }
     }
+  },
+  {
+    "id": "LY-25",
+    "why": "a modal window is never mapped again, though one ordered before it mapped after it",
+    "call": "sequence",
+    "input": {
+      "entries": [
+        {
+          "id": "modal",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": true,
+          "mapped": true,
+          "seq": 1,
+          "modal": true
+        },
+        {
+          "id": "popout",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": true,
+          "mapped": true,
+          "seq": 2
+        }
+      ],
+      "ordered": false,
+      "remappingIds": []
+    },
+    "expect": {
+      "remap": [],
+      "rules": {
+        "modal": "modalNeverRemaps"
+      }
+    }
+  },
+  {
+    "id": "LY-26",
+    "why": "where the compositor keeps the order, a modal window that a window of another order mapped after is in place: no remap, and no modal rule",
+    "call": "sequence",
+    "input": {
+      "entries": [
+        {
+          "id": "modal",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": true,
+          "mapped": true,
+          "seq": 1,
+          "modal": true
+        },
+        {
+          "id": "popout",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": true,
+          "mapped": true,
+          "seq": 2
+        }
+      ],
+      "ordered": true,
+      "remappingIds": []
+    },
+    "expect": {
+      "remap": [],
+      "rules": {
+        "modal": "orderedOnlyTiesByMapOrder"
+      }
+    }
   }
 ];

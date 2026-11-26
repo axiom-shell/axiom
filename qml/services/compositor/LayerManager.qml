@@ -8,21 +8,31 @@ import qs.config
 import qs.services.core
 
 /**
- * Where axiom's layer-shell windows are on their outputs, worked out by
- * axiom itself on every compositor (methods/layer/LayerArrange; docs/dev/
- * compositor/layer-arrangement.md). Each window that needs to know, or
- * that reserves space others are placed against, states how it asks to
- * be laid out (hosts/window/LayerOrigin, `setLayerSpec`): anchors, margins,
- * size, zone, and when it mapped. Where the compositor can list its layers
- * (Hyprland: CompositorManager.withLayerRects), each window's rect is
- * corrected by how far the compositor's own differs, sampled once they've
- * settled: what axiom doesn't arrange (another app's layers, a monitor's
- * reserved space) moves its windows too. Each difference is logged
- * (console.log, "LayerManager:").
- * It also maps the windows with a fixed place in the stack (bars, the
- * border, docks, integrated edge menus: hosts/window/LayerSlot, `setSlot`)
- * in LayerStack order, one stage at a time, and maps again any that land out
- * of place (the compositor stacks by map order alone, on every compositor).
+ * The layer service: where axiom's layer-shell windows stand, on every
+ * compositor (docs/dev/compositor/layer-arrangement.md). A window states
+ * its place as intents: its row in LayerStack (layer, order, overFullscreen,
+ * modal) and its LayerSlot (wanted, held); this service answers each slot
+ * with whether it shows and which layer it is on now (`slotOf`), and each
+ * window's rect (`rectOf`). The mechanisms differ by compositor and live in
+ * its parts: the backends' `supports` facts (`layerOrder`: the compositor
+ * keeps axiom's order itself, as Hyprland does while the daemon's order
+ * rules are in; `layerRestack`: a window moved to another layer lands on
+ * top of it) and the daemon's writer of the rules; nothing outside this
+ * service reads them. Without the rules the windows map one stage at a time
+ * in LayerStack order and map again when they land out of place, so the
+ * map order is the order: the fallback.
+ * Each window that needs to know, or that reserves space others are placed
+ * against, states how it asks to be laid out (hosts/window/LayerOrigin,
+ * `setLayerSpec`): anchors, margins, size, zone, and when it mapped. Where
+ * the compositor can list its layers (Hyprland: CompositorManager.
+ * withLayerRects), each window's rect is corrected by how far the
+ * compositor's own differs, sampled once they've settled: what axiom doesn't
+ * arrange (another app's layers, a monitor's reserved space) moves its
+ * windows too. Each difference is logged (console.log, "LayerManager:").
+ * The windows with a fixed place in the stack (bars, the border, docks,
+ * integrated edge menus, the overlay, the popouts, the prompts:
+ * hosts/window/LayerSlot, `setSlot`) are mapped in LayerStack order, one
+ * stage at a time.
  * The owners of both are the host items themselves; a pass takes its input
  * as plain data (a KeptList of entries by index, never an item) and gives
  * each owner its answer back through the same indexes, and again when only
@@ -43,6 +53,14 @@ QtObject {
   property var _seqs: new Map()
 
   readonly property bool _restacks: CompositorManager.supports.layerRestack === true
+  // The compositor keeps axiom's order itself (Hyprland, its rules in)
+  readonly property bool _ordered: CompositorManager.supports.layerOrder === true
+  // A window moved to another layer keeps its place in the order: the
+  // compositor orders by itself, or never lands a moved window on top
+  readonly property bool _movesKeepPlace: root._ordered || !root._restacks
+  on_OrderedChanged: {
+    console.log(root._ordered ? "LayerManager: the compositor keeps the order (rules in)" : "LayerManager: map order (rules not in)");
+  }
 
   // A WlrLayershell.layer as LayerArrange.layerNames names it
   function layerName(layer) {
@@ -55,6 +73,19 @@ QtObject {
       return "background";
     }
     return "top";
+  }
+
+  // A layer name as a WlrLayershell.layer
+  function wlrLayerOf(name) {
+    switch (name) {
+    case "overlay":
+      return WlrLayer.Overlay;
+    case "bottom":
+      return WlrLayer.Bottom;
+    case "background":
+      return WlrLayer.Background;
+    }
+    return WlrLayer.Top;
   }
 
   // Every window's rect by output, as LayerArrange.arrange gives it
@@ -120,9 +151,9 @@ QtObject {
 
   // The arrangement's whole input as plain data: each spec by its index in
   // `_specs` (with the owner's seq, none while unmapped), and each output's
-  // size. Kept once per event turn, so a burst of changes (a window resizing
-  // on every frame of an animation) reaches one pass, and equal content
-  // reaches none.
+  // size beside the compositor's order. Kept once per event turn, so a burst
+  // of changes (a window resizing on every frame of an animation) reaches one
+  // pass, and equal content reaches none.
   property KeptList _keptSpecs: KeptList {
     fresh: root._specs.entries.map((e, i) => Object.assign({
         "id": i
@@ -132,7 +163,12 @@ QtObject {
           "id": "output:" + screen.name,
           "width": screen.width,
           "height": screen.height
-        })))
+        })), [
+      {
+        "id": "pass",
+        "ordered": root._ordered
+      }
+    ])
     oncePerTurn: true
     onItemsChanged: root._arrange()
   }
@@ -143,7 +179,7 @@ QtObject {
   function _arrange() {
     const items = root._keptSpecs.items;
     const outputs = {};
-    for (const item of items.filter(i => typeof i.id === "string"))
+    for (const item of items.filter(i => typeof i.id === "string" && i.id.startsWith("output:")))
       outputs[item.id.slice("output:".length)] = {
         "width": item.width,
         "height": item.height
@@ -159,7 +195,7 @@ QtObject {
     const next = LayerArrange.arrange({
       "outputs": outputs,
       "surfaces": surfaces,
-      "ordered": false
+      "ordered": items.find(i => i.id === "pass")?.ordered ?? false
     });
     root._arrangedOwners = root._specs.entries.map(e => e.owner);
     if (JSON.stringify(next) !== JSON.stringify(root.rects)) {
@@ -231,8 +267,8 @@ QtObject {
 
   // --- Mapping in order (LayerSlot) ---
 
-  // Every slot's state, by owner (the LayerSlot): { outputName, layer,
-  // namespace, rank, rankGroup, wanted, held, mapped }
+  // Every slot's state, by owner (the LayerSlot): { outputName, namespace,
+  // rank, rankGroup, wanted, held, mapped }
   property OwnerRegistry _slots: OwnerRegistry {
     onEntriesChanged: Qt.callLater(root._followOwners)
   }
@@ -244,18 +280,14 @@ QtObject {
   // Slots unmapped to map again in their place, until they've unmapped
   // (owner -> true)
   property var _remapping: new Map()
-  // The answer for each slot (owner -> { shown }), read by `slotOf`
+  // The answer for each slot (owner -> { shown, layer }), read by `slotOf`
+  // and, as the previous pass's, by the next for `underModal`
   property var _answers: new Map()
 
   // A slot's state, again whenever it changes
   function setSlot(owner, slot) {
-    // A mapped window moved to another layer lands on top of it, as if it
-    // had just mapped, where the compositor does that (supports.layerRestack,
-    // SwayFX: the blur window rising over a fullscreen window and back)
-    const before = root._slots.valueOf(owner);
-    const moved = root._restacks && before !== undefined && before.layer !== slot.layer;
     root._slots.set(owner, slot);
-    if (slot.mapped && (!root._slotSeqs.has(owner) || moved)) {
+    if (slot.mapped && !root._slotSeqs.has(owner)) {
       root._slotSeqs = Utils.withEntry(root._slotSeqs, owner, ++root._lastSeq);
       root._settle.restart();
     } else if (!slot.mapped) {
@@ -277,12 +309,27 @@ QtObject {
     root._forget("_remapping", owner);
   }
 
-  // The service's answer for the slot `owner`: { shown } (whether its window
-  // may show now)
+  // The service's answer for the slot `owner`: { shown, layer } (whether its
+  // window may show now, and the layer it is on, a name); not answered yet:
+  // not shown, on its row's layer
   function slotOf(owner) {
     return root._answers.get(owner) ?? {
-      "shown": false
+      "shown": false,
+      "layer": LayerStack.layerOf(root._slots.valueOf(owner)?.namespace ?? "", {
+        "fullscreen": false,
+        "wanted": false,
+        "movesKeepPlace": true,
+        "underModal": ""
+      })
     };
+  }
+
+  // The layer, a name, that the window of `namespace` on `outputName` is on
+  // now, "" with none (a namespace of several windows has one row, so one
+  // layer there)
+  function layerOn(outputName, namespace) {
+    const entry = root._slots.entries.find(e => e.value.outputName === outputName && e.value.namespace === namespace);
+    return entry ? root._answers.get(entry.owner)?.layer ?? "" : "";
   }
 
   // A window just made visible is created at once but drawn (and mapped)
@@ -300,7 +347,9 @@ QtObject {
 
   // The sequence pass's whole input as plain data: each slot by its index in
   // `_slots` (with its order, its map sequence and what it remembers of its
-  // map), kept once per event turn
+  // map), each output's fullscreen state, and the compositor's answers that
+  // decide the layers; kept once per event turn, so a fullscreen change, a
+  // settle, a remap mark or the rules' answer reruns the pass
   property KeptList _keptSlots: KeptList {
     fresh: root._slots.entries.map((e, i) => Object.assign({
         "id": i
@@ -310,30 +359,66 @@ QtObject {
         "showing": root._slotSeqs.has(e.owner),
         "settled": root._slotSettled.get(e.owner) === true,
         "remapping": root._remapping.get(e.owner) === true
-      }))
+      })).concat(General.outputs.map(screen => ({
+          "id": "output:" + screen.name,
+          "fullscreen": CompositorManager.hasFullscreen(screen.name)
+        })), [
+      {
+        "id": "pass",
+        "ordered": root._ordered,
+        "movesKeepPlace": root._movesKeepPlace
+      }
+    ])
     oncePerTurn: true
     onItemsChanged: root._sequence()
   }
 
-  // The sequence pass: which slots may show now, and which map again
+  // The sequence pass: each slot's layer now (LayerStack.layerOf), which
+  // slots may show, and which map again. A slot that keeps its layer while a
+  // modal shows on its output (`underModal`, from its previous answer) goes
+  // on keeping it.
   function _sequence() {
-    const items = root._keptSlots.items;
+    const all = root._keptSlots.items;
+    const pass = all.find(i => i.id === "pass");
+    const items = all.filter(i => typeof i.id === "number");
     const owners = root._slots.entries.map(e => e.owner);
+    const modalOutputs = new Set(items.filter(i => i.showing && LayerStack.isModal(i.namespace)).map(i => i.outputName));
+    const entries = items.map(i => {
+      const before = root._answers.get(owners[i.id])?.layer;
+      const layer = LayerStack.layerOf(i.namespace, {
+        "fullscreen": all.find(o => o.id === "output:" + i.outputName)?.fullscreen ?? false,
+        "wanted": i.wanted,
+        "movesKeepPlace": pass?.movesKeepPlace ?? true,
+        "underModal": modalOutputs.has(i.outputName) ? before ?? "" : ""
+      });
+      // A mapped window moved to another layer lands on top of it, as if it
+      // had just mapped, where a move lands on top (not movesKeepPlace;
+      // supports.layerRestack, SwayFX: the blur window rising over a
+      // fullscreen window and back)
+      const moved = !pass?.movesKeepPlace && i.showing && before !== undefined && before !== layer;
+      if (moved) {
+        root._slotSeqs = Utils.withEntry(root._slotSeqs, owners[i.id], ++root._lastSeq);
+        root._forget("_slotSettled", owners[i.id]);
+        root._settle.restart();
+      }
+      return {
+        "id": i.id,
+        "outputName": i.outputName,
+        "layer": layer,
+        "order": i.order,
+        "rank": i.rank,
+        "rankGroup": i.rankGroup,
+        "wanted": i.wanted,
+        "held": i.held,
+        "showing": i.showing,
+        "mapped": moved ? false : i.settled,
+        "seq": moved ? root._slotSeqs.get(owners[i.id]) : i.seq,
+        "modal": LayerStack.isModal(i.namespace)
+      };
+    });
     const result = LayerArrange.sequence({
-      "entries": items.map(i => ({
-            "id": i.id,
-            "outputName": i.outputName,
-            "layer": i.layer,
-            "order": i.order,
-            "rank": i.rank,
-            "rankGroup": i.rankGroup,
-            "wanted": i.wanted,
-            "held": i.held,
-            "showing": i.showing,
-            "mapped": i.settled,
-            "seq": i.seq
-          })),
-      "ordered": false,
+      "entries": entries,
+      "ordered": pass?.ordered ?? false,
       "remappingIds": items.filter(i => i.remapping).map(i => i.id)
     });
     const remapping = new Map(root._remapping);
@@ -347,7 +432,8 @@ QtObject {
       root._remapping = remapping;
     const answers = new Map(owners.map((owner, id) => [owner,
         {
-          "shown": result.show.includes(id)
+          "shown": result.show.includes(id),
+          "layer": entries[id].layer
         }
       ]));
     if (!Utils.deepEqual(Array.from(answers), Array.from(root._answers)))

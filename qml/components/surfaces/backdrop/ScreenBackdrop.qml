@@ -61,7 +61,7 @@ PanelWindow {
   implicitWidth: 1
   implicitHeight: 1
   exclusionMode: ExclusionMode.Ignore
-  WlrLayershell.layer: WlrLayer.Top
+  WlrLayershell.layer: slot.layer
   readonly property string layerNamespace: "axiom-backdrop"
   WlrLayershell.namespace: root.layerNamespace
   WlrLayershell.keyboardFocus: WlrKeyboardFocus.None

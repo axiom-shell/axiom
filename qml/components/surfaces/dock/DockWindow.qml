@@ -139,8 +139,8 @@ Scope {
     // Its pill stretches as it's wanted, and draws back once it's gone
     showing: (root.wantShown || root._out) && root.count > 0
     open: root.wantShown
-    // A preview is on the Overlay layer, but fills itself (no origin)
-    onOverlayLayer: root.preview
+    // A preview is on the Overlay layer (its row), but fills itself (no origin)
+    onOverlayLayer: dockSlot.onOverlayLayer
     origin: root.preview ? null : root._origin
     attachedSurface: surface
     opens: root._origin !== null && !root.preview && panelWindow.visible && root.attached
@@ -416,17 +416,14 @@ Scope {
     LayerSlot {
       id: dockSlot
       window: panelWindow
-      layer: panelWindow.windowLayer
       wanted: root.count > 0
     }
 
-    // Top, with its layer rule ordering it after the border and bars: it
-    // sits inside them without shortening the bars on the other edges. A
-    // fullscreen window covers it. A preview is on Overlay, its rule
-    // ordering it after the overlay's panel.
-    readonly property int windowLayer: root.preview ? WlrLayer.Overlay : WlrLayer.Top
+    // Top (a preview's row, dock-preview, is on Overlay), its order after the
+    // border and bars: it sits inside them without shortening the bars on
+    // the other edges. A fullscreen window covers it.
     readonly property string layerNamespace: root.preview ? "axiom-dock-preview" : "axiom-dock"
-    WlrLayershell.layer: panelWindow.windowLayer
+    WlrLayershell.layer: dockSlot.layer
     WlrLayershell.namespace: panelWindow.layerNamespace
     // The full menu's keys come through it (as a grabbed popout's)
     WlrLayershell.keyboardFocus: menu.wantsKeyboard ? (menu.exclusiveKeyboard ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand) : WlrKeyboardFocus.None
@@ -536,7 +533,7 @@ Scope {
       id: placeOnScreen
       window: panelWindow
       edge: root.edge
-      layer: panelWindow.windowLayer
+      layer: dockSlot.layer
     }
 
     Item {
