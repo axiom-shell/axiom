@@ -436,6 +436,9 @@ class CheckStructure(unittest.TestCase):
         ("qml/shell/NState.qml", qml("property var s: NiriState.parse"), "qml/shell/NState.qml: uses a niri helper"),
         ("qml/shell/NotService.qml", qml("property var s: GhostManager.x"), "GhostManager is not a service"),
         ("qml/shell/Typo.qml", qml("property var s: AudioManger.x"), "AudioManger — did you mean AudioManager?"),
+        # A helper under methods/<domain>/ is a singleton too
+        ("qml/components/methods/demo/DemoFacts.qml", qml(), None),
+        ("qml/shell/DemoNear.qml", qml("property var s: DemoFact.x"), "DemoFact — did you mean DemoFacts?"),
         ("qml/config/GhostConfig.qml", qml("readonly property int k: _c.key ?? 1", head="pragma Singleton"),
          "`_c.key ??`: readers use no ?? fallback"),
         ("qml/shell/LiveModel.qml", qml("Repeater { model: SystemManager.processes }"),
@@ -1754,6 +1757,8 @@ class CheckDocs(unittest.TestCase):
         ("docs/dev/ghost.md", "[a](nowhere.md)\n`services/core/GhostlyManager.qml`\n`AudioManager.noSuchMember`\n"
                               "`IconConfig.x`\n"),
         ("qml/components/reusable/GhostPiece.qml", qml()),
+        ("qml/components/methods/demo/DemoFacts.qml", qml()),
+        ("docs/dev/demo.md", "`DemoFacts.noSuchMember`\n"),
         (".claude/templates/ghost.md", "`.claude/templates/gone.md`\n"),
     ]
 
@@ -1768,6 +1773,7 @@ class CheckDocs(unittest.TestCase):
             "docs/dev/ghost.md:2: `services/core/GhostlyManager.qml` doesn't exist",
             "docs/dev/ghost.md:3: `AudioManager.noSuchMember`: AudioManager has no member noSuchMember",
             "docs/dev/ghost.md:4: `IconConfig.x`: IconConfig was renamed to IconsConfig",
+            "docs/dev/demo.md:1: `DemoFacts.noSuchMember`: DemoFacts has no member noSuchMember",
             ".claude/templates/ghost.md:1: `.claude/templates/gone.md` doesn't exist",
             "qml/components/reusable/GhostPiece.qml: not in docs/dev/core/shared-ui-pieces.md",
             "`x-ghost` isn't in docs/dev/core/schema-annotations.md",

@@ -865,16 +865,16 @@ def main():
         code = "\n".join(line.split("//", 1)[0] for line in re.sub(r"/\*.*?\*/", "", text, flags=re.S).splitlines())
         if not path.startswith(("qml/services/", "qml/components/", "qml/shell/", "qml/config/")):
             continue
-        if not re.fullmatch(r"qml/(services/compositor|components/methods)/Hypr\w*\.qml", path) and re.search(r"\bHyprState\.", code):
+        if not re.fullmatch(r"qml/(services/compositor|components/methods(/\w+)?)/Hypr\w*\.qml", path) and re.search(r"\bHyprState\.", code):
             errors.append(f"{path}: uses a Hyprland helper (only the Hyprland* services and helpers may; go through CompositorManager / CompositorConfigManager)")
         for prefix, name, _, _ in backends:
-            if not re.fullmatch(rf"qml/(services/compositor|components/methods)/{prefix}\w*\.qml", path) and re.search(rf"\b{prefix}State\.", code):
+            if not re.fullmatch(rf"qml/(services/compositor|components/methods(/\w+)?)/{prefix}\w*\.qml", path) and re.search(rf"\b{prefix}State\.", code):
                 errors.append(f"{path}: uses a {name} helper (only the {prefix}* services and helpers may; go through CompositorManager / CompositorConfigManager)")
 
     # Singleton references: FooManager. must be a service, and a near-miss
     # of any project singleton (AudioManger.) is a typo
     external = {"ToplevelManager"}  # Quickshell's own
-    singletons = {f.stem for d in ("services/*", "config", "components/methods") for f in QML_ROOT.glob(f"{d}/*.qml")}
+    singletons = {f.stem for d in ("services/*", "config", "components/methods/**") for f in QML_ROOT.glob(f"{d}/*.qml")}
     services = {f.stem for f in QML_ROOT.glob("services/*/*.qml")} | external
     for path, text in sources.items():
         # without strings and comments
