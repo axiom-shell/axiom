@@ -64,14 +64,14 @@ QtObject {
       return null;
     if (root.followPanel !== undefined)
       return root._attachPanel;
-    const panel = ScreenEdgeManager.barOn(root.screen?.name ?? "", root.edge);
+    const panel = ScreenEdgeManager.barOn(root.screen, root.edge);
     return panel?.inPlace && !panel.barConfig.solid ? panel : null;
   }
   readonly property var _attachPanel: {
     const own = root.followPanel?.barConfig;
     if (!own || !own.attachId || own.attachId === own.id)
       return root.followPanel;
-    const panel = ScreenEdgeManager.barOn(root.screen?.name ?? "", root.edge, own.attachId);
+    const panel = ScreenEdgeManager.barOn(root.screen, root.edge, own.attachId);
     return panel?.inPlace ? panel : root.followPanel;
   }
   // How much further from the screen edge the followed bar's outer edge

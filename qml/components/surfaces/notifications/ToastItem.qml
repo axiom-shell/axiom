@@ -316,7 +316,7 @@ Item {
   property string screenName: ""
 
   // The card over the bars, fixed on the screen while it slides through
-  // (its slide undone on the band, the card's put back inside)
+  // (its slide undone over the bars, the card's put back inside)
   Item {
     visible: root.backed && root.card && root.ownFillRect !== null
     x: (root.ownFillRect?.x ?? 0) - root.shiftX

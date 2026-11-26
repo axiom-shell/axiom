@@ -53,8 +53,9 @@ Scope {
   // popout would.
   readonly property string _edgeName: ScreenEdge.name(root.edge)
   readonly property int connectorGap: placement.connectorGap
-  // Held off the edge (`distance` across the free screen from it)
-  readonly property bool held: root.dock.detached || placement.edgeAway
+  // Held off the edge: detached, or its edge's bars all away
+  // (EdgePlacement.holds)
+  readonly property bool held: placement.holds
   // Held off the edge, it fades in and out where it sits instead of sliding
   readonly property bool fades: root.held && root.dock.animation === "fade"
   // Where the window starts across the edge (what's reserved there; not
@@ -67,10 +68,8 @@ Scope {
   readonly property real attachAt: placement.attachAt
   // On a pill's far stroke the surface covers that stroke's inner fringe
   readonly property real backfill: placement.backfill
-  // A detached dock slides in from off the screen, over the bars, as an
-  // edge popout does (EdgePopout.slideDistance): its window's edge lies on
-  // the screen edge, and its box rests where a detached popout's does. It
-  // slides from there only while nothing of it is out.
+  // Detached, it slides in from off the screen as an edge popout does
+  // (EdgePopout.slideDistance), latched while nothing of it is out
   property ClosedLatch _fromEdge: ClosedLatch {
     source: placement.slidesFromEdge && !root.fades
     closed: !root._out
@@ -126,7 +125,7 @@ Scope {
     id: placement
     screen: root.screen
     edge: root.edge
-    held: root.held
+    held: root.dock.detached
     distance: root.dock.distance / 100
     heldDepth: root.thickness
     centre: root.centre

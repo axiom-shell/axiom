@@ -7,15 +7,15 @@
 
 var rows = [
   { "id": "SCTX-01", "why": "a box sliding in from the bottom is drawn by itself over the bars and by the backing window past them", "call": "overBars",
-    "input": {"edge": 1, "frameLine": 40, "width": 1000, "height": 600, "detached": true, "bare": false, "footprint": [{"x": 300, "y": 500, "width": 300, "height": 80}], "id": "toast:1", "screen": "DP-1", "entries": []},
+    "input": {"edge": 1, "frameLine": 40, "width": 1000, "height": 600, "detached": true, "bare": false, "footprint": [{"x": 300, "y": 460, "width": 300, "height": 80}], "id": "toast:1", "screen": "DP-1", "entries": []},
     "expect": {"over": {"x": 0, "y": 560, "width": 1000, "height": 40}, "past": {"x": 0, "y": 0, "width": 1000, "height": 560}} },
-  { "id": "SCTX-02", "why": "from the top the band lies along the top edge", "call": "overBars",
-    "input": {"edge": 0, "frameLine": 40, "width": 1000, "height": 600, "detached": true, "bare": false, "footprint": [{"x": 300, "y": 20, "width": 300, "height": 80}], "id": "toast:1", "screen": "DP-1", "entries": []},
+  { "id": "SCTX-02", "why": "from the top the part over the bars lies along the top edge", "call": "overBars",
+    "input": {"edge": 0, "frameLine": 40, "width": 1000, "height": 600, "detached": true, "bare": false, "footprint": [{"x": 300, "y": 60, "width": 300, "height": 80}], "id": "toast:1", "screen": "DP-1", "entries": []},
     "expect": {"over": {"x": 0, "y": 0, "width": 1000, "height": 40}, "past": {"x": 0, "y": 40, "width": 1000, "height": 560}} },
-  { "id": "SCTX-03", "why": "from the left the band lies down the left edge", "call": "overBars",
-    "input": {"edge": 2, "frameLine": 40, "width": 1000, "height": 600, "detached": true, "bare": false, "footprint": [{"x": 20, "y": 200, "width": 300, "height": 80}], "id": "toast:1", "screen": "DP-1", "entries": []},
+  { "id": "SCTX-03", "why": "from the left the part over the bars lies down the left edge", "call": "overBars",
+    "input": {"edge": 2, "frameLine": 40, "width": 1000, "height": 600, "detached": true, "bare": false, "footprint": [{"x": 60, "y": 200, "width": 300, "height": 80}], "id": "toast:1", "screen": "DP-1", "entries": []},
     "expect": {"over": {"x": 0, "y": 0, "width": 40, "height": 600}, "past": {"x": 40, "y": 0, "width": 960, "height": 600}} },
-  { "id": "SCTX-04", "why": "from the right the band lies down the right edge", "call": "overBars",
+  { "id": "SCTX-04", "why": "from the right the part over the bars lies down the right edge", "call": "overBars",
     "input": {"edge": 3, "frameLine": 40, "width": 1000, "height": 600, "detached": true, "bare": false, "footprint": [{"x": 600, "y": 50, "width": 300, "height": 80}], "id": "toast:1", "screen": "DP-1", "entries": []},
     "expect": {"over": {"x": 960, "y": 0, "width": 40, "height": 600}, "past": {"x": 0, "y": 0, "width": 960, "height": 600}} },
   { "id": "SCTX-05", "why": "no bars and no border on the edge leave nothing to split", "call": "overBars",
@@ -33,7 +33,7 @@ var rows = [
   { "id": "SCTX-09", "why": "a dock on another edge the path does not reach is not crossed", "call": "overBars",
     "input": {"edge": 3, "frameLine": 40, "width": 1000, "height": 600, "detached": true, "bare": false, "footprint": [{"x": 600, "y": 450, "width": 300, "height": 80}], "id": "toast:1", "screen": "DP-1", "entries": [{"id": "dock:main", "kind": "dock", "screen": "DP-1", "phase": "open", "footprint": [{"x": 300, "y": 540, "width": 400, "height": 50}]}]},
     "expect": {"over": {"x": 960, "y": 0, "width": 40, "height": 600}} },
-  { "id": "SCTX-10", "why": "a dock on another edge whose end the path crosses puts the line at its far side", "call": "overBars",
+  { "id": "SCTX-10", "why": "a dock on another edge whose end the path crosses puts the line at its inner side", "call": "overBars",
     "input": {"edge": 3, "frameLine": 40, "width": 1000, "height": 600, "detached": true, "bare": false, "footprint": [{"x": 400, "y": 500, "width": 80, "height": 60}], "id": "toast:1", "screen": "DP-1", "entries": [{"id": "dock:main", "kind": "dock", "screen": "DP-1", "phase": "open", "footprint": [{"x": 500, "y": 520, "width": 480, "height": 60}]}]},
     "expect": {"over": {"x": 500, "y": 0, "width": 500, "height": 600}} },
   { "id": "SCTX-11", "why": "a dock giving way is not crossed", "call": "overBars",
@@ -59,5 +59,8 @@ var rows = [
     "expect": {"over": {"x": 920, "y": 0, "width": 80, "height": 600}} },
   { "id": "SCTX-18", "why": "the farthest of several crossed docks sets the line", "call": "overBars",
     "input": {"edge": 3, "frameLine": 40, "width": 1000, "height": 600, "detached": true, "bare": false, "footprint": [{"x": 600, "y": 450, "width": 300, "height": 80}], "id": "toast:1", "screen": "DP-1", "entries": [{"id": "dock:main", "kind": "dock", "screen": "DP-1", "phase": "open", "footprint": [{"x": 920, "y": 400, "width": 60, "height": 200}]}, {"id": "dock:second", "kind": "dock", "screen": "DP-1", "phase": "open", "footprint": [{"x": 880, "y": 420, "width": 40, "height": 40}]}]},
-    "expect": {"over": {"x": 880, "y": 0, "width": 120, "height": 600}} }
+    "expect": {"over": {"x": 880, "y": 0, "width": 120, "height": 600}} },
+  { "id": "SCTX-19", "why": "a box resting nearer the edge than the frame line (on a transparent bar's inner accent line) puts the line at its near side", "call": "overBars",
+    "input": {"edge": 1, "frameLine": 40, "width": 1000, "height": 600, "detached": true, "bare": false, "footprint": [{"x": 300, "y": 522, "width": 300, "height": 40}], "id": "popout:1", "screen": "DP-1", "entries": []},
+    "expect": {"over": {"x": 0, "y": 562, "width": 1000, "height": 38}, "past": {"x": 0, "y": 0, "width": 1000, "height": 562}} }
 ];

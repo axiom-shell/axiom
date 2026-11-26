@@ -331,6 +331,9 @@ TestCase {
       "away": []
     })).frame, "none away");
     compare(edge(bars, "top", Object.assign({}, withBorder, {
+      "away": []
+    })).inner.id, BarEnds.edgesOn(bars, "DP-1").top.id, "none away: the innermost bar");
+    compare(edge(bars, "top", Object.assign({}, withBorder, {
       "away": ["left:solid"]
     })).inner.id, "top:transparent", "another edge's bars match nothing");
   }

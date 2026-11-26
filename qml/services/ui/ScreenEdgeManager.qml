@@ -91,7 +91,7 @@ QtObject {
   // sliding): what surfaces measure past and what re-places them at once
   // as it changes
   function awayOn(screen) {
-    return Object.values(BarEnds.stacksOn(root.bars, screen?.name)).flat().filter(bar => bar.autoHiding && !(root.barOn(screen?.name ?? "", bar.location, bar.id)?.inPlace ?? false)).map(bar => bar.id).sort();
+    return Object.values(BarEnds.stacksOn(root.bars, screen?.name)).flat().filter(bar => bar.autoHiding && !(root.barOn(screen, bar.location, bar.id)?.inPlace ?? false)).map(bar => bar.id).sort();
   }
 
   // What a screen edge's bars and the border leave on it (BarEnds.edgeOf:
@@ -138,11 +138,11 @@ QtObject {
   // every popout, dock and pill takes its joins, walls and openings from
   function surfaceEnd(screen, location) {
     const name = ScreenEdge.name(location);
-    const bar = root.edgesFor(screen)[name];
+    const bar = root.edgeOn(screen, location).inner;
     return SurfaceContext.endKind({
       "border": Appearance.screenBorder,
       "bar": bar,
-      "barShowing": !bar || (root.barOn(screen?.name ?? "", location)?.inPlace ?? false),
+      "barShowing": !bar || (root.barOn(screen, location, bar.id)?.inPlace ?? false),
       "menuZone": root.zoneOn(screen?.name ?? "", name)
     });
   }
@@ -316,12 +316,12 @@ QtObject {
     barPanels = barPanels.filter(p => p !== panel);
   }
 
-  // The window of the innermost enabled bar on a screen edge (a
-  // ScreenEdge), or with `barId`, of that bar there; else null
-  function barOn(screenName, location, barId) {
-    const id = barId || (BarEnds.edgesOn(root.bars, screenName)[ScreenEdge.name(location)]?.id ?? "");
+  // The window of the innermost bar in place on a screen edge (a
+  // ScreenEdge; edgeOn's inner), or with `barId`, of that bar there; else null
+  function barOn(screen, location, barId) {
+    const id = barId || (root.edgeOn(screen, location).inner?.id ?? "");
     if (id === "")
       return null;
-    return barPanels.find(p => p.barConfig.enabled && p.barConfig.id === id && p.barConfig.location === location && p.screen?.name === screenName) ?? null;
+    return barPanels.find(p => p.barConfig.enabled && p.barConfig.id === id && p.barConfig.location === location && p.screen?.name === screen?.name) ?? null;
   }
 }

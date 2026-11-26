@@ -47,8 +47,8 @@ AttachedSurface {
 
   // Over the bars it draws its box itself, in its coordinates: the split's
   // `over` less the window's origin and its own position, the same origin
-  // and position its BlurShape's place reads, so the band and the cut move
-  // together
+  // and position its BlurShape's place reads, so the part over the bars and
+  // the cut move together
   ownFillRect: root.geometry.overBars ? PopoutGeometry.offset([root.geometry.overBars.over], {
     "x": -((root.geometry.origin?.x ?? 0) + root.x),
     "y": -((root.geometry.origin?.y ?? 0) + root.y)
@@ -92,7 +92,7 @@ AttachedSurface {
     y: (root.geometry.origin?.y ?? 0) + root.y
     shown: root.backed && root.windowShown && !root.hollow
     clipRect: root.blurClip
-    fillClip: root.geometry.overBars ? ScreenRegion.intersect(root.blurClip ?? root.geometry.overBars.past, root.geometry.overBars.past) : root.blurClip
+    overBars: root.geometry.overBars
     paintRank: root.paintRank
   }
 }

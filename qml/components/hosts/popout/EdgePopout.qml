@@ -91,8 +91,8 @@ PopoutWrapperBase {
     source: placement.slidesFromEdge && !root.fades
     closed: !root.occupied || root._snapping
   }
-  // How far back from its attach edge its window edge lies: the screen
-  // edge (attachAt), so the box slides in from off the screen
+  // How far back from its attach edge its window edge lies
+  // (EdgePlacement.slideFrom)
   readonly property real slideDistance: (root._fromEdge.value ?? false) ? placement.slideFrom : 0
   // Over the overlay and fullscreen windows (BlurManager.backsOn), it and
   // a submenu in its window

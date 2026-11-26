@@ -71,9 +71,9 @@ Every mode is backed: `BlurManager.backingOn(screen)` follows the backing window
 ### A box sliding in over the bars
 - A detached box slides in from off the screen, over the bars and border on its edge, so its part there lies over them while the backing window (under the bars, on Top) draws and blurs the rest. The split is in space, never in time, so no frame has both fills or neither:
   - the surface fills and strokes its part between the screen edge and the line itself, unblurred (`AttachedSurface.ownFillRect`, its fill `_ownFill`: the same `Style.edgeFill` the backing window's copies use);
-  - the backing window draws and blurs the part past the line (`BlurShape.fillClip`, default `clipRect`: `Copies` cuts the chrome copies by it and `BlurBackingWindow`'s blur region reads it), and casts the shadow from the whole box (the outline copies are cut by `clipRect`, so it runs on unbroken).
-- The line is the bars' inner edge, or a shown dock's inner side where the box's slide path touches it (`SurfaceContext.overBars`, [surface context](../popouts/surface-context.md)).
-- `ownFillRect` and `fillClip` read the window's `LayerOrigin` origin, the one the copy's place and `clipRect` read, so the band and the cut move together as the box slides. A window moving while shown (a dock appearing on the slide edge under a held OSD) moves the box's own band with the window at its commit and the copy at the backing window's next frame, so one frame can show them apart, as every backed box's fill does.
+  - the backing window draws and blurs the part past the line (`BlurShape.fillClip`, `clipRect` less the part over the bars, derived from `BlurShape.overBars`: `Copies` cuts the chrome copies by it and `BlurBackingWindow`'s blur region reads it), and casts the shadow from the whole box (the outline copies are cut by `clipRect`, so it runs on unbroken).
+- The split line is `SurfaceContext.overBars`' ([surface context](../popouts/surface-context.md)).
+- `ownFillRect` and `fillClip` read the window's `LayerOrigin` origin, the one the copy's place and `clipRect` read, so the part over the bars and the cut move together as the box slides. A window moving while shown (a dock appearing on the slide edge under a held OSD) moves the box's own part over the bars with the window at its commit and the copy at the backing window's next frame, so one frame can show them apart, as every backed box's fill does.
 - A surface that blurs itself (the dock's preview) is unbacked: it takes the slide, not the split.
 
 ### Paused over fullscreen

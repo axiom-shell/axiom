@@ -230,8 +230,8 @@ TestCase {
       "x": spec.x ?? 0,
       "y": spec.y ?? 0,
       "clipRect": spec.clip ?? null
-    }, spec.fillClip ? {
-      "fillClip": spec.fillClip
+    }, spec.overBars ? {
+      "overBars": spec.overBars
     } : {}));
   }
 
@@ -2047,16 +2047,16 @@ TestCase {
     }
   }
 
-  // A detached box sliding in from the bottom over a band of the screen
-  // (the bars, from the line F down), at three places: wholly in the band,
-  // across F, wholly past it. The box's part in the band is the surface's
-  // own (ownFillRect), the rest its copy's (BlurShape.fillClip); the two over
+  // A detached box sliding in from the bottom over the bars (from the split
+  // line F down), at three places: wholly over the bars, across F, wholly
+  // past it. The box's part over the bars is the surface's own
+  // (ownFillRect), the rest its copy's (BlurShape.fillClip); the two over
   // each other at F and on either side of it hold the box's fill and its
   // side strokes as at rest: no seam, no double, no gap
   function test_split_over_bars_data() {
     return [
       {
-        "tag": "wholly in the band",
+        "tag": "wholly over the bars",
         "top": 84
       },
       {
@@ -2104,7 +2104,9 @@ TestCase {
     };
     const box = Qt.rect(src.x + src.boxRect.x, src.y + src.boxRect.y, src.boxRect.width, src.boxRect.height);
     const copy = root.render([Object.assign(root.attachedSpec(src, "surface", fill, stroke), {
-        "fillClip": Qt.rect(0, 0, 160, lineY)
+        "overBars": {
+          "past": Qt.rect(0, 0, 160, lineY)
+        }
       })]);
     const mid = Math.floor(box.x + box.width / 2);
     const rows = [box.y + 3, lineY - 1, lineY, lineY + 1, box.y + box.height - 4].filter(y => y >= box.y + 3 && y < box.y + box.height - 3);

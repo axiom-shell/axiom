@@ -21,7 +21,7 @@ This doc covers the shared host pieces in `qml/components/hosts/popout/`, how a 
   - **Detached:** the box sits half a connector gap past its lead.
     - Past a transparent bar, the lead moves the box in line with the windows (`BarsConfig.detachedPush`), past any bars inside it too. This is negative where the windows start nearer, down to minus half a connector gap.
     - A bar's pills keep that half gap too, since their depth is sized by it.
-    - Backed, it slides in from off the screen over the bars: `ownFillRect` (set by `EdgeSurface` from `EdgePlacement.overBars`) is the rect in its coordinates where it fills and strokes the box itself, the backing window drawing the rest ([Sliding in from off the screen](held-off-edge.md#sliding-in-from-off-the-screen)).
+    - Backed, it slides in from off the screen over the bars: `ownFillRect` (from `EdgePlacement.overBars`, via `EdgeSurface`): where it draws the box itself while backed ([Sliding in from off the screen](held-off-edge.md#sliding-in-from-off-the-screen)).
 - **`BarPopouts.qml`:** bar popouts share one wrapper, and one box, per bar. The content's `properties` arrive at `setSource`: a module's filled with its schema defaults (`OverlayConfig.moduleProperties`, over what the payload sends), a schema-less content's as sent (the Workspaces widget's options). The rest of the payload is copied onto the loaded item.
 
 ### Bar popout window sizing

@@ -112,7 +112,7 @@ Scope {
     // Make room: the oldest go
     const staying = root.toasts.filter(t => root._leaving[t.key] === undefined);
     staying.slice(NotificationsConfig.maxToasts - 1).forEach(t => root.hide(t.key));
-    if (staying.length === 0)
+    if (!root.showing)
       root._pickSlideEdge();
     root._serial += 1;
     root.toasts = [
@@ -175,12 +175,9 @@ Scope {
     return first ? root._heightOf(first.key) : 0;
   }
 
-  // A detached stack slides in from off the screen, over the bars and the
-  // docks on its slide edge (as an EdgePopout does): the free area reaches
-  // back over what is reserved there, and the insets add that back so the
-  // cards rest where they would. Read from the layout, not the area's
-  // geometry, which it moves; held while a toast shows, so it never moves
-  // under one.
+  // The free area reaches back over what's reserved on the slide edge
+  // (`_inset` adds it back); read from the layout, not the area it moves;
+  // held while a toast shows
   property ClosedLatch _slideReach: ClosedLatch {
     source: root.attached || root.fullscreen ? 0 : ScreenEdgeManager.reservedWithMenusOn(root.screen, root.slideEdge) + box.dockZone(ScreenEdge.name(root.slideEdge))
     closed: !root.showing || root._snapping
@@ -473,7 +470,6 @@ Scope {
         onUserClosed: root.userClosed(toastCard.notification)
 
         BlurShape {
-          id: shape
           source: toastCard.box
           kind: "rect"
           screen: root.screenName
@@ -487,7 +483,7 @@ Scope {
           // toast draws nothing)
           shown: toastCard.backed && toastCard.visible && !toastCard.gone && toastCard.opacity > 0
           clipRect: Qt.rect(area.origin.x, area.origin.y, area.width, area.height)
-          fillClip: toastCard.overBars ? ScreenRegion.intersect(shape.clipRect, toastCard.overBars.past) : shape.clipRect
+          overBars: toastCard.overBars
         }
       }
     }

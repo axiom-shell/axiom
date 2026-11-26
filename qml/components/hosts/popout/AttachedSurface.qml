@@ -367,7 +367,7 @@ Item {
   // The part of a backed detached box over the bars, drawn by the surface:
   // fixed on the screen while the box slides through it, under the content
   Item {
-    id: ownBand
+    id: ownFillItem
     visible: root.backed && !root.hollow && !root.mirror && root.detached && root.ownFillRect !== null
     x: root.ownFillRect?.x ?? 0
     y: root.ownFillRect?.y ?? 0
@@ -377,8 +377,8 @@ Item {
     opacity: root.shownOpacity
 
     DetachedBox {
-      x: root.boxRect.x + slideContainer.slideX - ownBand.x
-      y: root.boxRect.y + slideContainer.slideY - ownBand.y
+      x: root.boxRect.x + slideContainer.slideX - ownFillItem.x
+      y: root.boxRect.y + slideContainer.slideY - ownFillItem.y
       color: root._ownFill
       border.color: root.strokeColor
       border.width: root.strokeWidth

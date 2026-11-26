@@ -490,18 +490,20 @@ QtObject {
    * the backing window does: { over: the rect from that edge to the line,
    * past: the rest of the screen }, rects { x, y, width, height } on the
    * screen, or null where nothing is split. `p`:
-   *   edge (ScreenEdge), frameLine (the bars' inner edge on it, px from the
-   *   screen edge), width, height (the screen), detached, bare (over a
+   *   edge (ScreenEdge), frameLine (the inner side of what's on it, px from
+   *   the screen edge), width, height (the screen), detached, bare (over a
    *   fullscreen window), footprint (its resting box, rects on the screen),
    *   id (its own entry's, skipped), screen (its screen's name), entries
    *   (PopoutManager.entries)
    * In order: an attached box, or one over a fullscreen window, isn't split
    * (it grows from its bar or border; nothing lies under it). Its slide
    * path is each footprint rect stretched to the screen edge. The line is
-   * the frame line, or, if the path touches a dock shown on this screen
-   * (not itself, not one giving way), that dock's far side from the edge.
-   * No line, no split. At rest no box lies in `over`: a dock between it and
-   * the edge is crossed, one it overlaps gives way.
+   * the frame line, or nearer the edge where the resting box starts nearer
+   * (one standing on a transparent bar's inner accent line), or, if the
+   * path touches a dock shown on this screen (not itself, not one giving
+   * way), that dock's inner side. No line, no split. So at rest no box lies
+   * in `over`: a dock between it and the edge is crossed, one it overlaps
+   * gives way.
    */
   function overBars(p) {
     if (!p.detached || p.bare)
@@ -526,8 +528,9 @@ QtObject {
       }
     };
     const path = (p.footprint ?? []).map(r => SurfaceOutline.rectFrom(p.edge, w, h, 0, u(r), 0, len(r), far(r)));
+    const near = r => far(r) - (vertical ? r.width : r.height);
     const docks = (p.entries ?? []).filter(e => e.kind === "dock" && e.phase === "open" && e.screen === p.screen && e.id !== p.id && PopoutGeometry.intersects(path, e.footprint));
-    const line = Math.max(p.frameLine, ...[].concat(...docks.map(e => e.footprint.map(far))));
+    const line = Math.max(Math.min(p.frameLine, ...(p.footprint ?? []).map(near)), ...[].concat(...docks.map(e => e.footprint.map(far))));
     if (line <= 0)
       return null;
     return {
