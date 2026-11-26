@@ -40,7 +40,7 @@ def denied(command, cwd=str(REPO)):
     return False
 
 
-ORCHESTRATE = REPO / ".claude/skills/orchestrate/SKILL.md"
+STACKS = REPO / ".claude/skills/orchestrate/stacks.md"
 STACK_REBASE = [
     "git switch <top>",
     "git rebase --update-refs <fixed part>",
@@ -701,7 +701,7 @@ class StackRebaseRule(LiveSession, unittest.TestCase):
             self.assertIn(" = ", line, out)
 
     def test_block(self):
-        block = fenced_block(ORCHESTRATE.read_text(), "bash stack-rebase")
+        block = fenced_block(STACKS.read_text(), "bash stack-rebase")
         self.assertIsNotNone(block)
         self.assertEqual(block, STACK_REBASE)
         self.assertEqual(set(re.findall(r"<[^>]+>", "\n".join(block))), PLACEHOLDERS)
@@ -760,7 +760,7 @@ class GroupModeText(unittest.TestCase):
     """The orchestrate skill's text rules"""
 
     def test_plan_file_example(self):
-        block = fenced_block(ORCHESTRATE.read_text(), "plan-file")
+        block = fenced_block(STACKS.read_text(), "plan-file")
         self.assertIsNotNone(block)
         stacks = parts = 0
         columns = None
@@ -786,12 +786,12 @@ class GroupModeText(unittest.TestCase):
         self.assertGreaterEqual(parts, 1)
 
     def test_title_rule(self):
-        self.assertIn("<series> <n>/<m>: <subject>", ORCHESTRATE.read_text())
+        self.assertIn("<series> <n>/<m>: <subject>", STACKS.read_text())
 
     def test_generic_words(self):
         words = ["final" + "-shape", "axiom" + "-notes", "systems" + "/", "pack" + "et"]
         files = [
-            ORCHESTRATE,
+            *sorted((REPO / ".claude/skills/orchestrate").glob("*.md")),
             REPO / ".claude/skills/keep-order/SKILL.md",
             REPO / ".claude/skills/review-branch/SKILL.md",
             *sorted((REPO / ".claude/templates").glob("*.md")),
