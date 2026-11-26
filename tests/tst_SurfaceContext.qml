@@ -1,9 +1,27 @@
 import QtQuick
 import QtTest
 import qs.components.methods
+import "flat/SurfaceContext.js" as Rows
 
 TestCase {
+  id: test
   name: "SurfaceContext"
+
+  // overBars' contract rows (tests/flat/SurfaceContext.js)
+  EngineRows {
+    id: rows
+    testCase: test
+    facade: SurfaceContext
+    rows: Rows.rows
+  }
+
+  function test_rows_data() {
+    return rows.data();
+  }
+
+  function test_rows(data) {
+    rows.run(data);
+  }
 
   // An enriched bar, as far as SurfaceContext reads it
   function bar(background) {
@@ -988,8 +1006,8 @@ TestCase {
     }, floating)).attachFill, 0, "detached past a transparent bar");
   }
 
-  // A detached box slides in from behind its edge, out of the frame line,
-  // signed: negative where it attaches on the screen-edge side of it
+  // A detached box slides in from off the screen, over the bars: its window
+  // edge is the screen edge, attachAt back from where it attaches
   function test_layout_slides_from_edge() {
     const base = params();
     const f = SurfaceContext.frame(base);
@@ -1006,20 +1024,23 @@ TestCase {
         })
       }, extra));
     verify(at({}).slidesFromEdge);
-    // From the frame line to its attach edge, signed: the window's edge is
-    // the frame line, where the box attaches to it
-    compare(SurfaceContext.slideFrom(at({})), 0);
-    compare(SurfaceContext.slideFrom(at({
+    // From the screen edge to its attach edge
+    const plain = at({});
+    compare(SurfaceContext.slideFrom(plain), plain.attachAt);
+    const inside = at({
       "bar": Object.assign(bar("transparent"), {
         "extent": 40,
         "insideBorder": true
       })
-    })), 0);
+    });
+    compare(SurfaceContext.slideFrom(inside), inside.attachAt);
     // A transparent bar's box moved in to line up with the windows: its
-    // attach edge lies on the screen-edge side of the frame line
-    compare(SurfaceContext.slideFrom(at({
+    // attach edge lies on the screen-edge side of the frame line, and the
+    // box still slides in from off the screen
+    const pushed = at({
       "detachedPush": -base.gap / 2
-    })), -base.gap / 2);
+    });
+    compare(SurfaceContext.slideFrom(pushed), pushed.attachAt);
     // A box not detached doesn't slide back at all
     compare(SurfaceContext.slideFrom({
       "detached": false,
@@ -1034,15 +1055,16 @@ TestCase {
       "across": 10
     });
     verify(held.slidesFromEdge);
-    compare(SurfaceContext.slideFrom(held), 10 - base.gap / 2);
+    compare(SurfaceContext.slideFrom(held), held.attachAt);
+    compare(SurfaceContext.slideFrom(held), 40 + 10 - base.gap / 2);
     const close = at({
       "held": true,
       "bar": null,
       "across": 20
     });
     verify(close.slidesFromEdge);
-    compare(SurfaceContext.slideFrom(close), close.attachAt - 40);
-    compare(SurfaceContext.slideFrom(close), 20 - base.gap / 2);
+    compare(SurfaceContext.slideFrom(close), close.attachAt);
+    compare(SurfaceContext.slideFrom(close), 40 + 20 - base.gap / 2);
     // Past a floating bar showing no islands
     const plainIsland = Object.assign(bar("floating"), {
       "extent": 40,
@@ -1063,7 +1085,7 @@ TestCase {
     compare(SurfaceContext.slideFrom(at({
       "bar": solid
     })), 0);
-    // Over a fullscreen window: from the screen edge, the frame line there
+    // Over a fullscreen window: from the screen edge, as everywhere
     const bare = at({
       "held": true,
       "bare": true,

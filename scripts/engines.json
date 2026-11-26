@@ -1,5 +1,10 @@
 {
-  "$flat": {},
+  "$flat": {
+    "SurfaceContext": {
+      "prefix": "SCTX",
+      "tables": {}
+    }
+  },
   "$domains": {
     "layer": {
       "uses": [],

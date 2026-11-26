@@ -33,13 +33,14 @@ Item {
   Repeater {
     model: shapeModel.model
 
-    // Cut to the shape's clipRect (its window), if it has one
+    // Cut to the shape's fillClip (its fill and stroke) or clipRect (its
+    // outline, which the shadows cast from and are cut by), if it has one
     delegate: Item {
       id: slot
       required property string key
       // Fixed per key; null once it's gone, until its row goes
       readonly property var shape: BlurManager.shapeOf(Number(slot.key))
-      readonly property var area: slot.shape?.clipRect ?? null
+      readonly property var area: root.draws === "chrome" ? (slot.shape?.fillClip ?? null) : (slot.shape?.clipRect ?? null)
       // Its fill's alpha on this screen, as drawn (BlurManager.fillOn)
       readonly property real fillAlpha: BlurManager.fillOn(slot.shape?.color ?? "transparent", root.screen).a
       // What its copy fills with: black for the outline; else

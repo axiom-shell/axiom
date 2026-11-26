@@ -83,7 +83,7 @@ PopoutWrapperBase {
   property real edgeOffset: root.attachAt - root.attachBase
   // A detached box (held, over a fullscreen window, or past a bar it
   // doesn't grow out of) slides in from off the screen
-  // (EdgePlacement.slidesFromEdge), out of the frame line, its window on
+  // (EdgePlacement.slidesFromEdge), over the bars, its window on
   // the Overlay layer. Whether it slides from the edge follows only while
   // closed, and as it jumps over a fullscreen window or back (`_snapping`).
   // One that fades (`fade`, a detached box only) fades in where it sits.
@@ -91,8 +91,8 @@ PopoutWrapperBase {
     source: placement.slidesFromEdge && !root.fades
     closed: !root.occupied || root._snapping
   }
-  // How far back from its attach edge its window edge lies: the frame line
-  // (the screen edge over a fullscreen window), signed
+  // How far back from its attach edge its window edge lies: the screen
+  // edge (attachAt), so the box slides in from off the screen
   readonly property real slideDistance: (root._fromEdge.value ?? false) ? placement.slideFrom : 0
   // Over the overlay and fullscreen windows (BlurManager.backsOn), it and
   // a submenu in its window
@@ -324,6 +324,7 @@ PopoutWrapperBase {
   EdgePlacement {
     id: placement
     screen: root.screen
+    claim: root.claim
     // Its box eases its own size (its content's): the pill follows it as
     // sent, not chasing it with an ease of its own
     stretchGlides: false

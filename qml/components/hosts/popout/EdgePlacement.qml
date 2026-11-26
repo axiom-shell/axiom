@@ -105,6 +105,9 @@ QtObject {
   property var submenu: null
   readonly property var submenuWall: root.submenu?.wall ?? null
   readonly property var submenuSpan: root.opens ? (root.submenu?.joinSpan ?? null) : null
+  // The host's PopoutClaim, if it has one: its resting footprint is the box
+  // whose slide path the split reads (overBars)
+  property PopoutClaim claim: null
 
   // Its pill stretch: a key unique per surface on a bar, and whether it
   // shows (not while the content loads or unloads, the box a placeholder)
@@ -305,13 +308,30 @@ QtObject {
   readonly property real attachBase: root._layout.attachBase
   readonly property real attachFromBar: root._layout.attachFromBar + root._attachShift
   readonly property real barOuter: root._layout.barOuter
-  // A detached box slides in from behind its edge: from the frame line,
-  // coming out of what's on the edge (SurfaceContext)
+  // A detached box slides in from off the screen, over the bars and border
+  // (SurfaceContext)
   readonly property bool slidesFromEdge: root._layout.slidesFromEdge
-  // How far back from its attach edge its window edge lies (the frame line;
-  // signed, SurfaceContext.slideFrom), whether or not it slides from there
+  // How far back from its attach edge its window edge lies (the screen
+  // edge, SurfaceContext.slideFrom), whether or not it slides from there
   // now (the host gates it on its latched slidesFromEdge)
   readonly property real slideFrom: SurfaceContext.slideFrom(root._layout)
+  // A detached box's split as it slides in (SurfaceContext.overBars), on the
+  // screen: the part over the bars and border it fills itself, the part
+  // past them the backing window fills; null attached, over a fullscreen
+  // window or on a bare edge. Where a shown dock lies across its slide path
+  // the line is that dock's inner side
+  readonly property var overBars: SurfaceContext.overBars({
+    "edge": root.edge,
+    "frameLine": root._layout.frameLine,
+    "width": root.screen?.width ?? 0,
+    "height": root.screen?.height ?? 0,
+    "detached": root.detached,
+    "bare": root.bare,
+    "footprint": root.claim?.footprint ?? [],
+    "id": root.claim?.key ?? "",
+    "screen": root.screen?.name ?? "",
+    "entries": PopoutManager.entries
+  })
   // On a pill's far stroke the surface covers that stroke's inner fringe
   readonly property int backfill: root._layout.backfill
   // How a joined submenu meets the stroke the box grows from, from where

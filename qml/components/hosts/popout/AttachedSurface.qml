@@ -61,8 +61,8 @@ Item {
   property bool flushEndThrough: true
   property bool detached: false
   // A detached box's distance from its surface's start (its window edge, on
-  // the frame line) past the connector gap, signed (EdgePlacement.slideFrom):
-  // the box slides in from there.
+  // the screen edge) past the connector gap (EdgePlacement.slideFrom): the
+  // box slides in from there.
   property real detachedOffset: 0
   // A detached box fades in and out in place instead of sliding
   property bool fade: false
@@ -120,6 +120,11 @@ Item {
   // Filled solid while unbacked (BlurManager.opaqueOn: blur paused for a
   // fullscreen window on its screen)
   property bool opaque: false
+  // A rect in its coordinates where it fills and strokes its box itself
+  // while backed (null: none): the part of a detached box over the bars as
+  // it slides in from off the screen (EdgeSurface), which the backing
+  // window, under the bars, leaves to it (BlurShape.fillClip)
+  property var ownFillRect: null
   // Draws no box (fill, stroke or shadow) of its own, only its content,
   // which keeps the room a shadow would take (a tiled menu: MenuTiles)
   property bool hollow: false
@@ -130,7 +135,10 @@ Item {
   property color mirrorStroke: "transparent"
   // (a copy is drawn opaque: the blur window blends the strokes over the
   // fills itself, ChromeComposite)
-  readonly property color _fill: root.mirror ? root.fillColor : root.backed || root.hollow ? "transparent" : root.opaque ? root.fillColor : Style.edgeFill(root.fillColor, false)
+  // Its fill where it draws itself: solid while opaque, else as translucent
+  // as the backing window's (BlurManager.fillOn)
+  readonly property color _ownFill: root.opaque ? root.fillColor : Style.edgeFill(root.fillColor, false)
+  readonly property color _fill: root.mirror ? root.fillColor : root.backed || root.hollow ? "transparent" : root._ownFill
   readonly property color _stroke: root.mirror ? root.mirrorStroke : root.backed || root.hollow ? "transparent" : root.strokeColor
   // Rects (in this item's coordinates) where its outline is left open:
   // what's joined to it over them (a submenu on its side, a popout on
@@ -355,6 +363,27 @@ Item {
   // ends, whose ends sit exactly on the strokes they continue
   // (a copy reads its source's: AttachedSurfaceCopy)
   property string strokePath: SurfaceOutline.strokePath(root._spec, root._m, root.width, root.height)
+
+  // The part of a backed detached box over the bars, drawn by the surface:
+  // fixed on the screen while the box slides through it, under the content
+  Item {
+    id: ownBand
+    visible: root.backed && !root.hollow && !root.mirror && root.detached && root.ownFillRect !== null
+    x: root.ownFillRect?.x ?? 0
+    y: root.ownFillRect?.y ?? 0
+    width: root.ownFillRect?.width ?? 0
+    height: root.ownFillRect?.height ?? 0
+    clip: true
+    opacity: root.shownOpacity
+
+    DetachedBox {
+      x: root.boxRect.x + slideContainer.slideX - ownBand.x
+      y: root.boxRect.y + slideContainer.slideY - ownBand.y
+      color: root._ownFill
+      border.color: root.strokeColor
+      border.width: root.strokeWidth
+    }
+  }
 
   SlideAnimation {
     id: slideContainer

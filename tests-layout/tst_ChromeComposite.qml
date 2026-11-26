@@ -218,7 +218,7 @@ TestCase {
       source.strokeHoles = spec.holes ?? [];
     if (spec.kind === "attached")
       source.hostOpacity = spec.opacity ?? 1;
-    return shapeComp.createObject(scene, {
+    return shapeComp.createObject(scene, Object.assign({
       "source": source,
       "kind": spec.kind,
       "color": root.fillColor(spec.fill ?? {
@@ -230,7 +230,9 @@ TestCase {
       "x": spec.x ?? 0,
       "y": spec.y ?? 0,
       "clipRect": spec.clip ?? null
-    });
+    }, spec.fillClip ? {
+      "fillClip": spec.fillClip
+    } : {}));
   }
 
   function surface(props) {
@@ -259,25 +261,30 @@ TestCase {
     return scene;
   }
 
+  // An item with a `back` colour as (xd, yd) -> { r, g, b, a } (premultiplied, 0-1), from a grab over black and one over white
+  function grabPremultiplied(item) {
+    item.back = "black";
+    waitForRendering(item);
+    const onBlack = grabImage(item);
+    item.back = "white";
+    waitForRendering(item);
+    const onWhite = grabImage(item);
+    return (xd, yd) => ({
+          "r": onBlack.red(xd, yd) / 255,
+          "g": onBlack.green(xd, yd) / 255,
+          "b": onBlack.blue(xd, yd) / 255,
+          // (over white, a pixel is rgb + (1 - a))
+          "a": 1 - (onWhite.red(xd, yd) - onBlack.red(xd, yd)) / 255
+        });
+  }
+
   // The composite of `scene` as { px(x, y) -> { r, g, b, a } (premultiplied, 0-1), dpx(xd, yd) the same at a device
   // pixel }, x and y logical, read at the middle of their pixel
   function capture(scene) {
     const at = v => Math.floor((v + 0.5) * root.dpr);
     let grab;
     if (root.gpu) {
-      scene.back = "black";
-      waitForRendering(scene);
-      const onBlack = grabImage(scene);
-      scene.back = "white";
-      waitForRendering(scene);
-      const onWhite = grabImage(scene);
-      grab = (xd, yd) => ({
-            "r": onBlack.red(xd, yd) / 255,
-            "g": onBlack.green(xd, yd) / 255,
-            "b": onBlack.blue(xd, yd) / 255,
-            // (over white, a pixel is rgb + (1 - a))
-            "a": 1 - (onWhite.red(xd, yd) - onBlack.red(xd, yd)) / 255
-          });
+      grab = root.grabPremultiplied(scene);
     } else {
       // (each capture a layer of its own, apart from the scene: a grab of the
       // scene's two layers returns the first twice here)
@@ -2021,6 +2028,118 @@ TestCase {
     const line = root.over(root.line(1), root.filled(root.solid));
     root.near(cut.px(Math.floor(box.x + box.width / 2), box.y + box.height - 1), line, "the bottom run");
     root.near(cut.px(box.x + 1, Math.floor(box.y + box.height / 2)), line, "the left run");
+  }
+
+  // ---- a box sliding in over the bars: drawn by itself over them, by the backing window past them ----
+
+  // A surface over a backdrop that reads as black or white (its grab's
+  // premultiplied colour and alpha, as the scene's two captures are read)
+  Component {
+    id: holderComp
+
+    Item {
+      property color back: "black"
+
+      Rectangle {
+        anchors.fill: parent
+        color: parent.back
+      }
+    }
+  }
+
+  // A detached box sliding in from the bottom over a band of the screen
+  // (the bars, from the line F down), at three places: wholly in the band,
+  // across F, wholly past it. The box's part in the band is the surface's
+  // own (ownFillRect), the rest its copy's (BlurShape.fillClip); the two over
+  // each other at F and on either side of it hold the box's fill and its
+  // side strokes as at rest: no seam, no double, no gap
+  function test_split_over_bars_data() {
+    return [
+      {
+        "tag": "wholly in the band",
+        "top": 84
+      },
+      {
+        "tag": "across the line",
+        "top": 76
+      },
+      {
+        "tag": "wholly past the line",
+        "top": 40
+      }
+    ];
+  }
+
+  function test_split_over_bars(data) {
+    root.needsGpuAtFractional();
+    root.setStroke(2);
+    const lineY = 80;
+    const fill = root.blue;
+    const stroke = root.line(1);
+    // (beside the copy's scene: a grab reads the window)
+    const holder = createTemporaryObject(holderComp, root, {
+      "x": 200,
+      "width": 160,
+      "height": 100
+    });
+    const src = createTemporaryObject(surfaceComp, holder, {
+      "edge": ScreenEdge.Bottom,
+      "detached": true,
+      "detachedOffset": 10,
+      "boxWidth": 60,
+      "boxHeight": 16,
+      "backed": true,
+      "fillColor": root.fillColor(fill),
+      "strokeColor": root.strokeColor(stroke)
+    });
+    root.settle([src]);
+    // (the box on whole device pixels at 1.25)
+    src.x = 56 - src.boxRect.x;
+    src.y = data.top - src.boxRect.y;
+    src.ownFillRect = {
+      "x": -src.x,
+      "y": lineY - src.y,
+      "width": 160,
+      "height": 100 - lineY
+    };
+    const box = Qt.rect(src.x + src.boxRect.x, src.y + src.boxRect.y, src.boxRect.width, src.boxRect.height);
+    const copy = root.render([Object.assign(root.attachedSpec(src, "surface", fill, stroke), {
+        "fillClip": Qt.rect(0, 0, 160, lineY)
+      })]);
+    const mid = Math.floor(box.x + box.width / 2);
+    const rows = [box.y + 3, lineY - 1, lineY, lineY + 1, box.y + box.height - 4].filter(y => y >= box.y + 3 && y < box.y + box.height - 3);
+    verify(rows.length >= 2, "rows inside the box");
+    const outside = [lineY - 1, lineY, lineY + 1].filter(y => y >= box.y && y < box.y + box.height);
+    // The surface's own part, over black and over white, read at once (a
+    // grab is not kept apart from the next)
+    const at = v => Math.floor((v + 0.5) * root.dpr);
+    const own = root.grabPremultiplied(holder);
+    // The surface over its copy, as the layers stack
+    const seen = (x, y) => {
+      const o = own(at(x), at(y));
+      const c = copy.px(x, y);
+      return {
+        "r": o.r + (1 - o.a) * c.r,
+        "g": o.g + (1 - o.a) * c.g,
+        "b": o.b + (1 - o.a) * c.b,
+        "a": o.a + (1 - o.a) * c.a
+      };
+    };
+    for (const y of rows) {
+      root.near(seen(mid, y), root.filled(fill), `the fill at ${y}`);
+      root.near(seen(box.x + 1, y), root.over(stroke, root.filled(fill)), `the left run at ${y}`);
+      root.near(seen(box.x + box.width - 2, y), root.over(stroke, root.filled(fill)), `the right run at ${y}`);
+    }
+    const clear = {
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 0
+    };
+    for (const y of outside) {
+      root.near(seen(box.x - 3, y), clear, `nothing past the left side at ${y}`);
+      root.near(seen(box.x + box.width + 2, y), clear, `nothing past the right side at ${y}`);
+    }
   }
 
   // ---- a copy reads its source's paths ----

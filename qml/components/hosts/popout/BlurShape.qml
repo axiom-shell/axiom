@@ -39,6 +39,11 @@ QtObject {
   // past its window's edges (a hiding dock, an edge popout longer than its
   // window); null for the whole screen
   property var clipRect: null
+  // What of its fill and stroke its copy draws, and asks blurred, on screen:
+  // clipRect, less a part its surface fills itself (EdgeSurface: a detached
+  // box over the bars as it slides in). Its shadow is still cast from all of
+  // clipRect, so it runs on unbroken
+  property var fillClip: root.clipRect
 
   // The shadow it casts there (a SurfaceShadow look: BarStyle's or a
   // bar's), null for none. The blur window casts one per look from all

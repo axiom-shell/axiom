@@ -372,7 +372,8 @@ QtObject {
    *   what reserves the edge), attachFromBar (the same from the followed
    *   bar's outer edge), barOuter, ownSink, shadow, stretchFrom, stretchTo
    *   (where a joined submenu's reach along its pill stays),
-   *   slidesFromEdge, frameLine (the one it used; slideFrom starts from it)
+   *   slidesFromEdge, frameLine (the one it used: where a detached box sliding
+   *   in stops drawing itself and the backing window takes over, overBars)
    */
   function layout(f, p) {
     const bar = p.bar ?? null;
@@ -466,9 +467,8 @@ QtObject {
       // the strokes at the edge's ends
       "stretchFrom": f.strokeFrom,
       "stretchTo": f.strokeTo,
-      // A detached box slides in from behind its edge, from the frame
-      // line, cut there, so it comes out of the bar or border rather than
-      // over it
+      // A detached box slides in from off the screen, over the bars and
+      // border
       "slidesFromEdge": detached,
       "frameLine": p.frameLine ?? 0
     });
@@ -476,14 +476,64 @@ QtObject {
 
   /**
    * How far back from its attach edge a detached box's window edge lies:
-   * on the frame line (the screen edge over a fullscreen window), signed:
-   * negative where the attach edge lies on the screen-edge side of it (a
-   * held box's gap under half a connector gap, a transparent bar's
-   * popout), so the box rests where it attaches either way. Not gated on
-   * slidesFromEdge, which a host latches while open.
+   * on the screen edge (attachAt is measured from it), so the box slides in
+   * from off the screen, over the bars and border, and rests where it
+   * attaches. 0 for an attached box. Not gated on slidesFromEdge, which a
+   * host latches while open.
    */
   function slideFrom(layout) {
-    return layout.detached ? layout.attachAt - layout.frameLine : 0;
+    return layout.detached ? layout.attachAt : 0;
+  }
+
+  /**
+   * Where a box sliding in from screen edge `edge` draws itself and where
+   * the backing window does: { over: the rect from that edge to the line,
+   * past: the rest of the screen }, rects { x, y, width, height } on the
+   * screen, or null where nothing is split. `p`:
+   *   edge (ScreenEdge), frameLine (the bars' inner edge on it, px from the
+   *   screen edge), width, height (the screen), detached, bare (over a
+   *   fullscreen window), footprint (its resting box, rects on the screen),
+   *   id (its own entry's, skipped), screen (its screen's name), entries
+   *   (PopoutManager.entries)
+   * In order: an attached box, or one over a fullscreen window, isn't split
+   * (it grows from its bar or border; nothing lies under it). Its slide
+   * path is each footprint rect stretched to the screen edge. The line is
+   * the frame line, or, if the path touches a dock shown on this screen
+   * (not itself, not one giving way), that dock's far side from the edge.
+   * No line, no split. At rest no box lies in `over`: a dock between it and
+   * the edge is crossed, one it overlaps gives way.
+   */
+  function overBars(p) {
+    if (!p.detached || p.bare)
+      return null;
+    const w = p.width;
+    const h = p.height;
+    const vertical = p.edge === ScreenEdge.Left || p.edge === ScreenEdge.Right;
+    const L = vertical ? h : w;
+    const D = vertical ? w : h;
+    const u = r => vertical ? r.y : r.x;
+    const len = r => vertical ? r.height : r.width;
+    const far = r => {
+      switch (p.edge) {
+      case ScreenEdge.Top:
+        return r.y + r.height;
+      case ScreenEdge.Bottom:
+        return h - r.y;
+      case ScreenEdge.Left:
+        return r.x + r.width;
+      default:
+        return w - r.x;
+      }
+    };
+    const path = (p.footprint ?? []).map(r => SurfaceOutline.rectFrom(p.edge, w, h, 0, u(r), 0, len(r), far(r)));
+    const docks = (p.entries ?? []).filter(e => e.kind === "dock" && e.phase === "open" && e.screen === p.screen && e.id !== p.id && PopoutGeometry.intersects(path, e.footprint));
+    const line = Math.max(p.frameLine, ...[].concat(...docks.map(e => e.footprint.map(far))));
+    if (line <= 0)
+      return null;
+    return {
+      "over": SurfaceOutline.rectFrom(p.edge, w, h, 0, 0, 0, L, line),
+      "past": SurfaceOutline.rectFrom(p.edge, w, h, 0, 0, line, L, D - line)
+    };
   }
 
   /**

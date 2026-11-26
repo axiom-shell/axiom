@@ -59,7 +59,7 @@ PanelWindow {
   // Drawn whenever backed, blurred only where the compositor is asked
   // (regionsOn). Its shapes as its blur region, where the compositor
   // blurs only that (supports.blurRegion): each shape's pieces as drawn,
-  // at its place on the screen and cut to its clipRect; none while it
+  // at its place on the screen and cut to its fillClip; none while it
   // draws nothing
   readonly property bool regionBlur: CompositorManager.supports.blurRegion === true && backing.part !== "shadows" && BlurManager.regionsOn(backing.screen)
   readonly property var regionPieces: backing.regionBlur ? [].concat(...backing.shapes.map(shape => backing._piecesOf(shape))) : []
@@ -76,7 +76,7 @@ PanelWindow {
     // copy draws, as BoxBlurRegion and Hyprland's ignore_alpha compare it
     if (Appearance.surfaceAlpha * shape.color.a * (shape.fade ?? 1) * (src.shownOpacity ?? 1) * (src.hostOpacity ?? 1) < Appearance.blurThreshold)
       return [];
-    const clip = shape.clipRect ?? {
+    const clip = shape.fillClip ?? {
       "x": 0,
       "y": 0,
       "width": backing.width,

@@ -9,7 +9,8 @@ import qs.components.methods
 // EdgePlacement (`geometry`) and, for a host with submenus, its
 // SubmenuHost: whether it's detached, runs straight off its edge, how its
 // ends join or run flush, its backfill, who fills it (the blur window, or
-// itself, solid while blur is paused for a fullscreen window), how it
+// itself: solid while blur is paused for a fullscreen window, and the part
+// of a detached box over the bars as it slides in, ownFillRect), how it
 // casts its shadow, what's left open in its strokes and shadow under a
 // submenu, the corners a submenu squares, and its BlurShape. The same for bar popouts, edge
 // popouts and docks: hosts set where it is, its box, `active`, colours and
@@ -43,6 +44,15 @@ AttachedSurface {
   straightJoinStart: root.geometry.straightJoinStart
   straightJoinEnd: root.geometry.straightJoinEnd
   backfill: root.geometry.backfill
+
+  // Over the bars it draws its box itself, in its coordinates: the split's
+  // `over` less the window's origin and its own position, the same origin
+  // and position its BlurShape's place reads, so the band and the cut move
+  // together
+  ownFillRect: root.geometry.overBars ? PopoutGeometry.offset([root.geometry.overBars.over], {
+    "x": -((root.geometry.origin?.x ?? 0) + root.x),
+    "y": -((root.geometry.origin?.y ?? 0) + root.y)
+  })[0] : null
 
   backed: root.geometry.backed
   opaque: root.geometry.opaque
@@ -82,6 +92,7 @@ AttachedSurface {
     y: (root.geometry.origin?.y ?? 0) + root.y
     shown: root.backed && root.windowShown && !root.hollow
     clipRect: root.blurClip
+    fillClip: root.geometry.overBars ? ScreenRegion.intersect(root.blurClip ?? root.geometry.overBars.past, root.geometry.overBars.past) : root.blurClip
     paintRank: root.paintRank
   }
 }
