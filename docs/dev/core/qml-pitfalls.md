@@ -7,8 +7,8 @@
 Traps of QML, Qt's JS engine and Quickshell that have each cost a debugging session in axiom. Read it before writing QML; add one when a new trap bites.
 
 ### The JS engine
-- No `Array.prototype.flatMap`: use `[].concat(...arr.map(...))`.
-- No `Object.fromEntries`: use `reduce`. `check_structure.py` refuses both.
+- No `Array.prototype.flat` or `flatMap`: use `[].concat(...arr)` / `[].concat(...arr.map(...))`.
+- No `Object.fromEntries`: use `reduce`. `check_structure.py` refuses all three.
 - No `Intl`: dates go through `I18n.formatDate`.
 - **Never an optional call on a computed member** (`handlers[name]?.(x)`): Qt 6.12's compiler segfaults on it while loading the file, so a hot reload kills the live shell. Take the member into a `const` and test it (`const fn = handlers[name]; if (fn) fn(x);`). An optional call on a plain name (`done?.(x)`) is fine. `check_structure.py` refuses the form.
 - **`Unable to assign [undefined] to …` at a singleton's property on every reload** is Qt 6.12.0's own bug ([QTBUG-149607](https://bugreports.qt.io/browse/QTBUG-149607): with the old and new generations' engines both alive, a composite type's cast fails), not the binding: Arch's `qt6-declarative` 6.12.0-2 carries the fix. Don't work around it in QML.

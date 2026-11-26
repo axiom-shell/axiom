@@ -91,7 +91,7 @@ QtObject {
   // sliding): what surfaces measure past and what re-places them at once
   // as it changes
   function awayOn(screen) {
-    return Object.values(BarEnds.stacksOn(root.bars, screen?.name)).flat().filter(bar => bar.autoHiding && !(root.barOn(screen, bar.location, bar.id)?.inPlace ?? false)).map(bar => bar.id).sort();
+    return [].concat(...Object.values(BarEnds.stacksOn(root.bars, screen?.name))).filter(bar => bar.autoHiding && !(root.barOn(screen, bar.location, bar.id)?.inPlace ?? false)).map(bar => bar.id).sort();
   }
 
   // What a screen edge's bars and the border leave on it (BarEnds.edgeOf:
