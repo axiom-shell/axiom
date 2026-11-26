@@ -29,8 +29,9 @@ byte (docs/dev/backend/README.md › Shared fixtures).
 
 The whole directory is generated and gitignored: CI records it before the
 tests that replay it (both the JS and the Go side). Recording needs Qt 6's
-qmltestrunner. While it runs, tests/.recording holds "fixture", or
-"golden <Name>" for a golden (RepoFiles.recording reads it).
+qmltestrunner. It passes the kind ("fixture", or "golden <Name>") in
+AXIOM_RECORDING, which run_tests.sh writes to tests/.recording for the run
+(RepoFiles.recording reads it).
 
 A case is <suite>/<test>/<name>.json ({op, args}) plus <name>.expected.json
 (the exact bytes the JS helper produced). Arguments larger than BLOB_SIZE
@@ -44,9 +45,9 @@ The format-1 migration's cases aren't here: they were frozen into the
 binary's own testdata (backend/internal/migrate/legacy/testdata/) when the
 shell's copy of the migrations was removed.
 """
-import contextlib
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -58,8 +59,6 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import manifests  # noqa: E402
 
 SHARED = ROOT / "tests/fixtures/shared"
-# The one recording marker (gitignored): the kind of recording running now
-MARKER = ROOT / "tests/.recording"
 # Goldens of no listed engine; a listed engine's goldens are its manifest
 # tests.golden (manifests.golden_file); a golden has one home at a time
 GOLDENS = {"BarStyleMatrix": "tests/barstyle/Matrix.js"}
@@ -94,8 +93,7 @@ def main(argv):
         print(__doc__.strip(), file=sys.stderr)
         return 2
     if argv[1] == "ensure":
-        # A marker still here was left by a killed run: record, which removes it
-        if not MARKER.exists() and (SHARED / ".stamp").exists() and (SHARED / ".stamp").read_text() == stamp():
+        if (SHARED / ".stamp").exists() and (SHARED / ".stamp").read_text() == stamp():
             return 0
         return record()
     return record() if argv[1] == "record" else check()
@@ -118,8 +116,7 @@ def record():
     # What an earlier recording left that no suite writes any more
     for stale in ("legacy", "share", "corpus", "schemas", ".corpus"):
         shutil.rmtree(SHARED / stale, ignore_errors=True)
-    with recording("fixture"):
-        out = run_tests(RECORD_TESTS, "FIXTURE")
+    out = run_tests(RECORD_TESTS, "FIXTURE", "fixture")
 
     records = [decode(line) for line in out.splitlines() if "@@FIXTURE " in line]
     if not records:
@@ -159,20 +156,10 @@ def record():
     return 0
 
 
-@contextlib.contextmanager
-def recording(kind):
-    """tests/.recording holds kind while the block runs (RepoFiles.recording reads it)."""
-    MARKER.write_text(kind + "\n")
-    try:
-        yield
-    finally:
-        MARKER.unlink(missing_ok=True)
-
-
-def run_tests(names, tag):
-    """Runs the named tests, failing if any of them fails; @@<tag> lines stay out of the failure print."""
+def run_tests(names, tag, kind):
+    """Runs the named tests, failing if any of them fails; @@<tag> lines stay out of the failure print; kind is the recording marker's content."""
     proc = subprocess.run([str(ROOT / "scripts/run_tests.sh"), *names],
-                          cwd=ROOT, capture_output=True, text=True, errors="surrogateescape")
+                          cwd=ROOT, env={**os.environ, "AXIOM_RECORDING": kind}, capture_output=True, text=True, errors="surrogateescape")
     output = proc.stdout + proc.stderr
     if proc.returncode != 0:
         print("\n".join(l for l in output.splitlines() if f"@@{tag}" not in l)[-4000:], file=sys.stderr)
@@ -254,8 +241,7 @@ def golden(name, allow):
         except ValueError:
             print(f"can't read {rel}'s data", file=sys.stderr)
             return 1
-    with recording(f"golden {name}"):
-        out = run_tests([name], "MATRIX")
+    out = run_tests([name], "MATRIX", f"golden {name}")
 
     data = {}
     for line in out.splitlines():

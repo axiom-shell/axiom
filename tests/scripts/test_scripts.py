@@ -2349,6 +2349,48 @@ class NewNames(unittest.TestCase):
         self.assertFalse([r for r in self.run_names() if r["file"].endswith(".js")])
 
 
+class RunTests(unittest.TestCase):
+    """scripts/run_tests.sh owns tests/.recording, over a stub qmltestrunner that prints what it finds."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = fixture_root(self.tmp.name, "qml", "tests-layout")
+        write(self.root, "tests/tst_X.qml", "")
+        self.marker = self.root / "tests/.recording"
+        write(self.root, "bin/qmltestrunner",
+              '#!/bin/bash\nif [[ -e "$MARKER" ]]; then echo "seen $(cat "$MARKER")"; else echo none; fi\n'
+              'exit "${STUB_STATUS:-0}"\n')
+        (self.root / "bin/qmltestrunner").chmod(0o755)
+
+    def run_script(self, recording=None, status=0):
+        env = {**os.environ, "QT_BIN": str(self.root / "bin"), "MARKER": str(self.marker), "STUB_STATUS": str(status)}
+        env.pop("AXIOM_RECORDING", None)
+        if recording is not None:
+            env["AXIOM_RECORDING"] = recording
+        proc = subprocess.run([str(self.root / "scripts/run_tests.sh"), "X"], cwd=self.root, env=env,
+                              capture_output=True, text=True)
+        return proc.returncode, proc.stdout + proc.stderr
+
+    def test_a_stale_marker_is_removed_without_the_variable(self):
+        write(self.root, "tests/.recording", "golden X\n")
+        code, out = self.run_script()
+        self.assertEqual(code, 0, out)
+        self.assertIn("none", out)
+        self.assertFalse(self.marker.exists())
+
+    def test_the_marker_holds_the_variable_during_the_run(self):
+        code, out = self.run_script("fixture")
+        self.assertEqual(code, 0, out)
+        self.assertIn("seen fixture", out)
+        self.assertFalse(self.marker.exists())
+
+    def test_the_marker_is_gone_after_a_failed_run(self):
+        code, out = self.run_script("fixture", status=1)
+        self.assertNotEqual(code, 0, out)
+        self.assertFalse(self.marker.exists())
+
+
 class FixturesGolden(unittest.TestCase):
     """scripts/dev/fixtures.py golden and record, in a fixture root whose run_tests.sh is a stub."""
 
@@ -2363,8 +2405,7 @@ class FixturesGolden(unittest.TestCase):
         write(self.root, "tests/.keep", "")
         write(self.root, "scripts/run_tests.sh",
               '#!/bin/bash\nroot="$(cd "$(dirname "$0")/.." && pwd)"\n'
-              'if [[ -e "$root/tests/.recording" ]]; then cat "$root/tests/.recording" >> "$root/marker-seen"; '
-              'else echo none >> "$root/marker-seen"; fi\n'
+              'echo "${AXIOM_RECORDING:-none}" >> "$root/marker-seen"\n'
               'cat "$root/log.txt"\nexit "$(cat "$root/status" 2>/dev/null || echo 0)"\n')
         (self.root / "scripts/run_tests.sh").chmod(0o755)
         self.fixtures = self.load()
@@ -2432,16 +2473,6 @@ class FixturesGolden(unittest.TestCase):
         code, out = self.golden(*self.allow({"a key": {"rule": "rule-1", "reason": "meant"}}))
         self.assertEqual(code, 1, out)
         self.assertIn("in --allow but unchanged", self.err)
-        self.assertEqual((self.root / self.PATH).read_bytes(), before)
-
-    def test_marker_is_gone_after_a_failed_run(self):
-        self.seed(self.DATA)
-        before = (self.root / self.PATH).read_bytes()
-        self.log(self.DATA)
-        write(self.root, "status", "1")
-        code, out = self.golden()
-        self.assertEqual(code, 1, out)
-        self.assertFalse((self.root / "tests/.recording").exists())
         self.assertEqual((self.root / self.PATH).read_bytes(), before)
 
     def test_first_recording_needs_no_allow(self):
