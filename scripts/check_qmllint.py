@@ -49,13 +49,23 @@ BASELINE = ROOT / "scripts" / "qmllint-baseline.json"
 DISABLED = ["uncreatable-type", "signal-handler-parameters"]
 
 
+# What an umbrella module's empty `Module {}` gets, so qmllint imports it
+PLACEHOLDER = """Module {
+    Component { name: "AxiomQmllintPlaceholder"; exports: ["Quickshell/AxiomQmllintPlaceholder 0.0"] }
+}
+"""
+
+
 def qt_imports(out):
     """QT_QML with Quickshell's type info minus its opaque stubs; returns `out`.
 
     Since 0.3.2, a Quickshell module's qmltypes declares a member-less
     `isTypeOpaque` stub for each type it uses from another module
     (QuickshellScreenInfo, PopupAnchor, Margins, UntypedObjectModel, …), and
-    qmllint resolves the stub instead of the real type. Every other module is
+    qmllint resolves the stub instead of the real type. An umbrella module
+    (Quickshell.Hyprland) has an empty qmltypes and only re-exports its
+    submodules in its qmldir, which Qt 6.12.1 fails to import; one with no
+    Component left gets a placeholder exported one. Every other module is
     linked in as is."""
     out.mkdir()
     for entry in Path(QT_QML).iterdir():
@@ -76,6 +86,9 @@ def qt_imports(out):
                 if not any("isTypeOpaque: true" in b for b in block):
                     kept.extend(block)
                 block = None
+        if not any(line.startswith("    Component {") for line in kept):
+            start = next((i for i, line in enumerate(kept) if line.strip().startswith("Module")), 0)
+            kept[start:] = [PLACEHOLDER]
         types.write_text("".join(kept))
     return out
 
