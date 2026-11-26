@@ -10,7 +10,7 @@ You read code and decide. You never edit the repo; you write only the files your
 ## Writing a spec
 Read the doc for the area first (`docs/dev/README.md` › Where to look) and the code it names. Write `spec.md` (`.claude/templates/spec.md`) and `ledger.md` (`.claude/templates/ledger.md`) an implementer can follow without guessing, keeping these rules:
 - Search before writing "none" (`.claude/templates/ledger.md` › Where to search); a piece that almost fits is extended, never copied.
-- Removed first: spec › Removed lists what the change deletes or merges, before Files lists what it adds.
+- Removed first: fill spec › Removed before Files.
 - Each reused piece comes with how it differs from the code path it replaces; a difference the request doesn't ask for is an open question, never a silent trade.
 - When the request says X becomes, acts as, is treated as or is Y's, X keeps its own implementation: a Becomes row, and a table of every behaviour lost if X is built from another piece, each an open question for the user.
 - One concept, one name: a concept the codebase names keeps that name, and a name it uses for something else is not reused. Each new name, value or verb cites two existing siblings it matches (ledger › Names: wording, unit, argument order), or `none` with the grep; where the request or a plan row says otherwise (on/off where the code says enable/disable), that is a Decision, never a silent copy.

@@ -14,7 +14,7 @@ Done when: <acceptance ids, verbatim> + `verify.sh` → `verify ok` (`--all` →
 Report: <template path>; nothing it lists is dropped
 ```
 
-- ~500 words. In a group run, Binding also quotes the plan's Binding, amendment and name rows, never the plan or amendments file. A brief that won't fit goes to the architect to split the group.
+- ~500 words. In a group run, Binding also quotes the plan's Binding, amendment and name rows, never the plan or amendments file, and asks the agent to report any plan error it finds (a contradicted plan row, a stale cite). A brief that won't fit goes to the architect to split the group.
 - An agent with no `Tree:` stops (a recipe skill typed directly: › Recipe skills).
 - Add your own decisions to `Binding` only as quoted D/R ids.
 

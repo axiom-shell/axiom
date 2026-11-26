@@ -14,7 +14,7 @@ Arguments: `$ARGUMENTS`
 - `group <plan file> [--stack <k>]`: run one stack of a plan file (`stacks.md`). `<plan file>` is an absolute path, or a file name in the plan files folder (› State). `--stack <k>` picks the k-th stack and is required when the plan has two or more; one run owns one stack.
 - `resume <slug>`: continue in a fresh session: read state.md and decisions.md, `git -C <tree> status` and `log -3`, and the PR comments (answers become D; a stack: `stacks.md` › Resume); continue at Next.
 
-Layouts: one file per hand-off in `.claude/templates/`; fill them, never restate them. Steps 1–3 are in `start.md`, 5–9 and the Report in `finish.md`, beside this file: read each before running any step it holds, never earlier. A `group` run, or its resume, reads `stacks.md` first.
+Layouts: one file per hand-off in `.claude/templates/`; fill them, never restate them. Steps 1–3 are in `start.md`, 5–9 and the Report in `finish.md`, beside this file: read each before running any step it holds, never earlier. A `group` run, or its resume, reads `stacks.md` first; a run whose spec the architect splits into a stack reads it before the plan check.
 
 ## The lead
 
@@ -22,7 +22,7 @@ Layouts: one file per hand-off in `.claude/templates/`; fill them, never restate
 - **Skills and agents.** Run skills with the Skill tool, each with `--tree <tree>` (a recipe skill gets it as the brief's `Tree:`), never by reading their files. Each role and round gets a fresh agent.
 - **Briefs** are `.claude/templates/brief.md`, complete the first time. Quote decisions verbatim; add no step of your own.
 - **A stopped agent** goes to an `architect`, or to the user if the decision is product.
-- **Do nothing unasked:** no memory writes, PR comment edits, issues or standing rules.
+- **Do nothing unasked:** no memory, CLAUDE.md or CLAUDE.local.md writes, PR comment edits, issues or standing rules.
 - **"Was it checked?"** Answer from state.md, naming every `NOT RUN` and weak check.
 
 ## Questions
