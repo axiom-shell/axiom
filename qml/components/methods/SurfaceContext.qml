@@ -16,8 +16,7 @@ QtObject {
 
   // What a surface's end meets on the perpendicular edge there. `p`:
   //   border (the screen border is on), bar (the enriched bar on that edge,
-  //   or null), barShowing (it's mapped: a pill bar hides under fullscreen
-  //   windows; default true), menuZone (an integrated menu's strip there)
+  //   or null), menuZone (an integrated menu's strip there)
   // Returns { kind, joinable, island }, kind one of:
   //   "border"      the border's stroke (a solid bar under it too)
   //   "bare"        a bare screen edge, run straight off
@@ -47,7 +46,7 @@ QtObject {
         "joinable": true,
         "island": false
       };
-    if (bar.pills && (p.barShowing ?? true))
+    if (bar.pills)
       return {
         "kind": "pillBar",
         "joinable": true,

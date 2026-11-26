@@ -167,7 +167,6 @@ QtObject {
       "kind": root.bare ? SurfaceContext.endKind({
         "border": false,
         "bar": null,
-        "barShowing": true,
         "menuZone": 0
       }) : ScreenEdgeManager.surfaceEnd(root.screen, location),
       "frame": frame,

@@ -93,14 +93,6 @@ TestCase {
     }).kind, "wall");
   }
 
-  function test_hiddenPillBarIsAWall() {
-    compare(SurfaceContext.endKind({
-      "border": true,
-      "bar": bar("pills"),
-      "barShowing": false
-    }).kind, "wall");
-  }
-
   // Held, detached or on an island, no end joins (each host once gated
   // this differently); only a held surface has no walls (it keeps its
   // gaps), nor an island at a bar its own end is held clear of

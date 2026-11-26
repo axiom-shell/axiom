@@ -142,7 +142,6 @@ QtObject {
     return SurfaceContext.endKind({
       "border": Appearance.screenBorder,
       "bar": bar,
-      "barShowing": !bar || (root.barOn(screen, location, bar.id)?.inPlace ?? false),
       "menuZone": root.zoneOn(screen?.name ?? "", name)
     });
   }
