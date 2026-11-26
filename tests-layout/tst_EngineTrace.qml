@@ -231,4 +231,25 @@ TestCase {
     verify(typeof ({}).hasOwnProperty === "function");
     verify(Object.keys(Object.prototype).length === 0);
   }
+
+  function test_reservedStagesAreOrdinaryKeys() {
+    for (const stage of ["__proto__", "toString", "constructor"])
+      EngineTrace.record({
+        "engine": "rstage",
+        "stage": stage,
+        "id": "a",
+        "input": 1,
+        "output": 2
+      });
+    const r = EngineTrace.recordsOf("rstage", "a");
+    compare(Object.keys(r).sort(), ["__proto__", "constructor", "toString"]);
+    compare(r["__proto__"].output, 2);
+    compare(r.toString.output, 2);
+    verify(Object.getPrototypeOf(r) === Object.prototype);
+    EngineTrace.forget({
+      "engine": "rstage",
+      "id": "a"
+    });
+    compare(EngineTrace.recordsOf("rstage", "a"), {});
+  }
 }

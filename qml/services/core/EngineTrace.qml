@@ -41,10 +41,15 @@ QtObject {
     const out = {};
     const byStage = root._store[engine]?.[id] ?? {};
     for (const stage of Object.keys(byStage))
-      out[stage] = {
-        "input": byStage[stage].input,
-        "output": byStage[stage].output
-      };
+      Object.defineProperty(out, stage, {
+        "value": {
+          "input": byStage[stage].input,
+          "output": byStage[stage].output
+        },
+        "enumerable": true,
+        "writable": true,
+        "configurable": true
+      });
     return out;
   }
 
