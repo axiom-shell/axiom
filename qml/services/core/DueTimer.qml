@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-// One timer armed at an owner's `next` (ms on Date.now()'s clock, 0 = never);
+// One timer armed at an owner's `next` (ms on Date.now()'s clock, not above 0 = never);
 // it re-reads the clock at least every `recheck` ms, so a `next` passed during
 // a suspend fires within a minute of waking. `due` fires once per `next`
 // value; the owner moves `next` on.
@@ -9,7 +9,7 @@ import QtQuick
 QtObject {
   id: root
 
-  // The deadline, in ms on `clock`'s clock; 0 or less = never
+  // The deadline, in ms on `clock`'s clock; anything not above 0 (NaN too) = never
   property real next: 0
   // The clock read, in ms; tests replace it
   property var clock: () => Date.now()
@@ -27,13 +27,13 @@ QtObject {
   }
 
   onNextChanged: {
-    root._dueFor = 0;
+    root._fired = false;
     root._arm(true);
   }
 
   property int _armedFor: 0
-  // The `next` value `due` was emitted for, 0 for none
-  property real _dueFor: 0
+  // `due` was emitted for the current `next`
+  property bool _fired: false
 
   // fromChange: reached from a `next` change, so a past `next` is judged on
   // the next turn and an owner's own assignment never re-enters its handler
@@ -47,8 +47,8 @@ QtObject {
       if (fromChange) {
         root._dueTimeout.interval = 0;
         root._dueTimeout.start();
-      } else if (root._dueFor !== root.next) {
-        root._dueFor = root.next;
+      } else if (!root._fired) {
+        root._fired = true;
         root.due(now);
       }
       return;
