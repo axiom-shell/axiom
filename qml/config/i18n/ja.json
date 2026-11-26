@@ -4715,6 +4715,8 @@
     "As a submenu it closes on leave after this delay.": "",
     "How long the pointer rests on the row before the menu opens.": "",
     "Reduce effects over fullscreen": "",
-    "On a monitor with a fullscreen window, the overlay fades in instead of sliding, switches pages without sliding, and draws no blur or shadow.": ""
+    "On a monitor with a fullscreen window, the overlay fades in instead of sliding, switches pages without sliding, and draws no blur or shadow.": "",
+    "Start on": "",
+    "The workspace every monitor starts on: the middle of its workspaces (the middle cell of a grid), or its first.": ""
   }
 }

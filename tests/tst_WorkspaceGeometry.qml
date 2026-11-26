@@ -1162,23 +1162,50 @@ TestCase {
     compare(_focus(plan), "B:2 A:13");
   }
 
-  function test_centreWorkspace() {
-    compare(WorkspaceGeometry.centreWorkspace(1, 3, 3), 5, "3 × 3: the middle");
-    compare(WorkspaceGeometry.centreWorkspace(10, 3, 3), 14, "a second block's middle");
-    compare(WorkspaceGeometry.centreWorkspace(1, 4, 4), 11, "4 × 4: after the middle, right and down");
-    compare(WorkspaceGeometry.centreWorkspace(1, 5, 1), 3, "one row");
-    compare(WorkspaceGeometry.centreWorkspace(1, 1, 1), 1, "one cell");
+  function test_startWorkspace() {
+    // A grid: the middle cell, after the middle with an even count
+    compare(WorkspaceGeometry.startWorkspace(1, 3, 3, "middle"), 5, "3 × 3: the middle");
+    compare(WorkspaceGeometry.startWorkspace(10, 3, 3, "middle"), 14, "a second block's middle");
+    compare(WorkspaceGeometry.startWorkspace(1, 4, 4, "middle"), 11, "4 × 4: after the middle, right and down");
+    compare(WorkspaceGeometry.startWorkspace(1, 1, 1, "middle"), 1, "one cell");
+    compare(WorkspaceGeometry.startWorkspace(1, 3, 3, "first"), 1, "3 × 3: the first");
+    compare(WorkspaceGeometry.startWorkspace(10, 3, 3, "first"), 10, "a second block's first");
+    // perMonitor: one row of count
+    compare(WorkspaceGeometry.startWorkspace(1, 5, 1, "middle"), 3, "5 in a row: the middle");
+    compare(WorkspaceGeometry.startWorkspace(11, 10, 1, "middle"), 16, "a second block of 10: after the middle");
+    compare(WorkspaceGeometry.startWorkspace(11, 10, 1, "first"), 11, "a second block of 10: the first");
   }
 
-  function test_centreFocus() {
-    // 3 × 3 blocks: A owns 1-9, B 10-18
-    const start = WorkspaceGeometry.centreFocus(_monitors(1, 2), 9, 3, 3, true);
-    compare(_focus(start), "B:14 A:5", "both where the compositor started them, the focused one last");
-    verify(start.changed);
-    const moved = WorkspaceGeometry.centreFocus(_monitors(1, 12), 9, 3, 3, true);
+  function test_middleOf() {
+    compare(WorkspaceGeometry.middleOf(3), 2, "3: the second");
+    compare(WorkspaceGeometry.middleOf(4), 3, "4: after the middle");
+    compare(WorkspaceGeometry.middleOf(1), 1, "one");
+    compare(WorkspaceGeometry.middleOf(0), 1, "none: the first");
+  }
+
+  function test_startFocus() {
+    // A grid of 3 × 3 blocks: A owns 1-9, B 10-18
+    const centre = WorkspaceGeometry.startFocus(_monitors(1, 2), 9, 3, 3, "middle", true);
+    compare(_focus(centre), "B:14 A:5", "both where the compositor started them, the focused one last");
+    verify(centre.changed);
+    const moved = WorkspaceGeometry.startFocus(_monitors(1, 12), 9, 3, 3, "middle", true);
     compare(_focus(moved), "B:12 A:5", "B already moved within its block: kept");
-    const all = WorkspaceGeometry.centreFocus(_monitors(3, 12), 9, 3, 3, false);
+    const all = WorkspaceGeometry.startFocus(_monitors(3, 12), 9, 3, 3, "middle", false);
     compare(_focus(all), "B:14 A:5", "turning the grid on: every monitor");
-    verify(!WorkspaceGeometry.centreFocus(_monitors(5, 14), 9, 3, 3, false).changed, "already there");
+    verify(!WorkspaceGeometry.startFocus(_monitors(5, 14), 9, 3, 3, "middle", false).changed, "already there");
+    // The first: where the compositor starts them, so nothing moves
+    const first = WorkspaceGeometry.startFocus(_monitors(1, 10), 9, 3, 3, "first", true);
+    compare(_focus(first), "B:10 A:1");
+    verify(!first.changed, "already on their first ids");
+    const outside = WorkspaceGeometry.startFocus(_monitors(1, 2), 9, 3, 3, "first", true);
+    compare(_focus(outside), "B:10 A:1", "B numbered on outside its block: to its first");
+    verify(outside.changed);
+    // perMonitor blocks of 10, one row: A owns 1-10, B 11-20
+    const perMonitor = WorkspaceGeometry.startFocus(_monitors(1, 2), 10, 10, 1, "middle", true);
+    compare(_focus(perMonitor), "B:16 A:6", "perMonitor: the middle of each block");
+    verify(perMonitor.changed);
+    const perMonitorFirst = WorkspaceGeometry.startFocus(_monitors(1, 2), 10, 10, 1, "first", true);
+    compare(_focus(perMonitorFirst), "B:11 A:1", "perMonitor: B outside its block to its first");
+    verify(!WorkspaceGeometry.startFocus(_monitors(1, 11), 10, 10, 1, "first", true).changed, "perMonitor: already on their first ids");
   }
 }
