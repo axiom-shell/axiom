@@ -9,6 +9,7 @@ import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
 import qs.components.hosts.popout
+import qs.components.hosts.window
 
 // A free menu (placement `free`): a box of its own on no edge, in a
 // full-screen Top-layer window (axiom-menu) that never resizes, its input
@@ -323,14 +324,14 @@ PopoutWrapperBase {
     LayerSlot {
       id: menuSlot
       window: panel
-      namespace: "axiom-menu"
       wanted: root.occupied && loader.status === Loader.Ready
       held: true
     }
     color: "transparent"
 
     WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.namespace: "axiom-menu"
+    readonly property string layerNamespace: "axiom-menu"
+    WlrLayershell.namespace: panel.layerNamespace
     WlrLayershell.keyboardFocus: focusGrab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
     // The whole screen, the bars' zones included: FreeMenuPlace keeps
     // the box clear of them
@@ -424,7 +425,6 @@ PopoutWrapperBase {
     LayerOrigin {
       id: placeOnScreen
       window: panel
-      namespace: "axiom-menu"
       layer: WlrLayer.Top
     }
 

@@ -8,6 +8,7 @@ import qs.config
 import qs.services.compositor
 import qs.services.ui
 import qs.components.hosts.popout
+import qs.components.hosts.window
 import qs.components.methods
 import qs.components.reusable
 
@@ -68,7 +69,6 @@ PanelWindow {
   LayerSlot {
     id: layerSlot
     window: backing
-    namespace: backing.layerNamespace
     layer: backing.stackLayer
     held: true
   }

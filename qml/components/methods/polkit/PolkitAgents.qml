@@ -4,7 +4,9 @@ import QtQuick
 // The polkit agents axiom knows about (PolkitManager): a session has one
 // agent, so while axiom is its agent these are stopped and left out of the
 // generated autostart. `unit` is the systemd user unit that starts one, ""
-// for agents only started directly.
+// for agents only started directly. The daemon parses this file's plain
+// JSON (backend/internal/compositor/render/tables.go, ParseTables, from the
+// constant PolkitAgentsFile): the property name `agents` is its contract.
 QtObject {
   id: root
 

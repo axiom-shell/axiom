@@ -7,7 +7,7 @@ import qs.config
 import qs.services.compositor
 import qs.services.ui
 import qs.components.reusable
-import qs.components.hosts.popout
+import qs.components.hosts.window
 
 // A screen's dim background for full-screen surfaces (the overlay,
 // workspace overview, launcher, power menu, onboarding; BackdropRequest):
@@ -48,7 +48,6 @@ PanelWindow {
   LayerSlot {
     id: slot
     window: root
-    namespace: "axiom-backdrop"
     wanted: root._wanted || BackdropManager.catching
     held: true
   }
@@ -63,7 +62,8 @@ PanelWindow {
   implicitHeight: 1
   exclusionMode: ExclusionMode.Ignore
   WlrLayershell.layer: WlrLayer.Top
-  WlrLayershell.namespace: "axiom-backdrop"
+  readonly property string layerNamespace: "axiom-backdrop"
+  WlrLayershell.namespace: root.layerNamespace
   WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
   color: "transparent"
   mask: BackdropManager.catching ? null : root._noInput

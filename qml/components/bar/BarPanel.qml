@@ -8,6 +8,7 @@ import qs.config
 import qs.services.ui
 import qs.services.compositor
 import qs.components.hosts.popout
+import qs.components.hosts.window
 import qs.components.methods
 import qs.components.reusable
 
@@ -72,7 +73,6 @@ PanelWindow {
   LayerSlot {
     id: slot
     window: root
-    namespace: root.layerNamespace
     rank: root.barConfig.layerRank
     rankGroup: ScreenEdge.name(root.barConfig.location)
     wanted: root.barConfig.enabled
@@ -198,7 +198,6 @@ PanelWindow {
   LayerOrigin {
     id: placeOnScreen
     window: root
-    namespace: root.layerNamespace
     edge: root.barConfig.location
     estimatedStart: ScreenEdgeManager.barStartOn(root.screen, root.barConfig, true)
   }

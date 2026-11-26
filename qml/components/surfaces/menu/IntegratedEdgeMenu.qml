@@ -8,6 +8,7 @@ import qs.services.compositor
 import qs.services.ui
 import qs.components.methods
 import qs.components.hosts.popout
+import qs.components.hosts.window
 
 // An integrated edge menu: a Top-layer strip along the whole edge whose
 // exclusive zone is arranged before everything else's (its LayerStack
@@ -118,7 +119,6 @@ PopoutWrapperBase {
     LayerSlot {
       id: menuSlot
       window: panel
-      namespace: "axiom-edge-menu"
       wanted: root.occupied && loader.status === Loader.Ready
       // Where map order alone stacks: mapped from the start, a pixel deep,
       // reserving nothing while closed, so opening never maps it after
@@ -128,7 +128,8 @@ PopoutWrapperBase {
     color: "transparent"
 
     WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.namespace: "axiom-edge-menu"
+    readonly property string layerNamespace: "axiom-edge-menu"
+    WlrLayershell.namespace: panel.layerNamespace
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     exclusionMode: ExclusionMode.Normal
     exclusiveZone: menuSlot.idle ? 0 : root.depth
@@ -151,7 +152,6 @@ PopoutWrapperBase {
     LayerOrigin {
       id: placeOnScreen
       window: panel
-      namespace: "axiom-edge-menu"
       edge: root.edge
     }
     readonly property bool backed: BlurManager.backsOn(root.screen, false) && placeOnScreen.origin !== null

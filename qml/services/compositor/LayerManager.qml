@@ -3,34 +3,44 @@ import QtQuick
 import Quickshell.Wayland
 
 import qs.components.methods
+import qs.components.methods.layer
 import qs.config
+import qs.services.core
 
 /**
  * Where axiom's layer-shell windows are on their outputs, worked out by
- * axiom itself on every compositor (methods/LayerArrange; docs/dev/
+ * axiom itself on every compositor (methods/layer/LayerArrange; docs/dev/
  * compositor/layer-arrangement.md). Each window that needs to know, or
- * that reserves space others are placed against, reports how it asks to
- * be laid out (hosts/popout/LayerOrigin): anchors, margins, size, zone,
- * and when it mapped. Where the compositor can list its layers (Hyprland:
- * CompositorManager.withLayerRects), each window's rect is corrected by
- * how far the compositor's own differs, sampled once they've settled:
- * what axiom doesn't arrange (another app's layers, a monitor's reserved
- * space) moves its windows too. Each difference is logged (console.log,
- * "LayerManager:").
+ * that reserves space others are placed against, states how it asks to
+ * be laid out (hosts/window/LayerOrigin, `setLayerSpec`): anchors, margins,
+ * size, zone, and when it mapped. Where the compositor can list its layers
+ * (Hyprland: CompositorManager.withLayerRects), each window's rect is
+ * corrected by how far the compositor's own differs, sampled once they've
+ * settled: what axiom doesn't arrange (another app's layers, a monitor's
+ * reserved space) moves its windows too. Each difference is logged
+ * (console.log, "LayerManager:").
  * It also maps the windows with a fixed place in the stack (bars, the
- * border, docks, integrated edge menus: hosts/popout/LayerSlot) in
- * LayerStack order, one stage at a time, and maps again any that land out
+ * border, docks, integrated edge menus: hosts/window/LayerSlot, `setSlot`)
+ * in LayerStack order, one stage at a time, and maps again any that land out
  * of place (the compositor stacks by map order alone, on every compositor).
+ * The owners of both are the host items themselves; a pass takes its input
+ * as plain data (a KeptList of entries by index, never an item) and gives
+ * each owner its answer back through the same indexes, and again when only
+ * the owners changed (`_followOwners`).
  */
 QtObject {
   id: root
 
-  // { owner uid: spec } as reported; spec: { output, namespace, layer,
-  // anchors, margins, w, h, zone, mapped }
-  property var _specs: ({})
-  property int _lastUid: 0
+  // Every window's layout request, by owner (the LayerOrigin): the spec is
+  // { outputName, namespace, layer, anchors, margins, width, height, zone,
+  // mapped }
+  property OwnerRegistry _specs: OwnerRegistry {
+    onEntriesChanged: Qt.callLater(root._followOwners)
+  }
   property int _lastSeq: 0
-  property var _seqs: ({})
+  // Each mapped window's map sequence number, by owner (dropped as it unmaps,
+  // so a remap goes to the end)
+  property var _seqs: new Map()
 
   readonly property bool _restacks: CompositorManager.supports.layerRestack === true
 
@@ -47,141 +57,166 @@ QtObject {
     return "top";
   }
 
-  // Every reported window's rect by output, as LayerArrange.arrange
-  // gives it ({ [output]: { w, h, layers: [{ id, namespace, x, y, w, h }],
-  // reserved: { top, right, bottom, left } } });
-  // replaced only when something moved
+  // Every window's rect by output, as LayerArrange.arrange gives it
+  // ({ [outputName]: { width, height, layers: [{ id, namespace, x, y, width,
+  // height, rule }], reserved: { top, right, bottom, left } } }, a layer's
+  // id the index of its owner in `_arrangedOwners`); replaced only when
+  // something moved
   property var rects: ({})
+  // The owners the pass that made `rects` gave its ids to (id = index)
+  property var _arrangedOwners: []
 
-  // A reporting window's id: owners keep it for their lifetime
-  function register() {
-    return ++root._lastUid;
-  }
-
-  // A window's layout, again whenever it changes; null once it's gone
-  function report(uid, spec) {
-    const specs = Object.assign({}, root._specs);
-    const seqs = Object.assign({}, root._seqs);
-    if (spec)
-      specs[uid] = spec;
-    else
-      delete specs[uid];
+  // A window's layout, again whenever it changes
+  function setLayerSpec(owner, spec) {
+    root._specs.set(owner, spec);
     // Mapped from now on: arranged after everything mapped before it
-    if (spec?.mapped && seqs[uid] === undefined)
-      seqs[uid] = ++root._lastSeq;
-    else if (!spec?.mapped)
-      delete seqs[uid];
-    root._specs = specs;
-    root._seqs = seqs;
-    root._arrange.restart();
+    if (spec.mapped && !root._seqs.has(owner))
+      root._seqs = Utils.withEntry(root._seqs, owner, ++root._lastSeq);
+    else if (!spec.mapped)
+      root._forget("_seqs", owner);
   }
 
-  // Where window `uid` is on its output ({ x, y, w, h }), or null when
-  // it isn't laid out (no output, or reserving space and not mapped):
-  // as computed, plus its correction from the compositor's list
-  function rectOf(uid, output) {
-    const rect = (root.rects[output]?.layers ?? []).find(l => l.id === uid);
-    if (!rect)
+  // A window that's gone
+  function dropLayerSpec(owner) {
+    root._specs.drop(owner);
+    root._forget("_seqs", owner);
+    root._forget("_corrections", owner);
+  }
+
+  // The per-owner memory `name` (a Map) without `owner`, reassigned whole
+  // only when it held it
+  function _forget(name, owner) {
+    if (!root[name].has(owner))
+      return;
+    root[name] = Utils.withEntry(root[name], owner, undefined);
+  }
+
+  // Where window `owner` is on its output ({ x, y, width, height }), or null
+  // when it isn't laid out (no output, or reserving space and not mapped): as
+  // computed, plus its correction from the compositor's list
+  function rectOf(owner) {
+    const id = root._arrangedOwners.indexOf(owner);
+    if (id < 0)
       return null;
-    const c = root._corrections[uid];
-    return c ? {
-      "x": rect.x + c.dx,
-      "y": rect.y + c.dy,
-      "w": rect.w + c.dw,
-      "h": rect.h + c.dh
-    } : rect;
+    for (const name in root.rects) {
+      const rect = root.rects[name].layers.find(l => l.id === id);
+      if (!rect)
+        continue;
+      const c = root._corrections.get(owner);
+      return c ? {
+        "x": rect.x + c.dx,
+        "y": rect.y + c.dy,
+        "width": rect.width + c.dw,
+        "height": rect.height + c.dh
+      } : {
+        "x": rect.x,
+        "y": rect.y,
+        "width": rect.width,
+        "height": rect.height
+      };
+    }
+    return null;
   }
 
-  // The windows LayerArrange places: every mapped one, and those not yet
-  // mapped that reserve nothing (so nothing else moves), where they'd go
-  // if they mapped now
-  function _surfaces() {
-    const out = [];
-    for (const uid in root._specs) {
-      const spec = root._specs[uid];
-      const seq = root._seqs[uid];
-      if (seq === undefined && LayerArrange.reserves(spec))
+  // The arrangement's whole input as plain data: each spec by its index in
+  // `_specs` (with the owner's seq, none while unmapped), and each output's
+  // size. Kept once per event turn, so a burst of changes (a window resizing
+  // on every frame of an animation) reaches one pass, and equal content
+  // reaches none.
+  property KeptList _keptSpecs: KeptList {
+    fresh: root._specs.entries.map((e, i) => Object.assign({
+        "id": i
+      }, e.value, {
+        "seq": root._seqs.get(e.owner)
+      })).concat(General.outputs.map(screen => ({
+          "id": "output:" + screen.name,
+          "width": screen.width,
+          "height": screen.height
+        })))
+    oncePerTurn: true
+    onItemsChanged: root._arrange()
+  }
+
+  // The arrangement pass: the windows LayerArrange places are every mapped
+  // one, and those not yet mapped that reserve nothing (so nothing else
+  // moves), where they'd go if they mapped now
+  function _arrange() {
+    const items = root._keptSpecs.items;
+    const outputs = {};
+    for (const item of items.filter(i => typeof i.id === "string"))
+      outputs[item.id.slice("output:".length)] = {
+        "width": item.width,
+        "height": item.height
+      };
+    const surfaces = [];
+    for (const item of items.filter(i => typeof i.id === "number")) {
+      if (item.seq === undefined && LayerArrange.reserves(item))
         continue;
-      out.push(Object.assign({}, spec, {
-        "id": Number(uid),
-        "seq": seq ?? root._lastSeq + 1
+      surfaces.push(Object.assign({}, item, {
+        "seq": item.seq ?? root._lastSeq + 1
       }));
     }
-    return out;
+    const next = LayerArrange.arrange({
+      "outputs": outputs,
+      "surfaces": surfaces,
+      "ordered": false
+    });
+    root._arrangedOwners = root._specs.entries.map(e => e.owner);
+    if (JSON.stringify(next) !== JSON.stringify(root.rects)) {
+      root.rects = next;
+      root._check.restart();
+    }
   }
 
-  // Coalesces a burst of reports (a window resizing on every frame of an
-  // animation) into one arrangement
-  property Timer _arrange: Timer {
-    interval: 0
-    onTriggered: {
-      const outputs = General.outputs.reduce((acc, screen) => {
-        acc[screen.name] = {
-          "w": screen.width,
-          "h": screen.height
-        };
-        return acc;
-      }, {});
-      const next = LayerArrange.arrange(outputs, root._surfaces());
-      if (JSON.stringify(next) !== JSON.stringify(root.rects)) {
-        root.rects = next;
-        root._check.restart();
-      }
-    }
-  }
-  property Connections _outputs: Connections {
-    target: General
-    function onOutputsChanged() {
-      root._arrange.restart();
-    }
+  // Queued on either registry's `entries` change: keeps both lists now (a
+  // changed one runs its pass, which takes the owners), then reruns a pass
+  // whose owners changed while its plain data did not (a window remade with
+  // an equal spec): the same result by index, given to the new owners
+  function _followOwners() {
+    root._keptSpecs.keep();
+    root._keptSlots.keep();
+    const same = (a, b) => a.length === b.length && a.every((o, i) => o === b[i]);
+    if (!same(root._arrangedOwners, root._specs.entries.map(e => e.owner)))
+      root._arrange();
+    if (!same(Array.from(root._answers.keys()), root._slots.entries.map(e => e.owner)))
+      root._sequence();
   }
 
   // --- Corrections from the compositor's own list ---
 
-  // { uid: { dx, dy, dw, dh } }: how far the compositor's rect of each
-  // mapped window differs from the computed one (LayerArrange.match),
-  // sampled only once they've settled (a window resizing gets there a
-  // moment later), so a window animating keeps its last one. Kept while a
-  // window is unmapped (it most likely maps back where it was), dropped
-  // when mapped with no rect of its own reported.
-  property var _corrections: ({})
+  // owner -> { dx, dy, dw, dh, rule }: how far the compositor's rect of each
+  // mapped window differs from the computed one (LayerArrange.correctionsOf),
+  // sampled only once they've settled (a window resizing gets there a moment
+  // later), so a window animating keeps its last one. Kept while a window is
+  // unmapped (it most likely maps back where it was), dropped when mapped with
+  // no rect of its own reported.
+  property var _corrections: new Map()
   property string _lastMismatch: ""
   property Timer _check: Timer {
     interval: 600
     onTriggered: CompositorManager.withLayerRects(reported => {
       if (!reported)
         return;
-      const mapped = id => root._seqs[id] !== undefined;
-      const theirs = LayerArrange.match(root.rects, reported, mapped);
-      const corrections = Object.assign({}, root._corrections);
-      const misses = [];
-      for (const output in root.rects)
-        for (const l of root.rects[output].layers) {
-          if (!mapped(l.id))
-            continue;
-          const r = theirs[l.id];
-          if (r && r.x === l.x && r.y === l.y && r.w === l.w && r.h === l.h) {
-            delete corrections[l.id];
-            continue;
-          }
-          if (r)
-            corrections[l.id] = {
-              "dx": r.x - l.x,
-              "dy": r.y - l.y,
-              "dw": r.w - l.w,
-              "dh": r.h - l.h
-            };
-          else
-            delete corrections[l.id];
-          misses.push(`${l.namespace} on ${output} computed ${l.x},${l.y} ${l.w}x${l.h}; reported ${r ? `${r.x},${r.y} ${r.w}x${r.h}` : "none"}`);
-        }
-      // Of windows gone, none
-      for (const uid in corrections)
-        if (root._specs[uid] === undefined)
-          delete corrections[uid];
-      if (JSON.stringify(corrections) !== JSON.stringify(root._corrections))
+      // The ids of `rects` are indexes of the pass that made them
+      const owners = root._arrangedOwners;
+      const current = {};
+      for (const [owner, correction] of root._corrections)
+        if (owners.includes(owner))
+          current[owners.indexOf(owner)] = correction;
+      const result = LayerArrange.correctionsOf({
+        "computed": root.rects,
+        "reported": reported,
+        "mappedIds": owners.map((o, i) => i).filter(i => root._seqs.has(owners[i])),
+        "liveIds": owners.map((o, i) => i).filter(i => root._specs.valueOf(owners[i]) !== undefined),
+        "current": current
+      });
+      const corrections = new Map();
+      for (const id in result.corrections)
+        corrections.set(owners[Number(id)], result.corrections[id]);
+      if (!Utils.deepEqual(Array.from(corrections), Array.from(root._corrections)))
         root._corrections = corrections;
-      const text = misses.sort().join("\n");
+      const rectText = r => `${r.x},${r.y} ${r.width}x${r.height}`;
+      const text = result.misses.map(m => `${m.namespace} on ${m.outputName} computed ${rectText(m.computed)}; reported ${m.reported ? rectText(m.reported) : "none"}`).sort().join("\n");
       if (text !== root._lastMismatch && text !== "")
         console.log("LayerManager: corrected from the compositor:\n" + text);
       root._lastMismatch = text;
@@ -196,37 +231,58 @@ QtObject {
 
   // --- Mapping in order (LayerSlot) ---
 
-  // { slot uid: { output, layer, namespace, wanted, held, mapped } }
-  property var _slots: ({})
-  property var _slotSeqs: ({})
-  // Slots mapped long enough for the compositor to have mapped them
-  property var _slotSettled: ({})
+  // Every slot's state, by owner (the LayerSlot): { outputName, layer,
+  // namespace, rank, rankGroup, wanted, held, mapped }
+  property OwnerRegistry _slots: OwnerRegistry {
+    onEntriesChanged: Qt.callLater(root._followOwners)
+  }
+  // Each mapped slot's map sequence number, by owner
+  property var _slotSeqs: new Map()
+  // Slots mapped long enough for the compositor to have mapped them (owner ->
+  // true)
+  property var _slotSettled: new Map()
   // Slots unmapped to map again in their place, until they've unmapped
-  property var _remapping: ({})
-  // Slots that may show now ({ uid: true })
-  property var shownSlots: ({})
+  // (owner -> true)
+  property var _remapping: new Map()
+  // The answer for each slot (owner -> { shown }), read by `slotOf`
+  property var _answers: new Map()
 
-  // A slot's state, again whenever it changes; null once it's gone
-  function reportSlot(uid, slot) {
+  // A slot's state, again whenever it changes
+  function setSlot(owner, slot) {
     // A mapped window moved to another layer lands on top of it, as if it
     // had just mapped, where the compositor does that (supports.layerRestack,
     // SwayFX: the blur window rising over a fullscreen window and back)
-    const moved = root._restacks && slot !== null && root._slots[uid] !== undefined && root._slots[uid].layer !== slot.layer;
-    const slots = Object.assign({}, root._slots);
-    if (slot)
-      slots[uid] = slot;
-    else
-      delete slots[uid];
-    root._slots = slots;
-    if (slot?.mapped && (root._slotSeqs[uid] === undefined || moved)) {
-      root._slotSeqs[uid] = ++root._lastSeq;
+    const before = root._slots.valueOf(owner);
+    const moved = root._restacks && before !== undefined && before.layer !== slot.layer;
+    root._slots.set(owner, slot);
+    if (slot.mapped && (!root._slotSeqs.has(owner) || moved)) {
+      root._slotSeqs = Utils.withEntry(root._slotSeqs, owner, ++root._lastSeq);
       root._settle.restart();
-    } else if (!slot?.mapped) {
-      delete root._slotSeqs[uid];
-      delete root._slotSettled[uid];
-      delete root._remapping[uid];
+    } else if (!slot.mapped) {
+      root._forgetSlot(owner);
     }
-    root._sequence.restart();
+  }
+
+  // A slot that's gone
+  function dropSlot(owner) {
+    root._slots.drop(owner);
+    root._forgetSlot(owner);
+    root._forget("_answers", owner);
+  }
+
+  // What a slot's owner remembers of its map, once it's unmapped
+  function _forgetSlot(owner) {
+    root._forget("_slotSeqs", owner);
+    root._forget("_slotSettled", owner);
+    root._forget("_remapping", owner);
+  }
+
+  // The service's answer for the slot `owner`: { shown } (whether its window
+  // may show now)
+  function slotOf(owner) {
+    return root._answers.get(owner) ?? {
+      "shown": false
+    };
   }
 
   // A window just made visible is created at once but drawn (and mapped)
@@ -234,43 +290,67 @@ QtObject {
   property Timer _settle: Timer {
     interval: 50
     onTriggered: {
-      for (const uid in root._slotSeqs)
-        root._slotSettled[uid] = true;
-      root._sequence.restart();
+      const next = new Map(root._slotSettled);
+      for (const owner of root._slotSeqs.keys())
+        next.set(owner, true);
+      if (next.size !== root._slotSettled.size)
+        root._slotSettled = next;
     }
   }
 
-  property Timer _sequence: Timer {
-    interval: 0
-    onTriggered: {
-      const entries = Object.keys(root._slots).map(uid => {
-        const slot = root._slots[uid];
-        return {
-          "id": uid,
-          "output": slot.output,
-          "layer": slot.layer,
-          "order": LayerStack.orderOf(slot.namespace),
-          "rank": slot.rank,
-          "rankGroup": slot.rankGroup,
-          "wanted": slot.wanted,
-          "held": slot.held,
-          "showing": root._slotSeqs[uid] !== undefined,
-          "mapped": root._slotSettled[uid] === true,
-          "seq": root._slotSeqs[uid] ?? 0
-        };
-      });
-      const result = LayerStack.sequence(entries);
-      for (const uid of result.remap) {
-        if (!root._remapping[uid])
-          console.log(`LayerManager: mapping ${root._slots[uid].namespace} on ${root._slots[uid].output} again, in its place`);
-        root._remapping[uid] = true;
-      }
-      const shown = result.show.filter(uid => !root._remapping[uid]).reduce((acc, uid) => {
-        acc[uid] = true;
-        return acc;
-      }, {});
-      if (JSON.stringify(shown) !== JSON.stringify(root.shownSlots))
-        root.shownSlots = shown;
+  // The sequence pass's whole input as plain data: each slot by its index in
+  // `_slots` (with its order, its map sequence and what it remembers of its
+  // map), kept once per event turn
+  property KeptList _keptSlots: KeptList {
+    fresh: root._slots.entries.map((e, i) => Object.assign({
+        "id": i
+      }, e.value, {
+        "order": LayerStack.orderOf(e.value.namespace),
+        "seq": root._slotSeqs.get(e.owner) ?? 0,
+        "showing": root._slotSeqs.has(e.owner),
+        "settled": root._slotSettled.get(e.owner) === true,
+        "remapping": root._remapping.get(e.owner) === true
+      }))
+    oncePerTurn: true
+    onItemsChanged: root._sequence()
+  }
+
+  // The sequence pass: which slots may show now, and which map again
+  function _sequence() {
+    const items = root._keptSlots.items;
+    const owners = root._slots.entries.map(e => e.owner);
+    const result = LayerArrange.sequence({
+      "entries": items.map(i => ({
+            "id": i.id,
+            "outputName": i.outputName,
+            "layer": i.layer,
+            "order": i.order,
+            "rank": i.rank,
+            "rankGroup": i.rankGroup,
+            "wanted": i.wanted,
+            "held": i.held,
+            "showing": i.showing,
+            "mapped": i.settled,
+            "seq": i.seq
+          })),
+      "ordered": false,
+      "remappingIds": items.filter(i => i.remapping).map(i => i.id)
+    });
+    const remapping = new Map(root._remapping);
+    for (const id of result.remap) {
+      const owner = owners[id];
+      if (!remapping.get(owner))
+        console.log(`LayerManager: mapping ${items[id].namespace} on ${items[id].outputName} again, in its place`);
+      remapping.set(owner, true);
     }
+    if (remapping.size !== root._remapping.size)
+      root._remapping = remapping;
+    const answers = new Map(owners.map((owner, id) => [owner,
+        {
+          "shown": result.show.includes(id)
+        }
+      ]));
+    if (!Utils.deepEqual(Array.from(answers), Array.from(root._answers)))
+      root._answers = answers;
   }
 }

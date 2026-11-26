@@ -826,7 +826,8 @@ def demo_engine(root):
                       editPoints={"case": "DemoRules.rows", "rule": ["DemoRules", "DemoRules.boxOf"], "input": "DemoOwner",
                                   "output": "DemoEngine.api", "consumer": "DemoAdapter", "tuning": "DemoEngine.tuning"},
                       alone=[{"regex": "\\bdemoKindOf\\b", "only": [f"{methods}/demo/DemoRules.qml"], "why": "the kind lookup lives in the rules file"}])
-    text = json.loads(manifest_text(demo))
+    # the copied tree has the real domain folders (qml/components/methods/layer/ …), so their entries stay
+    text = json.loads(manifest_text(demo, **{"$domains": manifests.domains()}))
     text["sink"] = sink
     (root / "scripts" / "engines.json").write_text(json.dumps(text, indent=2) + "\n")
     for entry in manifests.engines(text=json.dumps(text))[0].values():

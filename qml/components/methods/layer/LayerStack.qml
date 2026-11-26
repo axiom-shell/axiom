@@ -7,7 +7,10 @@ import QtQuick
 // nearest the screen edge, takes a shared corner and is drawn underneath
 // (docs/dev/compositor/layer-arrangement.md). `order` is axiom's map
 // sequence: LayerManager maps the windows in it on every compositor, and
-// the daemon writes no order.
+// the daemon writes no order. The daemon parses this file's plain JSON
+// (backend/internal/compositor/render/tables.go, ParseTables, from the
+// constant LayerStackFile): the property names `layers`, `blurSurfaces`,
+// `blurBackdrops`, `blurReduced` and `blurChrome` are its contract.
 QtObject {
   id: root
 
@@ -20,24 +23,24 @@ QtObject {
     {
       "namespace": "backdrop",
       "order": 11,
-      "why": "Each screen's backdrop window (ScreenBackdrop: full-screen surfaces' dim background): on Top, under the bars and border. Held, so it keeps its place before them."
+      "why": "Each screen's backdrop window (ScreenBackdrop: full-screen surfaces' dim background): on Top, under the bars and border. Mapped, so it keeps its place before them."
     },
     {
       "namespace": "overlay",
       "order": 10,
-      "why": "The overlay's page: on Top, after the backdrop and before the backing window, so the backing window draws every chrome fill over it and every chrome window is over it; on Overlay while a fullscreen window is on its screen (still before the backing window). Held while closed (a pixel drawing nothing), so it keeps that place. One namespace in every state: its reduced blur is a rule turned off (blurReduced), never a namespace change, which would remake it and map every window after it again."
+      "why": "The overlay's page: on Top, after the backdrop and before the backing window, so the backing window draws every chrome fill over it and every chrome window is over it; on Overlay while a fullscreen window is on its screen (still before the backing window). Mapped while closed (a pixel drawing nothing), so it keeps that place. One namespace in every state: its reduced blur is a rule turned off (blurReduced), never a namespace change, which would remake it and map every window after it again."
     },
     {
       "namespace": "blur-backing",
       "order": 9,
       "noAnim": true,
-      "why": "The backing window (BlurManager, shell/BlurBacking), drawing the chrome's fills under it. Held (a pixel while nothing blurs)."
+      "why": "The backing window (BlurManager, shell/BlurBacking), drawing the chrome's fills under it. Mapped (a pixel while nothing blurs)."
     },
     {
       "namespace": "shadows",
       "order": 8,
       "noAnim": true,
-      "why": "The chrome's shadows, apart from the blur window where its blur has no alpha threshold (SwayFX, no supports.blurThreshold), so they aren't blurred: over the fills (they never meet) and under the chrome. Held as the blur window is."
+      "why": "The chrome's shadows, apart from the blur window where its blur has no alpha threshold (SwayFX, no supports.blurThreshold), so they aren't blurred: over the fills (they never meet) and under the chrome. Mapped as the blur window is."
     },
     {
       "namespace": "edge-menu",
@@ -49,7 +52,7 @@ QtObject {
       "namespace": "menu",
       "order": 7,
       "noAnim": true,
-      "why": "Free menus (FreeMenu): on Top over the windows, under every popout: the dock on Top, and the Overlay layer's. Their full-screen window reserves nothing and keeps clear of what's reserved, so it never meets an integrated menu of its order. Held (mapped from the start, drawing and taking nothing while closed)."
+      "why": "Free menus (FreeMenu): on Top over the windows, under every popout: the dock on Top, and the Overlay layer's. Their full-screen window reserves nothing and keeps clear of what's reserved, so it never meets an integrated menu of its order. Mapped, drawing and taking nothing while closed."
     },
     {
       "namespace": "bar",
@@ -207,36 +210,5 @@ QtObject {
   function orderOf(namespace) {
     const name = String(namespace).replace(/^axiom-/, "");
     return root.layers.find(l => l.namespace === name)?.order ?? 0;
-  }
-
-  /**
-   * Which of the windows axiom maps in order may show now, and which
-   * have to map again. `entries`: { id, output, layer, order, rank (among
-   * windows of one order, lower first: optional, 0), wanted (its
-   * owner wants it shown), held (kept mapped even when not wanted), showing (visible now),
-   * mapped (shown long enough for the compositor to have mapped it), seq
-   * (when it mapped) }.
-   * On each output and layer a window shows once every window ordered
-   * before it there that shows is mapped, so they map highest order
-   * first. One already showing stays (a window ordered before it starting
-   * to show, a backdrop, doesn't take it down). A mapped window that one
-   * ordered before it mapped after is out of place: it maps again
-   * (`remap`), and so lands after it: axiom maps them in this order on
-   * every compositor.
-   * Returns { show: [ids], remap: [ids] }.
-   */
-  function sequence(entries) {
-    const wants = e => e.wanted || e.held;
-    const peers = e => entries.filter(o => o !== e && o.output === e.output && o.layer === e.layer);
-    // `o` belongs before `e`: a higher order, or a lower rank of the same
-    // in its rank group (the border's corners after its strips, drawn over
-    // their ends; bars stacked on one edge)
-    const before = (o, e) => o.order > e.order || (o.order === e.order && (o.rankGroup ?? "") === (e.rankGroup ?? "") && (o.rank ?? 0) < (e.rank ?? 0));
-    const remap = entries.filter(e => e.mapped && peers(e).some(o => o.mapped && before(o, e) && o.seq > e.seq)).map(e => e.id);
-    const show = entries.filter(e => wants(e) && !remap.includes(e.id) && (e.showing || peers(e).every(o => !wants(o) || !before(o, e) || o.mapped))).map(e => e.id);
-    return {
-      "show": show,
-      "remap": remap
-    };
   }
 }

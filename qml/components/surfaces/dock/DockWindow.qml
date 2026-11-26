@@ -8,6 +8,7 @@ import qs.services.compositor
 import qs.services.ui
 import qs.components.methods
 import qs.components.hosts.popout
+import qs.components.hosts.window
 import qs.components.reusable
 
 // One dock (a DockEntry) on one screen: a strip along its edge, inside the
@@ -415,7 +416,6 @@ Scope {
     LayerSlot {
       id: dockSlot
       window: panelWindow
-      namespace: panelWindow.layerNamespace
       layer: panelWindow.windowLayer
       wanted: root.count > 0
     }
@@ -535,7 +535,6 @@ Scope {
     LayerOrigin {
       id: placeOnScreen
       window: panelWindow
-      namespace: panelWindow.layerNamespace
       edge: root.edge
       layer: panelWindow.windowLayer
     }

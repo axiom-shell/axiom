@@ -1,3 +1,14 @@
 {
-  "$flat": {}
+  "$flat": {},
+  "$domains": {
+    "layer": {
+      "uses": [],
+      "prefix": "LY",
+      "tables": {}
+    },
+    "polkit": {
+      "uses": [],
+      "tables": {}
+    }
+  }
 }

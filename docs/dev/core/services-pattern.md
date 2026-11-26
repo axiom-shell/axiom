@@ -71,7 +71,7 @@ Feature services each have their own doc under `docs/dev/features/`, `docs/dev/h
 
 ## Service base
 
-### Shape
+### Base shape
 - `OwnerRegistry` (`qml/services/core/OwnerRegistry.qml`) holds what each owner holds (a request, a frame, a window), one entry per owner, for the service that owns it; not a singleton, each service has its own.
 - Members: `entries` (`[{owner, value}]`), `values` (the entries' values), `active` (any entry), `set(owner, value)` (value omitted is `true`), `drop(owner)`, `valueOf(owner)` (`undefined` when not held).
 - Order: a new owner appends, a re-`set` keeps its place, `drop` removes.

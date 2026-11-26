@@ -5,7 +5,7 @@ import Quickshell.Wayland
 
 import qs.config
 import qs.components.methods
-import qs.components.hosts.popout
+import qs.components.hosts.window
 import qs.services.ui
 
 // One edge of the screen border (RoundedBorders): a strip that reserves
@@ -35,7 +35,6 @@ PanelWindow {
   LayerOrigin {
     id: placeOnScreen
     window: root
-    namespace: "axiom-border"
     edge: root.edge === "left" ? ScreenEdge.Left : root.edge === "right" ? ScreenEdge.Right : root.edge === "bottom" ? ScreenEdge.Bottom : ScreenEdge.Top
   }
   // The stroke runs between the corner pieces: a horizontal strip spans
@@ -64,13 +63,13 @@ PanelWindow {
 
   exclusiveZone: root.frameWidth
   aboveWindows: true
-  WlrLayershell.namespace: "axiom-border"
+  readonly property string layerNamespace: "axiom-border"
+  WlrLayershell.namespace: root.layerNamespace
   // Once the windows before it in the stack have mapped
   visible: slot.shown
   LayerSlot {
     id: slot
     window: root
-    namespace: "axiom-border"
   }
   color: "transparent"
   mask: Region {}

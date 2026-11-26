@@ -17,7 +17,6 @@ QtObject {
   id: root
 
   required property var window
-  required property string namespace
   // The window's edge: where it's estimated to be while it has no origin
   property int edge: ScreenEdge.Top
   // Its WlrLayershell.layer (an attached property, unreadable from here)
@@ -27,14 +26,12 @@ QtObject {
   // barStartOn); NaN for centred
   property real estimatedStart: NaN
 
-  // Its id in LayerManager, taken once
-  property int _uid: 0
-  readonly property string _output: root.window?.screen?.name ?? ""
+  readonly property string _outputName: root.window?.screen?.name ?? ""
 
   // How it asks to be laid out (LayerArrange.arrange's surfaces)
   readonly property var _spec: {
     const w = root.window;
-    if (!w || root._output === "")
+    if (!w || root._outputName === "")
       return null;
     const a = w.anchors, m = w.margins;
     const anchors = {
@@ -46,8 +43,8 @@ QtObject {
     const vertical = anchors.left !== anchors.right;
     const zone = w.exclusionMode === ExclusionMode.Ignore ? -1 : w.exclusionMode === ExclusionMode.Auto ? (vertical ? w.implicitWidth : w.implicitHeight) : w.exclusiveZone;
     return {
-      "output": root._output,
-      "namespace": root.namespace,
+      "outputName": root._outputName,
+      "namespace": root.window?.layerNamespace ?? "",
       "layer": LayerManager.layerName(root.layer),
       "anchors": anchors,
       "margins": {
@@ -57,23 +54,23 @@ QtObject {
         "bottom": m.bottom
       },
       // Stretched between the edges it's anchored to on both sides
-      "w": anchors.left && anchors.right ? 0 : w.implicitWidth,
-      "h": anchors.top && anchors.bottom ? 0 : w.implicitHeight,
+      "width": anchors.left && anchors.right ? 0 : w.implicitWidth,
+      "height": anchors.top && anchors.bottom ? 0 : w.implicitHeight,
       "zone": zone,
       "mapped": w.visible
     };
   }
-  on_SpecChanged: {
-    if (root._uid > 0)
-      LayerManager.report(root._uid, root._spec);
+  on_SpecChanged: root._report()
+  Component.onCompleted: root._report()
+  Component.onDestruction: LayerManager.dropLayerSpec(root)
+  function _report() {
+    if (root._spec)
+      LayerManager.setLayerSpec(root, root._spec);
+    else
+      LayerManager.dropLayerSpec(root);
   }
-  Component.onCompleted: {
-    root._uid = LayerManager.register();
-    LayerManager.report(root._uid, root._spec);
-  }
-  Component.onDestruction: LayerManager.report(root._uid, null)
 
-  readonly property var _rect: LayerManager.rectOf(root._uid, root._output)
+  readonly property var _rect: LayerManager.rectOf(root)
   readonly property var origin: root._rect ? Qt.point(root._rect.x, root._rect.y) : null
   // The window on screen: what of a surface in it shows, BlurShape.clipRect
   readonly property rect screenRect: Qt.rect(root.origin?.x ?? 0, root.origin?.y ?? 0, root.window?.width ?? 0, root.window?.height ?? 0)
@@ -118,8 +115,8 @@ QtObject {
     enabled: !root._warned
     function onFrameSwapped() {
       root._warned = true;
-      if (root.origin === null && BlurManager.backingOn(root._output))
-        console.warn(`${root.namespace} on ${root._output}: drawn before it was placed`);
+      if (root.origin === null && BlurManager.backingOn(root._outputName))
+        console.warn(`${root.window?.layerNamespace ?? ""} on ${root._outputName}: drawn before it was placed`);
     }
   }
 }

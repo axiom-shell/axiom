@@ -1306,7 +1306,7 @@ def rpc_page():
     return "\n".join(out).rstrip() + "\n", problems
 
 
-LAYERS_PATH = QML_ROOT / "components/methods/LayerStack.qml"
+LAYERS_PATH = QML_ROOT / "components/methods/layer/LayerStack.qml"
 
 # The words of an edit point's "where … goes" line, by `editPoints` key
 EDIT_POINT_TEXT = {"case": "a case", "rule": "a rule", "input": "an input", "output": "an output",

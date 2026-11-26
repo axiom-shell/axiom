@@ -1,6 +1,6 @@
 # Polkit agent
 
-> **Files:** `qml/services/session/PolkitManager.qml`, `qml/components/methods/PolkitAgents.qml`, `qml/config/PolkitConfig.qml`, `qml/components/surfaces/prompt/PolkitCard.qml`, `qml/components/views/Settings/PolkitStatus.qml`
+> **Files:** `qml/services/session/PolkitManager.qml`, `qml/components/methods/polkit/PolkitAgents.qml`, `qml/config/PolkitConfig.qml`, `qml/components/surfaces/prompt/PolkitCard.qml`, `qml/components/views/Settings/PolkitStatus.qml`
 > **Config:** `Polkit.*` (reader `PolkitConfig`)
 > **Related:** [Prompts](prompts.md), [Lockscreen](lockscreen.md) (shared password field), [Shell manager and targeting](../core/shell-manager-targeting.md), [Greeter install](greeter-install.md)
 
@@ -15,7 +15,7 @@ Axiom as the session's polkit agent: it takes over registration from other agent
 
 ### Taking over from other agents
 A session has one agent, and Quickshell never retries a failed registration. So:
-- **After 2 s:** if the agent is still unregistered, it looks for the agents `qml/components/methods/PolkitAgents` knows.
+- **After 2 s:** if the agent is still unregistered, it looks for the agents `qml/components/methods/polkit/PolkitAgents` knows.
   - `PolkitAgents` is pure: process names, systemd user units, `processPattern`. The managed mode's autostart matches agent commands in Go against the same table (`Tables.IsAgentCommand`).
   - Matches are anchored to the executable, so a command whose argument names an agent is never killed.
 - **Stopping them** is the daemon's (`polkit.probe`, `polkit.stopOthers`, `daemon/polkit.go`'s `stopOthers`; the shell passes `PolkitAgents.processPattern` and the units): only this session's (`session.Scope`: the same `WAYLAND_DISPLAY`, runtime dir and bus; another session's agents are logged and left alone), the active units through `systemctl --user stop` when the session bus is the user manager's, then the processes with SIGTERM (up to 1 s). Each is recorded (the unit in the state record, the process's argv, environment and cwd in the runtime record) before it is stopped, so the same agent can be started again.

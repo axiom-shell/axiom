@@ -97,10 +97,18 @@ QtObject {
     }, (_, i) => rowAt(i)));
   }
 
-  // A copy of the object `map` with `key` set to `value`, or left out when
-  // `value` is undefined: for map properties, whose bindings only update
-  // when the property is assigned a new object
+  // A copy of the object (or `Map`) `map` with `key` set to `value`, or left
+  // out when `value` is undefined: for map properties, whose bindings only
+  // update when the property is assigned a new object
   function withEntry(map, key, value) {
+    if (map instanceof Map) {
+      const next = new Map(map);
+      if (value === undefined)
+        next.delete(key);
+      else
+        next.set(key, value);
+      return next;
+    }
     const out = Object.assign({}, map);
     if (value === undefined)
       delete out[key];

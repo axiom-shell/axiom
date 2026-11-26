@@ -6,7 +6,7 @@ import Quickshell.Wayland
 import qs.config
 import qs.services.ui
 import qs.components.methods
-import qs.components.hosts.popout
+import qs.components.hosts.window
 
 // A full-screen window placed inside the border's and bars'
 // reserved area (the overlay on Top, the onboarder on Overlay). Normal exclusion with no zone
@@ -78,7 +78,6 @@ PanelWindow {
   LayerOrigin {
     id: placeOnScreen
     window: root
-    namespace: root.layerNamespace
     layer: root.stackLayer
   }
 }

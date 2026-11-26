@@ -15,7 +15,7 @@ import qs.services.compositor
  * exactly; the surfaces themselves draw their outer fill transparent
  * (`backing`). Layer-shell windows don't know where they are on
  * screen: each shape is placed from its window's origin as LayerManager
- * works it out (hosts/popout/LayerOrigin).
+ * works it out (hosts/window/LayerOrigin).
  */
 QtObject {
   id: root

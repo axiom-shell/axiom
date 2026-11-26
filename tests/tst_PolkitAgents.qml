@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 import qs.components.methods
+import qs.components.methods.polkit
 
 TestCase {
   name: "PolkitAgents"

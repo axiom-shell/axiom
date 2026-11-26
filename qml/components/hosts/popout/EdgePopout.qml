@@ -7,6 +7,7 @@ import qs.config
 import qs.services.compositor
 import qs.services.ui
 import qs.components.methods
+import qs.components.hosts.window
 
 /**
  * A popout that slides out of a screen edge and joins the screen border
@@ -113,7 +114,7 @@ PopoutWrapperBase {
   window: surfaceWindow
   // The hover strip's window (a focus grab's partner, see MenuSync)
   readonly property var triggerWindow: trigger
-  readonly property string layerNamespace: root.overNamespace
+  readonly property string layerNamespace: surfaceWindow.layerNamespace
   readonly property rect boxInWindow: Qt.rect(boxArea.x, boxArea.y, boxArea.width, boxArea.height)
   // ...its content's top-left in the window where it rests
   readonly property point contentInWindow: Qt.point(surface.x + surface.boxRect.x + loader.x, surface.y + surface.boxRect.y + loader.y)
@@ -427,7 +428,8 @@ PopoutWrapperBase {
     // lines it up with their inner stroke, whether that's a bar or the
     // plain border.
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: root.layerNamespace
+    readonly property string layerNamespace: root.overNamespace
+    WlrLayershell.namespace: surfaceWindow.layerNamespace
     // Its top-left on its screen, or null while unknown (a wallpaper
     // picker's click point)
     readonly property var screenOrigin: placeOnScreen.origin
@@ -525,7 +527,6 @@ PopoutWrapperBase {
     LayerOrigin {
       id: placeOnScreen
       window: surfaceWindow
-      namespace: root.layerNamespace
       edge: root.edge
       layer: WlrLayer.Overlay
     }

@@ -10,6 +10,7 @@ import qs.services.system
 import qs.services.ui
 import qs.components.methods
 import qs.components.hosts.popout
+import qs.components.hosts.window
 import qs.components.reusable
 
 // One screen's notification toasts (shell/Notifications builds one per
@@ -303,7 +304,6 @@ Scope {
     LayerSlot {
       id: slot
       window: area
-      namespace: "axiom-notifications"
       layer: WlrLayer.Overlay
     }
     color: "transparent"
@@ -314,7 +314,8 @@ Scope {
       right: true
     }
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: "axiom-notifications"
+    readonly property string layerNamespace: "axiom-notifications"
+    WlrLayershell.namespace: area.layerNamespace
     WlrLayershell.keyboardFocus: root.replyable && !root.attached ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     exclusionMode: root.fullscreen ? ExclusionMode.Ignore : ExclusionMode.Normal
     exclusiveZone: 0
@@ -324,7 +325,6 @@ Scope {
     LayerOrigin {
       id: placeOnScreen
       window: area
-      namespace: "axiom-notifications"
       layer: WlrLayer.Overlay
     }
 

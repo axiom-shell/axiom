@@ -5,7 +5,7 @@ The systems `/review-system` knows. Each `## <name>` entry: **Scope** in a line;
 ## compositor
 Scope: the neutral compositor layer: the contract, `supports`, layers and their order, config modes, window look.
 Docs: compositor/README.md compositor/contract.md compositor/config-modes.md compositor/layer-arrangement.md compositor/window-look.md
-Extra: qml/components/methods/CompositorKind.qml backend/internal/compositor/edit/edit.go qml/components/hosts/popout/LayerSlot.qml qml/services/ui/BackdropManager.qml qml/components/surfaces/backdrop/ScreenBackdrop.qml qml/shell/Backdrops.qml
+Extra: qml/components/methods/CompositorKind.qml backend/internal/compositor/edit/edit.go qml/components/hosts/window/LayerSlot.qml qml/services/ui/BackdropManager.qml qml/components/surfaces/backdrop/ScreenBackdrop.qml qml/shell/Backdrops.qml
 Checks:
 - Every consumer goes through `CompositorManager` (neutral shapes, `goToWorkspace`/`focusWindow`); no backend object leaks out of it.
 - Every `supports.<key>` read anywhere is one each backend sets (true or false), and every gated feature reads a key rather than a compositor name.

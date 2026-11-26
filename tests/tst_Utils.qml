@@ -258,6 +258,14 @@ TestCase {
     }, "undefined leaves it out");
     verify(Utils.withEntry(map, "a", 5) !== map, "a new object");
     compare(map.a, 1, "the original is untouched");
+
+    const kept = new Map([["a", 1], ["b", 2]]);
+    const set = Utils.withEntry(kept, "c", 3);
+    verify(set instanceof Map && set !== kept, "a new Map");
+    compare(set.get("c"), 3);
+    const gone = Utils.withEntry(kept, "a", undefined);
+    verify(!gone.has("a") && gone.has("b"), "undefined leaves it out of a Map");
+    verify(kept.has("a") && !kept.has("c"), "the input Map is untouched");
   }
 
   function test_pick() {

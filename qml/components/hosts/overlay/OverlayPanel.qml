@@ -9,6 +9,7 @@ import qs.services.compositor
 import qs.services.ui
 import qs.components.reusable
 import qs.components.hosts.popout
+import qs.components.hosts.window
 // Imported (though views load by URL) so qs scans what they import and
 // the folders whose files see each other (scripts/check_structure.py)
 import qs.components.content.Palette // qmllint disable unused-imports
@@ -69,7 +70,6 @@ ReservedAreaWindow {
   LayerSlot {
     id: slot
     window: root
-    namespace: root.layerNamespace
     layer: root.stackLayer
     wanted: root._wanted
     held: CompositorManager.surfacesReady

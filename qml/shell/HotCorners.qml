@@ -6,7 +6,7 @@ import Quickshell.Wayland
 import qs.config
 import qs.services.compositor
 import qs.services.ui
-import qs.components.hosts.popout
+import qs.components.hosts.window
 
 // Each hot corner (HotCorners.items) on the screens its target puts it on:
 // a transparent pixel of a window in its corner, on Top (so it's quiet
@@ -36,7 +36,8 @@ Scope {
           screen: modelData
           visible: slot.shown
           WlrLayershell.layer: WlrLayer.Top
-          WlrLayershell.namespace: "axiom-hot-corner"
+          readonly property string layerNamespace: "axiom-hot-corner"
+          WlrLayershell.namespace: corner.layerNamespace
           exclusionMode: ExclusionMode.Ignore
           color: "transparent"
           implicitWidth: 1
@@ -51,7 +52,6 @@ Scope {
           LayerSlot {
             id: slot
             window: corner
-            namespace: "axiom-hot-corner"
           }
 
           MouseArea {

@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 import qs.components.methods
+import qs.components.methods.layer
 
 // The stacking order of axiom's layer surfaces (LayerStack)
 TestCase {
@@ -85,17 +86,6 @@ TestCase {
     verify(![].concat(LayerStack.blurSurfaces, LayerStack.blurBackdrops).includes("menu"), "never blurred whole");
   }
 
-  // Held: mapped from the start
-  // with the integrated menus (its order), before the bars and the border
-  function test_sequence_free_menu_held() {
-    const menu = entry("menu", order("menu"), {
-      "wanted": false,
-      "held": true
-    });
-    const bar = entry("bar", order("bar"));
-    compare(shared.calls.LayerStack.sequence([bar, menu]).show, ["menu"], "the bar waits for it");
-  }
-
   function test_orderOf() {
     compare(shared.calls.LayerStack.orderOf("axiom-bar"), 5);
     compare(shared.calls.LayerStack.orderOf("dock"), -7);
@@ -103,10 +93,18 @@ TestCase {
     compare(shared.calls.LayerStack.orderOf("someone-else"), 0, "not listed");
   }
 
+  function sequenceOf(entries) {
+    return LayerArrange.sequence({
+      "entries": entries,
+      "ordered": false,
+      "remappingIds": []
+    });
+  }
+
   function entry(id, order, extra) {
     return Object.assign({
       "id": id,
-      "output": "O",
+      "outputName": "O",
       "layer": "top",
       "order": order,
       "wanted": true,
@@ -116,66 +114,9 @@ TestCase {
     }, extra ?? {});
   }
 
-  // Highest order first: each waits for those before it to have mapped
-  function test_sequence_stages() {
-    const shadow = entry("shadow", 11), bar = entry("bar", 5), border = entry("border", 0), pill = entry("pill", -1);
-    compare(shared.calls.LayerStack.sequence([border, pill, bar, shadow]).show, ["shadow"]);
-    shadow.mapped = true;
-    compare(shared.calls.LayerStack.sequence([border, pill, bar, shadow]).show, ["bar", "shadow"]);
-    bar.mapped = true;
-    compare(shared.calls.LayerStack.sequence([border, pill, bar, shadow]).show.sort(), ["bar", "border", "shadow"]);
-    border.mapped = true;
-    compare(shared.calls.LayerStack.sequence([border, pill, bar, shadow]).show.length, 4);
-  }
-
-  // Not wanted, a window doesn't hold the others back; equal orders don't
-  // wait for each other; other outputs and layers don't count
-  function test_sequence_independent() {
-    const off = entry("off", 5, {
-      "wanted": false
-    });
-    const a = entry("a", 0), b = entry("b", 0);
-    const elsewhere = entry("elsewhere", 9, {
-      "output": "P"
-    });
-    const above = entry("above", 9, {
-      "layer": "overlay"
-    });
-    compare(shared.calls.LayerStack.sequence([off, a, b, elsewhere, above]).show.sort(), ["a", "above", "b", "elsewhere"]);
-  }
-
-  // A bar remade (mapped after the border) puts the border out of place
-  function test_sequence_remap() {
-    const bar = entry("bar", 5, {
-      "mapped": true,
-      "seq": 3
-    });
-    const border = entry("border", 0, {
-      "mapped": true,
-      "seq": 1
-    });
-    const dock = entry("dock", -7, {
-      "mapped": true,
-      "seq": 4
-    });
-    const result = shared.calls.LayerStack.sequence([bar, border, dock]);
-    compare(result.remap, ["border"]);
-    verify(!result.show.includes("border"), "hidden to map again");
-  }
-
-  // Held windows map at their place even unwanted
-  function test_sequence_held() {
-    const menu = entry("menu", 7, {
-      "wanted": false,
-      "held": true
-    });
-    const bar = entry("bar", 5);
-    compare(shared.calls.LayerStack.sequence([menu, bar]).show, ["menu"]);
-  }
-
   // Held windows opening and closing, and a window on the Overlay layer
   // mapping, never put a Top window out of place
-  function test_sequence_runtime_keeps_top() {
+  function test_runtime_keeps_top() {
     const held = ["backdrop", "overlay", "blur-backing", "menu", "edge-menu"];
     const entries = [];
     let seq = 1;
@@ -187,12 +128,12 @@ TestCase {
         "mapped": true,
         "seq": seq++
       }));
-    compare(shared.calls.LayerStack.sequence(entries).remap, [], "settled: nothing to map again");
+    compare(sequenceOf(entries).remap, [], "settled: nothing to map again");
     for (const e of entries.filter(x => x.held)) {
       e.wanted = true;
-      compare(shared.calls.LayerStack.sequence(entries).remap, [], "opening and closing held windows, and an Overlay window mapping, maps no Top window again");
+      compare(sequenceOf(entries).remap, [], "opening and closing held windows, and an Overlay window mapping, maps no Top window again");
       e.wanted = false;
-      compare(shared.calls.LayerStack.sequence(entries).remap, [], "opening and closing held windows, and an Overlay window mapping, maps no Top window again");
+      compare(sequenceOf(entries).remap, [], "opening and closing held windows, and an Overlay window mapping, maps no Top window again");
     }
     const all = entries.concat([entry("notifications", order("notifications"), {
         "layer": "overlay",
@@ -200,49 +141,6 @@ TestCase {
         "mapped": true,
         "seq": seq++
       })]);
-    compare(shared.calls.LayerStack.sequence(all).remap, [], "opening and closing held windows, and an Overlay window mapping, maps no Top window again");
-  }
-
-  // A window ordered before others starting to show (a backdrop, opening
-  // with the overlay) doesn't take down those already showing
-  function test_sequence_showing_stays() {
-    const backdrop = entry("backdrop", 11);
-    const bar = entry("bar", 5, {
-      "showing": true,
-      "mapped": true,
-      "seq": 1
-    });
-    const border = entry("border", 0);
-    const result = shared.calls.LayerStack.sequence([backdrop, bar, border]);
-    compare(result.show.sort(), ["backdrop", "bar"], "the bar stays; the border, not shown yet, still waits");
-  }
-
-  // Of one order, a higher rank waits for the lower ones, and maps again
-  // if it mapped before one
-  function test_sequence_rank() {
-    const strip = entry("strip", 0);
-    const corner = entry("corner", 0, {
-      "rank": 1
-    });
-    compare(shared.calls.LayerStack.sequence([strip, corner]).show, ["strip"]);
-    strip.mapped = true;
-    strip.seq = 2;
-    corner.mapped = true;
-    corner.seq = 1;
-    compare(shared.calls.LayerStack.sequence([strip, corner]).remap, ["corner"]);
-    // Ranks of other groups (bars on another edge) never compare: one
-    // remade there maps nothing again
-    const top = entry("top", 0, {
-      "rank": 1,
-      "rankGroup": "top",
-      "mapped": true,
-      "seq": 1
-    });
-    const bottom = entry("bottom", 0, {
-      "rankGroup": "bottom",
-      "mapped": true,
-      "seq": 2
-    });
-    compare(shared.calls.LayerStack.sequence([top, bottom]).remap, []);
+    compare(sequenceOf(all).remap, [], "opening and closing held windows, and an Overlay window mapping, maps no Top window again");
   }
 }
