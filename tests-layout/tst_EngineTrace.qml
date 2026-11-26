@@ -252,4 +252,61 @@ TestCase {
     });
     compare(EngineTrace.recordsOf("rstage", "a"), {});
   }
+
+  function test_ipcTargetIsEngines() {
+    compare(EngineTrace._ipc.target, "engines");
+    compare(BackendManager._targets.length, 1);
+  }
+
+  function test_ipcListAnswersSortedIds() {
+    for (const id of ["b", "a"])
+      EngineTrace.record({
+        "engine": "ipclist",
+        "stage": "s",
+        "id": id,
+        "input": 1,
+        "output": 2
+      });
+    compare(EngineTrace._ipc.list("ipclist"), '["a","b"]');
+    compare(EngineTrace._ipc.list("ipcunknown"), "[]");
+  }
+
+  function test_ipcExplainAnswersRecords() {
+    EngineTrace.record({
+      "engine": "ipcexplain",
+      "stage": "s",
+      "id": "a",
+      "input": 1,
+      "output": 2
+    });
+    compare(EngineTrace._ipc.explain("ipcexplain", "a"), JSON.stringify(EngineTrace.recordsOf("ipcexplain", "a")));
+    compare(EngineTrace._ipc.explain("ipcexplain", "none"), "{}");
+  }
+
+  function test_ipcExplainKeepsReservedStages() {
+    for (const stage of ["__proto__", "toString"])
+      EngineTrace.record({
+        "engine": "ipcreserved",
+        "stage": stage,
+        "id": "a",
+        "input": 1,
+        "output": 2
+      });
+    const json = EngineTrace._ipc.explain("ipcreserved", "a");
+    compare(json, JSON.stringify(EngineTrace.recordsOf("ipcreserved", "a")));
+    compare(Object.keys(JSON.parse(json)).sort(), ["__proto__", "toString"]);
+  }
+
+  function test_ipcEnableDisableToggleStatus() {
+    EngineTrace._ipc.disable();
+    verify(EngineTrace.tracing === false);
+    verify(EngineTrace._ipc.status() === false);
+    EngineTrace._ipc.enable();
+    verify(EngineTrace.tracing === true);
+    verify(EngineTrace._ipc.status() === true);
+    EngineTrace._ipc.toggle();
+    verify(EngineTrace.tracing === false);
+    EngineTrace._ipc.toggle();
+    verify(EngineTrace.tracing === true);
+  }
 }

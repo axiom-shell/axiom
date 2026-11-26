@@ -201,7 +201,7 @@ LAYOUT_STUBS = ROOT / "tests-layout" / "stubs"
 LAYOUT_CONFIG = {"Appearance", "Widget", "Theme", "Style", "StyleInk", "StyleTextRole", "BarStyle", "PopoutsConfig"}
 STUBBED_IMPORTS = {"Quickshell", "Quickshell.Widgets"}
 # Service files a layout test loads, whose imports the stubs supply
-LAYOUT_SERVICES = {"services/core/EngineTrace.qml"}
+LAYOUT_SERVICES = {"services/core/EngineTrace.qml", "services/core/IpcTarget.qml"}
 
 
 def layout(path):
