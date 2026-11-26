@@ -208,7 +208,6 @@ Scope {
   }
 
   // --- Showing and hiding ---
-  readonly property bool fullscreen: CompositorManager.hasFullscreen(root.screen?.name ?? "")
   readonly property bool hiddenByHand: !!DockManager.hidden[root.dock.id]
   // Opened by the trigger (after openDelay), a reveal, or the pointer on
   // the shown dock, until the pointer has been gone for closeDelay. Only
@@ -395,7 +394,7 @@ Scope {
   EdgeTrigger {
     id: trigger
     screen: root.screen
-    slotWanted: !root.preview && root.mode !== "always" && !root.fullscreen && root.count > 0
+    slotWanted: !root.preview && root.mode !== "always" && root.count > 0
     // Away it stays mapped, with no input: unmapping deletes its window
     takesInput: !root.away
     edge: root.edge

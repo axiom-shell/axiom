@@ -293,8 +293,9 @@ QtObject {
       "namespace": "edge-trigger",
       "order": -12,
       "layer": "top",
+      "overFullscreen": "never",
       "noAnim": true,
-      "why": "An edge's hover strip: a pixel window on Top that opens a popout, mapped while its host wants it (inert without input). Last on Top: over the bars, border and docks it opens from."
+      "why": "An edge's hover strip: a pixel window on Top that opens a popout, mapped while its host wants it (inert without input). Last on Top: over the bars, border and docks it opens from. Never shown over a fullscreen window: hidden while one is up on its screen."
     }
   ]
   // The bars' namespaces (without "axiom-")
@@ -351,26 +352,26 @@ QtObject {
   // rises to Overlay where a move keeps its place (Hyprland with its rules,
   // niri)
   function risesWhereMovesKeepPlace(row, state) {
-    return state.movesKeepPlace;
+    return (row.overFullscreen === "always" || row.overFullscreen === "whileShown") && state.fullscreen && state.movesKeepPlace;
   }
 
   // Rule: where a move lands on top, a `whileShown` window rises while it is
   // wanted
   function risesWhileShown(row, state) {
-    return row.overFullscreen === "whileShown" && state.wanted;
+    return row.overFullscreen === "whileShown" && state.fullscreen && !state.movesKeepPlace && state.wanted;
   }
 
   // Rule: where a move lands on top, a `whileShown` window not wanted comes
   // down at once (the Top layer is under the fullscreen window, so what it
   // lands over maps again unseen)
   function downWhileNotShown(row, state) {
-    return row.overFullscreen === "whileShown" && !state.wanted;
+    return row.overFullscreen === "whileShown" && state.fullscreen && !state.movesKeepPlace && !state.wanted;
   }
 
   // Rule: where a move lands on top, an `always` window never moves (its
   // surfaces over a fullscreen window fill themselves)
   function staysWhereMovesDont(row, state) {
-    return row.overFullscreen === "always";
+    return row.overFullscreen === "always" && state.fullscreen && !state.movesKeepPlace;
   }
 
   // Rule: where a move lands on top, a window that would move onto the modal

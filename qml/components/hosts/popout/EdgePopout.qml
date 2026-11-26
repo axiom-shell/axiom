@@ -201,6 +201,7 @@ PopoutWrapperBase {
   // The one change an open box moves for: it jumps straight to the shape
   // and place it would open at now, with no animation (`settled` off for
   // a tick while the latches follow, `_snapping`).
+  // Read raw, as the layer service reads it: `_snap` runs in the same deferred batch as LayerManager's pass, so this placement and BlurManager's backing change together, with no frame between (the layer service's `hasFullscreen` here would put `_snap` a batch later)
   readonly property bool fullscreen: CompositorManager.hasFullscreen(root.screen?.name ?? "")
   property ClosedLatch _fullscreenLatch: ClosedLatch {
     source: root.fullscreen

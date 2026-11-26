@@ -40,7 +40,7 @@ App docks on screen edges: pinned and running apps, magnification, hover and int
 - **Layer order:** its `LayerStack` row puts it after the border and every bar ([layer stacking](../generated/layers.md); [layer arrangement](../compositor/layer-arrangement.md)).
   - It sits inside them, and never shortens the bars on other edges.
   - It is blurred.
-- **Fullscreen:** a fullscreen window covers it, and its hover trigger is off then.
+- **Fullscreen:** a fullscreen window covers it, and its hover trigger is off then (by the strips' `LayerStack` row, as every edge strip).
 - **Put away** (`away`):
   - while the overlay is open on its screen, unless the dock reserves its strip;
   - while any popout covers it, or a notification stack does (whatever its visibility or `reserveSpace`; see [Popout registry](../popouts/registry.md) › Ranks). Its `PopoutClaim`, a resident, has yielded (see [Popout registry](../popouts/registry.md)).

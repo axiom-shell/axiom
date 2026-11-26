@@ -49,21 +49,6 @@ PanelWindow {
   // Its namespace, set here so its LayerSlot can read it
   required property string layerNamespace
 
-  // Its watchdog has warned (once per window)
-  property bool _warned: false
-  // Chrome is backed here but this window isn't shown (a seam: the chrome
-  // shows without its fill): a moment's grace, then it says so, once
-  Timer {
-    interval: 1000
-    running: backing.shapes.length > 0 && !layerSlot.shown
-    onTriggered: {
-      if (backing._warned)
-        return;
-      backing._warned = true;
-      console.warn(`${backing.layerNamespace} on ${backing.screen?.name ?? ""}: chrome is backed but its backing window isn't shown`);
-    }
-  }
-
   visible: layerSlot.shown
   LayerSlot {
     id: layerSlot

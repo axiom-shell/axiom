@@ -212,5 +212,35 @@ var rows = [
       }
     ],
     "expect": "overlay"
+  },
+  {
+    "id": "LY-30",
+    "why": "a hover strip is not shown while a fullscreen window is up on its screen",
+    "call": "layerOf",
+    "args": [
+      "edge-trigger",
+      {
+        "fullscreen": true,
+        "wanted": true,
+        "movesKeepPlace": true,
+        "underModal": ""
+      }
+    ],
+    "expect": ""
+  },
+  {
+    "id": "LY-31",
+    "why": "a hover strip stays on Top with no fullscreen window up",
+    "call": "layerOf",
+    "args": [
+      "edge-trigger",
+      {
+        "fullscreen": false,
+        "wanted": true,
+        "movesKeepPlace": true,
+        "underModal": ""
+      }
+    ],
+    "expect": "top"
   }
 ];

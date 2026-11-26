@@ -63,6 +63,7 @@ Scope {
   readonly property bool showing: root.count > 0
 
   // A fullscreen window on its screen now (quietFullscreen)
+  // Read raw, as the layer service reads it: `_snap` runs in the same deferred batch as LayerManager's pass, so this placement and BlurManager's backing change together, with no frame between (the layer service's `hasFullscreen` here would put `_snap` a batch later)
   readonly property bool fullscreenNow: CompositorManager.hasFullscreen(root.screenName)
   // Over a fullscreen window nothing else shows: the stack sits on the
   // whole screen, its gaps from the screen's edges. Showing toasts jump

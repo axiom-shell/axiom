@@ -65,10 +65,12 @@ QtObject {
 
   // Whether surfaces on `screen` leave their fill to the backing window:
   // drawn in every mode, opaque too (the compositor blurs it only where
-  // `active`/`regionsOn`), once its windows are built (BlurBacking waits for
-  // the layer rules, as the chrome does).
+  // `active`/`regionsOn`), while the layer service shows that screen's
+  // backing window (its `axiom-blur-backing` slot; on SwayFX the fills'
+  // window): so no surface is backed while that window isn't shown (starting,
+  // a screen added, mapping again in its place)
   function backingOn(screen) {
-    return CompositorManager.surfacesReady;
+    return LayerManager.slotOn(root._name(screen), "axiom-blur-backing")?.shown === true;
   }
 
   // Whether a surface on `screen` that blurs itself (LayerStack.

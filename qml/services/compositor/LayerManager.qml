@@ -340,12 +340,20 @@ QtObject {
     });
   }
 
+  // The answer ({ shown, layer }) for the window of `namespace` on
+  // `outputName`, null with none or none yet; for a namespace with one window
+  // per output (the backing window). `layer` is the same for every window of
+  // a namespace there (one row); `shown` is that window's own
+  function slotOn(outputName, namespace) {
+    const entry = root._slots.entries.find(e => e.value.outputName === outputName && e.value.namespace === namespace);
+    return entry ? root._answers.slots.get(entry.owner) ?? null : null;
+  }
+
   // The layer, a name, that the window of `namespace` on `outputName` is on
   // now, "" with none (a namespace of several windows has one row, so one
   // layer there)
   function layerOn(outputName, namespace) {
-    const entry = root._slots.entries.find(e => e.value.outputName === outputName && e.value.namespace === namespace);
-    return entry ? root._answers.slots.get(entry.owner)?.layer ?? "" : "";
+    return root.slotOn(outputName, namespace)?.layer ?? "";
   }
 
   // Whether a fullscreen window is on that output, as the layer pass that
