@@ -440,7 +440,6 @@ Scope {
         maxHeight: root.toastMaxHeight
         width: implicitWidth
         height: implicitHeight
-        visible: !SurfaceManager.captureFrozen
         screenName: root.screenName
         covered: root.covered
         backed: BlurManager.backsOn(root.screen, slot.onOverlayLayer) && placeOnScreen.origin !== null

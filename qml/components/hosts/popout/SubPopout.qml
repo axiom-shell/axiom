@@ -227,7 +227,7 @@ Item {
       // What PopoutAnchors in its content open in: this one again
       readonly property var popoutHost: outer
 
-      visible: root.occupied && (root.contentReady || still.switching) && !SurfaceManager.captureFrozen
+      visible: root.occupied && (root.contentReady || still.switching) && !SurfaceManager.popupsHidden
       color: "transparent"
 
       // TrayMenuList sizes itself to its entries, within its limits

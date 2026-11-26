@@ -452,6 +452,24 @@ QtObject {
     return e.modal === true;
   }
 
+  // A modal entry that holds its output and layer: showing, or wanted in this
+  // pass (it shows at once, modalShowsAtOnce)
+  function modalHolds(e) {
+    return e.modal === true && (e.showing === true || root._wants(e));
+  }
+
+  // Rule: a modal window (an instant action surface) shows once wanted,
+  // waiting for no window ordered before it
+  function modalShowsAtOnce(e) {
+    return e.modal === true;
+  }
+
+  // Rule: a window not showing yet waits while a modal holds its output and
+  // layer (showing, or wanted in this pass), so nothing maps over it
+  function waitsUnderModal(entries, e) {
+    return e.modal !== true && e.showing !== true && root._peersOf(entries, e).some(o => root.modalHolds(o));
+  }
+
   // Rule: where the compositor keeps the order, only windows of one order
   // can be out of place
   function orderedOnlyTiesByMapOrder(entries, e, ordered) {
@@ -486,12 +504,16 @@ QtObject {
       return "outOfPlaceRemaps";
     if (root.orderedOnlyTiesByMapOrder(entries, e, ordered))
       return "orderedOnlyTiesByMapOrder";
+    if (root._wants(e) && root.waitsUnderModal(entries, e))
+      return "waitsUnderModal";
     if (root.heldStaysMapped(e))
       return "heldStaysMapped";
     if (!root._wants(e))
       return "";
     if (root.showingStays(e))
       return "showingStays";
+    if (root.modalShowsAtOnce(e))
+      return "modalShowsAtOnce";
     return root.rankWithinOrder(entries, e) ? "rankWithinOrder" : "showsAfterPredecessorsMapped";
   }
 
@@ -501,14 +523,18 @@ QtObject {
    * windows of one order, lower first: optional, 0), rankGroup, wanted (its
    * owner wants it shown), held (kept mapped even when not wanted), showing
    * (visible now), mapped (shown long enough for the compositor to have
-   * mapped it), seq (when it mapped) }; `ordered` is whether the compositor
+   * mapped it), seq (when it mapped), modal (an instant action surface,
+   * LayerStack.isModal) }; `ordered` is whether the compositor
    * keeps the order; `remappingIds` the windows still unmapping to map
    * again (hidden meanwhile).
    * On each output and layer a window shows once every window ordered
    * before it there that shows is mapped, so they map highest order first.
    * One already showing stays. A mapped window that one ordered before it
    * mapped after is out of place: it maps again (`remap`), and so lands
-   * after it. Returns { show: [ids], remap: [ids], rules: { [id]: ruleId } }
+   * after it. A modal entry shows once wanted, waiting for no window ordered
+   * before it, and is never in `remap`; while one shows or is wanted on an
+   * output and layer, no other entry there that isn't showing yet shows, so
+   * nothing maps over it. Returns { show: [ids], remap: [ids], rules: { [id]: ruleId } }
    * (`rules` has an entry for each window that wants a place, is out of place
    * or is mapping again).
    */
@@ -519,7 +545,7 @@ QtObject {
       remappingIds
     } = input;
     const remap = entries.filter(e => !root.modalNeverRemaps(e) && root.outOfPlaceRemaps(entries, e, ordered)).map(e => e.id);
-    const show = entries.filter(e => root._wants(e) && !remap.includes(e.id) && !root.remappingHidden(e, remappingIds) && (root.showingStays(e) || root.showsAfterPredecessorsMapped(entries, e))).map(e => e.id);
+    const show = entries.filter(e => root._wants(e) && !remap.includes(e.id) && !root.remappingHidden(e, remappingIds) && !root.waitsUnderModal(entries, e) && (root.showingStays(e) || root.modalShowsAtOnce(e) || root.showsAfterPredecessorsMapped(entries, e))).map(e => e.id);
     const rules = {};
     for (const e of entries) {
       const rule = root._sequenceRuleOf(entries, e, ordered, remappingIds);
