@@ -35,7 +35,7 @@ Scope {
 
           screen: modelData
           visible: slot.shown
-          WlrLayershell.layer: WlrLayer.Top
+          WlrLayershell.layer: slot.layer
           readonly property string layerNamespace: "axiom-hot-corner"
           WlrLayershell.namespace: corner.layerNamespace
           exclusionMode: ExclusionMode.Ignore

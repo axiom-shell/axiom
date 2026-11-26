@@ -491,7 +491,7 @@ Rectangle {
   // top-left on screen
   readonly property var blurOrigin: root.panel?.screenOrigin ? Qt.point(root.panel.screenOrigin.x + root.x, root.panel.screenOrigin.y + root.y) : null
   readonly property string blurScreen: root.panel?.screen?.name ?? ""
-  readonly property bool backed: BlurManager.backsOn(root.blurScreen, false) && root.blurOrigin !== null
+  readonly property bool backed: BlurManager.backsOn(root.blurScreen, root.panel?.onOverlayLayer ?? false) && root.blurOrigin !== null
 
   // Where the open popouts of the bars outside it on its edge lie over it,
   // along it in its own coordinates (ScreenEdgeManager.coveredOn): the

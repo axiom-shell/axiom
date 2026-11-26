@@ -403,7 +403,7 @@ PopoutWrapperBase {
   EdgeTrigger {
     id: trigger
     screen: root.screen
-    visible: root.triggerEnabled
+    slotWanted: root.triggerEnabled
     edge: root.edge
     position: root.position
     positionOffset: root.positionOffset

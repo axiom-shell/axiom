@@ -29,7 +29,7 @@ Overlay modules drawn on the desktop, under the windows. Read this doc for deskt
 
 ### Surface
 - **Window:** `qml/shell/Desktop` builds `surfaces/desktop/DesktopWindow` on each screen whose layout has modules, once the layer rules are in.
-  - It is a Bottom-layer `PanelWindow` named `axiom-desktop`, with `no_anim` because it fades itself in.
+  - It is a Bottom-layer `PanelWindow` named `axiom-desktop` (its `LayerSlot` and `LayerStack.layers` row), with `no_anim` because it fades itself in.
   - It sits over the Background wallpaper and under every window, so fullscreen windows cover it.
 - **Input:**
   - It takes keyboard focus only while its layout shows a module with `x-keyboard` (`ScreenLayoutView.wantsKeyboard`), and then only on demand: a click on the desktop takes it, a click on a window gives it back. Otherwise clicking a desktop clock would take the keyboard from the focused window.

@@ -36,7 +36,7 @@ PanelWindow {
   // arranged before it reserve (BarEnds.placeStack); bars of one rule on
   // an edge map in list order (`layerRank`), as the compositor breaks
   // their tie by map order.
-  WlrLayershell.layer: WlrLayer.Top
+  WlrLayershell.layer: slot.layer
   // How far in from its outer edge it reserves (BarEnds.placeStack: a
   // transparent bar facing the windows less gaps_out, a solid bar under
   // the border's strip less the strip; an auto-hiding bar nothing, unless
@@ -77,6 +77,8 @@ PanelWindow {
     rankGroup: ScreenEdge.name(root.barConfig.location)
     wanted: root.barConfig.enabled
   }
+  // Its window is on the Overlay layer now (BarContainer.backed)
+  readonly property bool onOverlayLayer: slot.onOverlayLayer
 
   // With pills, room past the bar for the fillet where an end pill meets
   // the perpendicular edge, for a shadow, and for the fade of a transparent
@@ -198,6 +200,7 @@ PanelWindow {
   LayerOrigin {
     id: placeOnScreen
     window: root
+    layer: slot.layer
     edge: root.barConfig.location
     estimatedStart: ScreenEdgeManager.barStartOn(root.screen, root.barConfig, true)
   }

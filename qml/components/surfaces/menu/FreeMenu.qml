@@ -71,8 +71,8 @@ PopoutWrapperBase {
   // fade | scale | slide; popped out, it appears at once where its edge
   // box was (an instant fade)
   readonly property string animation: root.popped ? "fade" : root.menu.animation
-  // Its window is on Top, under the Overlay layer (SubPopout reads it)
-  readonly property bool onOverlayLayer: false
+  // Its window is on the Overlay layer now (SubPopout reads it)
+  readonly property bool onOverlayLayer: menuSlot.onOverlayLayer
 
   // What's kept clear at each screen edge: what's reserved there, and the
   // gap windows keep from it
@@ -289,7 +289,7 @@ PopoutWrapperBase {
     readonly property int backfill: root._free.backfill
     readonly property bool onOverlayLayer: root.onOverlayLayer
     readonly property var origin: placeOnScreen.origin
-    readonly property bool backed: BlurManager.backsOn(root.screen, false) && placeOnScreen.origin !== null && !root.scaling
+    readonly property bool backed: BlurManager.backsOn(root.screen, root.onOverlayLayer) && placeOnScreen.origin !== null && !root.scaling
     readonly property bool opaque: BlurManager.opaqueOn(root.screen)
     readonly property var shadowLook: BarStyle.look
     readonly property var submenuJoin: null
@@ -329,7 +329,7 @@ PopoutWrapperBase {
     }
     color: "transparent"
 
-    WlrLayershell.layer: WlrLayer.Top
+    WlrLayershell.layer: menuSlot.layer
     readonly property string layerNamespace: "axiom-menu"
     WlrLayershell.namespace: panel.layerNamespace
     WlrLayershell.keyboardFocus: focusGrab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
@@ -425,7 +425,7 @@ PopoutWrapperBase {
     LayerOrigin {
       id: placeOnScreen
       window: panel
-      layer: WlrLayer.Top
+      layer: menuSlot.layer
     }
 
     EdgeSurface {

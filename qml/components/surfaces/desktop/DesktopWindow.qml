@@ -6,6 +6,7 @@ import Quickshell.Wayland
 import qs.services.core
 import qs.services.compositor
 import qs.services.ui
+import qs.components.hosts.window
 import qs.components.surfaces.screenlayout
 
 // A screen's desktop modules (a DesktopLayout, DesktopConfig.layoutFor),
@@ -24,8 +25,15 @@ PanelWindow {
   // (a wallpaper picker's click point)
   readonly property point screenOrigin: Qt.point(0, 0)
 
-  WlrLayershell.layer: WlrLayer.Bottom
-  WlrLayershell.namespace: "axiom-desktop"
+  readonly property string layerNamespace: "axiom-desktop"
+  WlrLayershell.layer: slot.layer
+  WlrLayershell.namespace: root.layerNamespace
+  // Once the windows before it in the stack have mapped
+  visible: slot.shown
+  LayerSlot {
+    id: slot
+    window: root
+  }
   WlrLayershell.keyboardFocus: view.wantsKeyboard ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
   exclusionMode: ExclusionMode.Ignore
   color: "transparent"

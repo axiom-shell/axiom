@@ -395,7 +395,7 @@ Scope {
   EdgeTrigger {
     id: trigger
     screen: root.screen
-    visible: !root.preview && root.mode !== "always" && !root.fullscreen && root.count > 0
+    slotWanted: !root.preview && root.mode !== "always" && !root.fullscreen && root.count > 0
     // Away it stays mapped, with no input: unmapping deletes its window
     takesInput: !root.away
     edge: root.edge

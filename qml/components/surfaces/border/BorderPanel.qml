@@ -35,6 +35,7 @@ PanelWindow {
   LayerOrigin {
     id: placeOnScreen
     window: root
+    layer: slot.layer
     edge: root.edge === "left" ? ScreenEdge.Left : root.edge === "right" ? ScreenEdge.Right : root.edge === "bottom" ? ScreenEdge.Bottom : ScreenEdge.Top
   }
   // The stroke runs between the corner pieces: a horizontal strip spans
@@ -65,6 +66,7 @@ PanelWindow {
   aboveWindows: true
   readonly property string layerNamespace: "axiom-border"
   WlrLayershell.namespace: root.layerNamespace
+  WlrLayershell.layer: slot.layer
   // Once the windows before it in the stack have mapped
   visible: slot.shown
   LayerSlot {

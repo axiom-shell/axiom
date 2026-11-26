@@ -1,10 +1,12 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
+import Quickshell.Wayland
 
 import qs.config
 import qs.services.ui
 import qs.components.methods
+import qs.components.hosts.window
 
 // A thin hover strip on a screen edge that fires `triggered` once the
 // pointer has rested on it for `hoverDelay`. Without `takesInput` it stays
@@ -44,6 +46,18 @@ PanelWindow {
   // The trigger's centre along the edge, within the free length
   readonly property real _centre: !isNaN(root.centre) ? root.centre : root.startInset + ((root._vertical ? root.screen?.height ?? 0 : root.screen?.width ?? 0) - root.startInset - root.endInset) * root.position + root.positionOffset
 
+  readonly property string layerNamespace: "axiom-edge-trigger"
+  WlrLayershell.namespace: root.layerNamespace
+  WlrLayershell.layer: slot.layer
+  // Whether its host wants it: its slot's `wanted`
+  property bool slotWanted: true
+  // Mapped while its host wants it, once the windows before it in the stack have mapped
+  visible: slot.shown
+  LayerSlot {
+    id: slot
+    window: root
+    wanted: root.slotWanted
+  }
   color: "transparent"
   exclusionMode: ExclusionMode.Ignore
   mask: root.takesInput ? null : root._noInput

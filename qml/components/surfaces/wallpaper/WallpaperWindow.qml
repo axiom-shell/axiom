@@ -7,6 +7,7 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 import qs.services.compositor
+import qs.components.hosts.window
 
 // A screen's wallpaper (WallpaperView: its transitions), sliding with the
 // workspaces and along a scrolling strip when the parallax is on
@@ -39,8 +40,15 @@ PanelWindow {
       "y": 0
     })
 
-  WlrLayershell.layer: WlrLayer.Background
-  WlrLayershell.namespace: "axiom-wallpaper"
+  readonly property string layerNamespace: "axiom-wallpaper"
+  WlrLayershell.layer: slot.layer
+  WlrLayershell.namespace: root.layerNamespace
+  // Once the windows before it in the stack have mapped
+  visible: slot.shown
+  LayerSlot {
+    id: slot
+    window: root
+  }
   exclusionMode: ExclusionMode.Ignore
   color: Style.surfacePage
   anchors {
