@@ -623,6 +623,30 @@ class CheckQmllint(unittest.TestCase):
         self.assertEqual(against(found, lines, baseline), (["a.qml:3,9: k: m (1 new)", "c.qml:5: z: w"], ["b.qml: x: y (1 gone)"]))
         self.assertEqual(against(found, lines, found), ([], []))
 
+    def test_umbrella_qmltypes_gets_a_component(self):
+        """A copied qmltypes left with no Component (an umbrella module's empty
+        `Module {}`, or only opaque stubs) gets a placeholder; one with a real
+        Component is kept."""
+        sys.path.insert(0, str(SCRIPTS))
+        import check_qmllint
+        head = "import QtQuick.tooling 1.2\n\n"
+        real = "Module {\n    Component {\n        name: \"A\"\n    }\n}\n"
+        stub = "Module {\n    Component {\n        name: \"S\"\n        isTypeOpaque: true\n    }\n}\n"
+        with tempfile.TemporaryDirectory() as tmp:
+            qt = Path(tmp) / "qt"
+            for name, body in (("Umbrella", "Module {}\n"), ("Tight", "Module{}\n"), ("Empty", ""),
+                              ("Real", real), ("Stub", stub)):
+                write(qt / "Quickshell", f"{name}/x.qmltypes", head + body)
+            with mock.patch.object(check_qmllint, "QT_QML", str(qt)):
+                out = check_qmllint.qt_imports(Path(tmp) / "out")
+            got = {n: (out / "Quickshell" / n / "x.qmltypes").read_text() for n in ("Umbrella", "Tight", "Empty", "Real", "Stub")}
+        self.assertIn("AxiomQmllintPlaceholder", got["Umbrella"])
+        self.assertIn("AxiomQmllintPlaceholder", got["Tight"])
+        self.assertIn("AxiomQmllintPlaceholder", got["Empty"])
+        self.assertIn("AxiomQmllintPlaceholder", got["Stub"])
+        self.assertNotIn("isTypeOpaque", got["Stub"])
+        self.assertEqual(got["Real"], head + real)
+
 
 class Ratchet(unittest.TestCase):
     """qml_modules' baseline compare (`baseline_diff`) and shrink-only ratchet, on small inputs
