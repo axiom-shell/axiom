@@ -27,6 +27,9 @@ QtObject {
   readonly property int count: _c.count
   readonly property int columns: grid ? _c.columns : count
   readonly property int rows: grid ? _c.rows : 1
+  // The workspace each monitor starts on (grid and perMonitor): "middle"
+  // of its block (a grid's middle cell) | "first"
+  readonly property string startCell: _c.startCell
   // Workspaces a monitor shows
   readonly property int size: grid ? columns * rows : count
   readonly property bool wrap: _c.wrap
