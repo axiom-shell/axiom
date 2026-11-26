@@ -87,7 +87,8 @@ def qt_imports(out):
                     kept.extend(block)
                 block = None
         if not any(line.startswith("    Component {") for line in kept):
-            kept[next(i for i, line in enumerate(kept) if line.startswith("Module {")):] = [PLACEHOLDER]
+            start = next((i for i, line in enumerate(kept) if line.strip().startswith("Module")), 0)
+            kept[start:] = [PLACEHOLDER]
         types.write_text("".join(kept))
     return out
 

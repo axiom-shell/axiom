@@ -627,12 +627,15 @@ class CheckQmllint(unittest.TestCase):
         stub = "Module {\n    Component {\n        name: \"S\"\n        isTypeOpaque: true\n    }\n}\n"
         with tempfile.TemporaryDirectory() as tmp:
             qt = Path(tmp) / "qt"
-            for name, body in (("Umbrella", "Module {}\n"), ("Real", real), ("Stub", stub)):
+            for name, body in (("Umbrella", "Module {}\n"), ("Tight", "Module{}\n"), ("Empty", ""),
+                              ("Real", real), ("Stub", stub)):
                 write(qt / "Quickshell", f"{name}/x.qmltypes", head + body)
             with mock.patch.object(check_qmllint, "QT_QML", str(qt)):
                 out = check_qmllint.qt_imports(Path(tmp) / "out")
-            got = {n: (out / "Quickshell" / n / "x.qmltypes").read_text() for n in ("Umbrella", "Real", "Stub")}
+            got = {n: (out / "Quickshell" / n / "x.qmltypes").read_text() for n in ("Umbrella", "Tight", "Empty", "Real", "Stub")}
         self.assertIn("AxiomQmllintPlaceholder", got["Umbrella"])
+        self.assertIn("AxiomQmllintPlaceholder", got["Tight"])
+        self.assertIn("AxiomQmllintPlaceholder", got["Empty"])
         self.assertIn("AxiomQmllintPlaceholder", got["Stub"])
         self.assertNotIn("isTypeOpaque", got["Stub"])
         self.assertEqual(got["Real"], head + real)
