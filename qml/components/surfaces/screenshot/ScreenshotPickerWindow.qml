@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
+import qs.components.hosts.window
 
 import qs.components.methods
 import qs.components.reusable
@@ -83,9 +84,14 @@ PanelWindow {
     left: true
     right: true
   }
-
-  WlrLayershell.layer: WlrLayer.Overlay
-  WlrLayershell.namespace: "axiom-screenshot"
+  visible: slot.shown
+  WlrLayershell.layer: slot.layer
+  readonly property string layerNamespace: "axiom-screenshot"
+  WlrLayershell.namespace: root.layerNamespace
+  LayerSlot {
+    id: slot
+    window: root
+  }
   WlrLayershell.keyboardFocus: root.interactive && root.focusedScreen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
   // Crops `area` (local logical pixels) out of the frame and hands it over

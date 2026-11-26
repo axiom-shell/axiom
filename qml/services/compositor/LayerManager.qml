@@ -28,7 +28,8 @@ import qs.services.core
  * withLayerRects), each window's rect is corrected by how far the
  * compositor's own differs, sampled once they've settled: what axiom doesn't
  * arrange (another app's layers, a monitor's reserved space) moves its
- * windows too. Each difference is logged (console.log, "LayerManager:").
+ * windows too. Each difference is logged (console.log, "LayerManager:"),
+ * and each layer move too (`LayerManager: … moves from … to …`).
  * The windows with a fixed place in the stack (bars, the border, docks,
  * integrated edge menus, the overlay, the popouts, the prompts:
  * hosts/window/LayerSlot, `setSlot`) are mapped in LayerStack order, one
@@ -383,6 +384,7 @@ QtObject {
     const items = all.filter(i => typeof i.id === "number");
     const owners = root._slots.entries.map(e => e.owner);
     const modalOutputs = new Set(items.filter(i => i.showing && LayerStack.isModal(i.namespace)).map(i => i.outputName));
+    const moves = new Set();
     const entries = items.map(i => {
       const before = root._answers.get(owners[i.id])?.layer;
       const layer = LayerStack.layerOf(i.namespace, {
@@ -391,6 +393,8 @@ QtObject {
         "movesKeepPlace": pass?.movesKeepPlace ?? true,
         "underModal": modalOutputs.has(i.outputName) ? before ?? "" : ""
       });
+      if (before !== undefined && before !== layer)
+        moves.add(`LayerManager: ${i.namespace} on ${i.outputName} moves from ${before} to ${layer}`);
       // A mapped window moved to another layer lands on top of it, as if it
       // had just mapped, where a move lands on top (not movesKeepPlace;
       // supports.layerRestack, SwayFX: the blur window rising over a
@@ -416,6 +420,8 @@ QtObject {
         "modal": LayerStack.isModal(i.namespace)
       };
     });
+    for (const line of moves)
+      console.log(line);
     const result = LayerArrange.sequence({
       "entries": entries,
       "ordered": pass?.ordered ?? false,

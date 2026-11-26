@@ -49,7 +49,12 @@ QtObject {
   }
   on_SlotChanged: root._report()
   Component.onCompleted: root._report()
-  Component.onDestruction: LayerManager.dropSlot(root)
+  // Lets go of its window first: the dying window's last changes (it
+  // unmaps as its answer goes) must not report it again
+  Component.onDestruction: {
+    root.window = null;
+    LayerManager.dropSlot(root);
+  }
   function _report() {
     if (root._slot)
       LayerManager.setSlot(root, root._slot);

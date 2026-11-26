@@ -63,7 +63,12 @@ QtObject {
   }
   on_SpecChanged: root._report()
   Component.onCompleted: root._report()
-  Component.onDestruction: LayerManager.dropLayerSpec(root)
+  // Lets go of its window first: the dying window's last changes (it
+  // unmaps as its answer goes) must not report it again
+  Component.onDestruction: {
+    root.window = null;
+    LayerManager.dropLayerSpec(root);
+  }
   function _report() {
     if (root._spec)
       LayerManager.setLayerSpec(root, root._spec);

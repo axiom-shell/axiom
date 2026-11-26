@@ -8,6 +8,7 @@ import qs.services.ui
 import qs.config
 import qs.components.methods
 import qs.components.reusable
+import qs.components.hosts.window
 // Imported (though loaded by URL) so qs scans the content folders whose
 // files see each other (scripts/check_structure.py)
 import qs.components.content.Submenu // qmllint disable unused-imports
@@ -35,7 +36,7 @@ PopoutWrapperBase {
   // inner side (the frame line, EdgePlacement.slideFrom)
   // Over the overlay and fullscreen windows (BlurManager.backsOn), the box
   // and a submenu in its window
-  readonly property bool onOverlayLayer: true
+  readonly property bool onOverlayLayer: layerSlot.onOverlayLayer
   window: mainPopup
   // Content box in its window's coordinates (see AttachedSurface.boxRect)
   readonly property rect boxRect: Qt.rect(surface.x + surface.boxRect.x, surface.y + surface.boxRect.y, surface.boxRect.width, surface.boxRect.height)
@@ -373,11 +374,17 @@ PopoutWrapperBase {
   PanelWindow {
     id: mainPopup
     screen: root.screen
-    visible: still.showing
+    visible: layerSlot.shown
     color: "transparent"
 
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: "axiom-popout"
+    WlrLayershell.layer: layerSlot.layer
+    readonly property string layerNamespace: "axiom-popout"
+    WlrLayershell.namespace: mainPopup.layerNamespace
+    LayerSlot {
+      id: layerSlot
+      window: mainPopup
+      wanted: still.showing
+    }
     WlrLayershell.keyboardFocus: root.wantsKeyboardFocus ? (focusGrab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand) : WlrKeyboardFocus.None
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: 0

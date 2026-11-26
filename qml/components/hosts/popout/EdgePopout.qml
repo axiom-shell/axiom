@@ -96,7 +96,7 @@ PopoutWrapperBase {
   readonly property real slideDistance: (root._fromEdge.value ?? false) ? placement.slideFrom : 0
   // Over the overlay and fullscreen windows (BlurManager.backsOn), it and
   // a submenu in its window
-  readonly property bool onOverlayLayer: true
+  readonly property bool onOverlayLayer: layerSlot.onOverlayLayer
   property color fillColor: Style.surfacePage
   property color strokeColor: Style.frameStroke
   // No box of its own drawn, only its content (AttachedSurface.hollow: a
@@ -419,7 +419,7 @@ PopoutWrapperBase {
   PanelWindow {
     id: surfaceWindow
     screen: root.screen
-    visible: root.occupied && loader.status === Loader.Ready
+    visible: layerSlot.shown
     color: "transparent"
 
     // Overlay so the connector draws over the border/bar stroke it joins.
@@ -427,8 +427,13 @@ PopoutWrapperBase {
     // the border's and bars' reserved area; the -borderWidth margin then
     // lines it up with their inner stroke, whether that's a bar or the
     // plain border.
-    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.layer: layerSlot.layer
     readonly property string layerNamespace: root.overNamespace
+    LayerSlot {
+      id: layerSlot
+      window: surfaceWindow
+      wanted: root.occupied && loader.status === Loader.Ready
+    }
     WlrLayershell.namespace: surfaceWindow.layerNamespace
     // Its top-left on its screen, or null while unknown (a wallpaper
     // picker's click point)
@@ -528,7 +533,7 @@ PopoutWrapperBase {
       id: placeOnScreen
       window: surfaceWindow
       edge: root.edge
-      layer: WlrLayer.Overlay
+      layer: layerSlot.layer
     }
 
     EdgeSurface {

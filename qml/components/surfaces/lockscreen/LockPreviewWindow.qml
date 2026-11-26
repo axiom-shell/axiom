@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import qs.components.hosts.window
 
 import qs.config
 import qs.services.session
@@ -13,9 +14,14 @@ import qs.components.reusable
 // click on the background closes it, back to the editor.
 PanelWindow {
   id: root
-
-  WlrLayershell.layer: WlrLayer.Overlay
-  WlrLayershell.namespace: "axiom-lock-preview"
+  visible: slot.shown
+  WlrLayershell.layer: slot.layer
+  readonly property string layerNamespace: "axiom-lock-preview"
+  WlrLayershell.namespace: root.layerNamespace
+  LayerSlot {
+    id: slot
+    window: root
+  }
   WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
   exclusionMode: ExclusionMode.Ignore
   color: "black"
