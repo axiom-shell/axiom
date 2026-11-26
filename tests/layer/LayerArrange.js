@@ -595,5 +595,642 @@ var rows = [
         "modal": "orderedOnlyTiesByMapOrder"
       }
     }
+  },
+  {
+    "id": "LY-32",
+    "why": "nothing new shows over a modal window that shows: the OSD and the toast box wait",
+    "call": "sequence",
+    "input": {
+      "entries": [
+        {
+          "id": "polkit",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": true,
+          "mapped": true,
+          "seq": 1,
+          "modal": true
+        },
+        {
+          "id": "osd",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0
+        },
+        {
+          "id": "notifications",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0
+        }
+      ],
+      "ordered": false,
+      "remappingIds": []
+    },
+    "expect": {
+      "show": [
+        "polkit"
+      ],
+      "remap": [],
+      "rules": {
+        "osd": "waitsUnderModal",
+        "notifications": "waitsUnderModal"
+      }
+    }
+  },
+  {
+    "id": "LY-33",
+    "why": "a modal window that is gone holds nothing: the windows that waited show",
+    "call": "sequence",
+    "input": {
+      "entries": [
+        {
+          "id": "polkit",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": false,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0,
+          "modal": true
+        },
+        {
+          "id": "osd",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0
+        },
+        {
+          "id": "notifications",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0
+        }
+      ],
+      "ordered": false,
+      "remappingIds": []
+    },
+    "expect": {
+      "show": [
+        "osd",
+        "notifications"
+      ],
+      "remap": [],
+      "rules": {
+        "osd": "showsAfterPredecessorsMapped"
+      }
+    }
+  },
+  {
+    "id": "LY-34",
+    "why": "a modal window still showing but no longer wanted holds its output until it is hidden",
+    "call": "sequence",
+    "input": {
+      "entries": [
+        {
+          "id": "polkit",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": false,
+          "held": false,
+          "showing": true,
+          "mapped": true,
+          "seq": 1,
+          "modal": true
+        },
+        {
+          "id": "osd",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0
+        },
+        {
+          "id": "notifications",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0
+        }
+      ],
+      "ordered": false,
+      "remappingIds": []
+    },
+    "expect": {
+      "show": [],
+      "remap": [],
+      "rules": {
+        "osd": "waitsUnderModal"
+      }
+    }
+  },
+  {
+    "id": "LY-35",
+    "why": "a modal window shows once wanted, without waiting for a window ordered before it to map",
+    "call": "sequence",
+    "input": {
+      "entries": [
+        {
+          "id": "osd",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": true,
+          "mapped": false,
+          "seq": 0
+        },
+        {
+          "id": "screenshot",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0,
+          "modal": true
+        }
+      ],
+      "ordered": false,
+      "remappingIds": []
+    },
+    "expect": {
+      "show": [
+        "osd",
+        "screenshot"
+      ],
+      "rules": {
+        "screenshot": "modalShowsAtOnce"
+      }
+    }
+  },
+  {
+    "id": "LY-36",
+    "why": "the modal windows are never mapped again, in whatever order they mapped",
+    "call": "sequence",
+    "input": {
+      "entries": [
+        {
+          "id": "polkit",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": true,
+          "mapped": true,
+          "seq": 5,
+          "modal": true
+        },
+        {
+          "id": "screenshot",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": true,
+          "mapped": true,
+          "seq": 3,
+          "modal": true
+        },
+        {
+          "id": "powermenu",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": true,
+          "mapped": true,
+          "seq": 1,
+          "modal": true
+        },
+        {
+          "id": "monitor-prompt",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": true,
+          "mapped": true,
+          "seq": 4,
+          "modal": true
+        },
+        {
+          "id": "screen-share-picker",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": true,
+          "mapped": true,
+          "seq": 2,
+          "modal": true
+        }
+      ],
+      "ordered": false,
+      "remappingIds": []
+    },
+    "expect": {
+      "show": [
+        "polkit",
+        "screenshot",
+        "powermenu",
+        "monitor-prompt",
+        "screen-share-picker"
+      ],
+      "remap": []
+    }
+  },
+  {
+    "id": "LY-37",
+    "why": "the launcher and the overview wait while the power menu shows on their output",
+    "call": "sequence",
+    "input": {
+      "entries": [
+        {
+          "id": "powermenu",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": true,
+          "mapped": true,
+          "seq": 1,
+          "modal": true
+        },
+        {
+          "id": "edge-popout",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0
+        },
+        {
+          "id": "workspaces",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0
+        }
+      ],
+      "ordered": false,
+      "remappingIds": []
+    },
+    "expect": {
+      "show": [
+        "powermenu"
+      ],
+      "remap": [],
+      "rules": {
+        "edge-popout": "waitsUnderModal",
+        "workspaces": "waitsUnderModal"
+      }
+    }
+  },
+  {
+    "id": "LY-38",
+    "why": "a modal window holds only its own output: the launcher and the overview on another output show",
+    "call": "sequence",
+    "input": {
+      "entries": [
+        {
+          "id": "powermenu",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": true,
+          "mapped": true,
+          "seq": 1,
+          "modal": true
+        },
+        {
+          "id": "edge-popout",
+          "outputName": "DP-2",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0
+        },
+        {
+          "id": "workspaces",
+          "outputName": "DP-2",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0
+        }
+      ],
+      "ordered": false,
+      "remappingIds": []
+    },
+    "expect": {
+      "show": [
+        "powermenu",
+        "edge-popout",
+        "workspaces"
+      ],
+      "remap": []
+    }
+  },
+  {
+    "id": "LY-39",
+    "why": "the launcher and the overview show when the power menu is gone",
+    "call": "sequence",
+    "input": {
+      "entries": [
+        {
+          "id": "powermenu",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": false,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0,
+          "modal": true
+        },
+        {
+          "id": "edge-popout",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0
+        },
+        {
+          "id": "workspaces",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0
+        }
+      ],
+      "ordered": false,
+      "remappingIds": []
+    },
+    "expect": {
+      "show": [
+        "edge-popout",
+        "workspaces"
+      ],
+      "remap": []
+    }
+  },
+  {
+    "id": "LY-40",
+    "why": "a modal window wanted in the same pass as another window holds the output at once: the other waits",
+    "call": "sequence",
+    "input": {
+      "entries": [
+        {
+          "id": "osd",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0
+        },
+        {
+          "id": "polkit",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0,
+          "modal": true
+        }
+      ],
+      "ordered": false,
+      "remappingIds": []
+    },
+    "expect": {
+      "show": [
+        "polkit"
+      ],
+      "remap": [],
+      "rules": {
+        "osd": "waitsUnderModal",
+        "polkit": "modalShowsAtOnce"
+      }
+    }
+  },
+  {
+    "id": "LY-41",
+    "why": "a window of another layer is not held: it opens under the modal window",
+    "call": "sequence",
+    "input": {
+      "entries": [
+        {
+          "id": "polkit",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": true,
+          "mapped": true,
+          "seq": 1,
+          "modal": true
+        },
+        {
+          "id": "menu",
+          "outputName": "DP-1",
+          "layer": "top",
+          "order": 7,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0
+        }
+      ],
+      "ordered": false,
+      "remappingIds": []
+    },
+    "expect": {
+      "show": [
+        "polkit",
+        "menu"
+      ],
+      "remap": []
+    }
+  },
+  {
+    "id": "LY-42",
+    "why": "a modal window wanted in this pass holds its output before it shows",
+    "call": "modalHolds",
+    "input": {
+      "modal": true,
+      "showing": false,
+      "wanted": true,
+      "held": false
+    },
+    "expect": true
+  },
+  {
+    "id": "LY-43",
+    "why": "a modal window that shows holds its output though no longer wanted",
+    "call": "modalHolds",
+    "input": {
+      "modal": true,
+      "showing": true,
+      "wanted": false,
+      "held": false
+    },
+    "expect": true
+  },
+  {
+    "id": "LY-44",
+    "why": "a modal window neither showing nor wanted holds nothing",
+    "call": "modalHolds",
+    "input": {
+      "modal": true,
+      "showing": false,
+      "wanted": false,
+      "held": false
+    },
+    "expect": false
+  },
+  {
+    "id": "LY-45",
+    "why": "a window that is not modal holds nothing",
+    "call": "modalHolds",
+    "input": {
+      "modal": false,
+      "showing": true,
+      "wanted": true,
+      "held": false
+    },
+    "expect": false
   }
 ];
