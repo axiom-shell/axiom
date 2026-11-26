@@ -559,7 +559,7 @@ PopoutWrapperBase {
     // A submenu's stretch: along the bar on a vertical one, away from it
     // on a horizontal one
     boxHeight: root.shownBoxHeight + slot.shownStretchTop + slot.shownStretchBottom
-    // A detached box slides out from under the bars, from the screen edge
+    // A detached box slides out of the frame line, its window edge (slideDistance, signed)
     detachedOffset: root.slideDistance
 
     // The content keeps its target size while the box animates to it,

@@ -19,7 +19,7 @@ Floating edge menus, docks, OSDs, the launcher and the window switcher with `det
   - `gap` on each side, or
   - Auto (null):
     - When a floating bar shares the edge, its `floatingGap` is used across, so the surface lines up with its islands; at both ends it lines up with the windows, as the islands' ends do.
-    - Otherwise, per side, how far past the frame line windows start (`ScreenEdgeManager.barReservedOn` + gaps_out), so it lines up with the windows. Across, past a bar on that edge, never less than gaps_out less the bar's `trim`: where windows start with the bar reserving its space, whether or not it does, so a held box rests at the same gap from the frame line either way.
+    - Otherwise, per side, how far past the frame line windows start (`ScreenEdgeManager.barReservedOn` + gaps_out), so it lines up with the windows. Across, past a bar on that edge, `ScreenEdgeManager.windowsPast` (never less than gaps_out less the bar's `trim`): where windows start with the bar reserving its space, whether or not it does, so a held box rests at the same gap from the frame line either way.
 - **Placement origin:** each surface places itself from where its window starts (`ScreenEdgeManager.reservedWithMenusOn`).
 
 ### EdgePlacement given `held` and `distance`
@@ -52,7 +52,7 @@ Floating edge menus, docks, OSDs, the launcher and the window switcher with `det
 ### Sliding in from off the screen
 Every detached box slides in from behind its edge (unless it fades), from `SurfaceContext.layout`:
 - **`slidesFromEdge`:** always, for every detached box, on every compositor: its window is on the Overlay layer, over the bars, so it comes out of them: from the frame line, cut there, so the first pixel it draws is the one just past the border's or bar's inner stroke.
-- **`slideFrom`:** the distance from its attach edge back to the window's edge, the frame line (`attachAt - frameLine`; the screen edge where that is 0: a bare edge, over a fullscreen window), signed: negative where the attach edge lies on the screen-edge side of it (a held box's gap under half a connector gap, a transparent bar's popout), down to minus half a connector gap. A transparent bar's box rests where it would with the bar reserving its space, whether it does or not (`EdgePlacement._detachedPush`; the held gap across, `ScreenEdgeManager.detachedGaps`, takes the same least value). The surface reaches back over it (`AttachedSurface.detachedOffset`) and `SlideAnimation` cuts there, so the slide starts with the box wholly hidden behind it.
+- **`slideFrom`:** the distance from its attach edge back to the window's edge, the frame line (`attachAt - frameLine`; the screen edge where that is 0: a bare edge, over a fullscreen window), signed: negative where the attach edge lies on the screen-edge side of it (a held box's gap under half a connector gap, a transparent bar's popout), down to minus half a connector gap. A transparent bar's box rests where it would with the bar reserving its space, whether it does or not (`ScreenEdgeManager.windowsPast`, the one home: `EdgePlacement._detachedPush` and the held gap across, `ScreenEdgeManager.detachedGaps`, read it). The surface reaches back over it (`AttachedSurface.detachedOffset`) and `SlideAnimation` cuts there, so the slide starts with the box wholly hidden behind it.
 - The bar popouts' detached boxes (a transparent bar's, a floating bar's showing no islands) slide the same way ([Transparent bars](pill-and-floating-bars.md#transparent-bars-detached-popouts)). The dock and toasts don't yet.
 
 ### The dock
