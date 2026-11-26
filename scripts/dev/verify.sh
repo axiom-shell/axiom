@@ -118,8 +118,7 @@ for f in "${changed[@]}"; do
   tests-layout/tst_*.qml)
     name="$(basename "$f" .qml)"
     [[ -f "$f" ]] && tests+=("${name#tst_}")
-    tests+=(TextFit MenuRow Pieces)
-    ;;
+    ;;&
   # A piece, a form control or a tool-page piece runs the layout harness (tests-layout/)
   qml/components/reusable/* | qml/components/forms/* | qml/components/views/base/* | qml/components/content/base/* | qml/components/content/parts/KeyboardMap.qml | qml/config/Style.qml | qml/config/Widget.qml | tests-layout/*) tests+=(TextFit MenuRow Pieces) ;;
   # A theme or a style fixture runs the pair sweep before CI does

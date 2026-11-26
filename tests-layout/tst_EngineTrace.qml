@@ -31,6 +31,24 @@ TestCase {
     }
   }
 
+  // Built inside a test, with tracing off: its binding records, so turning tracing on re-runs it
+  Component {
+    id: rerunComp
+
+    QtObject {
+      property var seen: {
+        EngineTrace.record({
+          "engine": "rerun",
+          "stage": "s",
+          "id": "a",
+          "input": 1,
+          "output": 2
+        });
+        return EngineTrace.recordsOf("rerun", "a");
+      }
+    }
+  }
+
   function initTestCase() {
     failOnWarning(/./);
     verify(EngineTrace.tracing === false);
@@ -178,5 +196,39 @@ TestCase {
     r.extra = {};
     compare(EngineTrace.recordsOf("copy", "a").s.input, 1);
     compare(Object.keys(EngineTrace.recordsOf("copy", "a")), ["s"]);
+  }
+
+  function test_recordingBindingRerunsWhenTracingTurnsOn() {
+    EngineTrace.setTracing(false);
+    const o = createTemporaryObject(rerunComp, root);
+    compare(o.seen, {});
+    EngineTrace.setTracing(true);
+    verify(o.seen.s !== undefined);
+    compare(o.seen.s.output, 2);
+  }
+
+  function test_reservedNamesAreOrdinaryKeys() {
+    for (const [engine, id] of [["__proto__", "x"], ["reserved", "__proto__"], ["reserved", "toString"], ["reserved", "hasOwnProperty"]]) {
+      EngineTrace.record({
+        "engine": engine,
+        "stage": "s",
+        "id": id,
+        "input": 1,
+        "output": 2
+      });
+      compare(EngineTrace.recordsOf(engine, id).s.output, 2);
+      verify(EngineTrace.idsOf(engine).indexOf(id) >= 0);
+      EngineTrace.forget({
+        "engine": engine,
+        "id": id
+      });
+      compare(EngineTrace.recordsOf(engine, id), {});
+      compare(EngineTrace.idsOf(engine).indexOf(id), -1);
+    }
+    verify(({}).s === undefined);
+    verify(({}).x === undefined);
+    verify(typeof ({}).toString === "function");
+    verify(typeof ({}).hasOwnProperty === "function");
+    verify(Object.keys(Object.prototype).length === 0);
   }
 }
