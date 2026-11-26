@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 // One timer armed at an owner's `next` (ms on Date.now()'s clock, not above 0 = never);
-// it re-reads the clock at least every `recheck` ms, so a `next` passed during
+// it re-reads the clock at least every minute, so a `next` passed during
 // a suspend fires within a minute of waking. `due` fires once per `next`
 // value; the owner moves `next` on.
 // Each owner builds its own.
@@ -13,10 +13,6 @@ QtObject {
   property real next: 0
   // The clock read, in ms; tests replace it
   property var clock: () => Date.now()
-  // The longest the inner timer is armed for, in ms
-  readonly property int recheck: 60000
-  // What the inner timer is armed for, in ms; 0 = not armed
-  readonly property int armedFor: root._armedFor
 
   // `next` has been reached (once per `next` value); `now` is the clock then
   signal due(real now)
@@ -31,7 +27,8 @@ QtObject {
     root._arm(true);
   }
 
-  property int _armedFor: 0
+  // The longest the inner timer is armed for, in ms
+  readonly property int _recheckMs: 60000
   // `due` was emitted for the current `next`
   property bool _fired: false
 
@@ -40,7 +37,6 @@ QtObject {
   function _arm(fromChange) {
     const now = root.clock();
     root._dueTimeout.stop();
-    root._armedFor = 0;
     if (!(root.next > 0))
       return;
     if (root.next <= now) {
@@ -53,9 +49,8 @@ QtObject {
       }
       return;
     }
-    const ms = Math.ceil(Math.min(root.next - now, root.recheck));
+    const ms = Math.ceil(Math.min(root.next - now, root._recheckMs));
     root._dueTimeout.interval = ms;
-    root._armedFor = ms;
     root._dueTimeout.start();
   }
 

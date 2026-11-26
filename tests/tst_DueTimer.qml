@@ -28,6 +28,11 @@ TestCase {
     return timer;
   }
 
+  // What the inner timer is armed for, in ms; 0 = not armed
+  function armed(t) {
+    return t._dueTimeout.running ? t._dueTimeout.interval : 0;
+  }
+
   function init() {
     root.now = 0;
   }
@@ -35,9 +40,9 @@ TestCase {
   function test_neverWhenZero() {
     const t = make({});
     t.next = root.now + 5000;
-    compare(t.armedFor, 5000);
+    compare(armed(t), 5000);
     t.next = 0;
-    compare(t.armedFor, 0);
+    compare(armed(t), 0);
     verify(!t._dueTimeout.running);
     wait(0);
     compare(root.fired.length, 0);
@@ -46,7 +51,7 @@ TestCase {
   function test_nanIsNever() {
     const t = make({});
     t.next = NaN;
-    compare(t.armedFor, 0);
+    compare(armed(t), 0);
     verify(!t._dueTimeout.running);
     wait(50);
     compare(root.fired.length, 0);
@@ -55,18 +60,18 @@ TestCase {
   function test_timerFiresAtNext() {
     const t = make({});
     t.next = root.now + 50;
-    compare(t.armedFor, 50);
+    compare(armed(t), 50);
     root.now = 100;
     tryCompare(root.fired, "length", 1);
-    compare(t.armedFor, 0);
+    compare(armed(t), 0);
   }
 
   function test_nextMovedEarlierWhileArmed() {
     const t = make({});
     t.next = root.now + 30000;
-    compare(t.armedFor, 30000);
+    compare(armed(t), 30000);
     t.next = root.now + 5000;
-    compare(t.armedFor, 5000);
+    compare(armed(t), 5000);
   }
 
   function test_samePastNextAgainFiresAgain() {
@@ -93,24 +98,24 @@ TestCase {
   function test_armsForTheWait() {
     const t = make({});
     t.next = root.now + 5000;
-    compare(t.armedFor, 5000);
+    compare(armed(t), 5000);
   }
 
   function test_armsNoLongerThanRecheck() {
     const t = make({});
     t.next = root.now + 3600000;
-    compare(t.armedFor, 60000);
+    compare(armed(t), 60000);
   }
 
   function test_suspendFiresOnCheck() {
     const t = make({});
     t.next = 3600000;
-    compare(t.armedFor, 60000);
+    compare(armed(t), 60000);
     root.now = 3700000;
     t.check();
     compare(root.fired.length, 1);
     compare(root.fired[0], 3700000);
-    compare(t.armedFor, 0);
+    compare(armed(t), 0);
   }
 
   function test_passedNextFiresOnTheNextTurn() {
@@ -118,7 +123,7 @@ TestCase {
     const t = make({});
     t.next = 500;
     compare(root.fired.length, 0, "not synchronously");
-    compare(t.armedFor, 0);
+    compare(armed(t), 0);
     wait(0);
     compare(root.fired.length, 1);
     compare(root.fired[0], 1000);
@@ -140,13 +145,13 @@ TestCase {
     t.check();
     compare(root.fired.length, 1);
     t.next = 7000;
-    compare(t.armedFor, 5000);
+    compare(armed(t), 5000);
   }
 
   function test_negativeNextNever() {
     const t = make({});
     t.next = -5;
-    compare(t.armedFor, 0);
+    compare(armed(t), 0);
     t.check();
     wait(0);
     compare(root.fired.length, 0);
