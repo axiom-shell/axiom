@@ -36,7 +36,7 @@ QtObject {
       delete root._store[entry.engine];
   }
 
-  // -> {stage: {input, output}}, a copy; {} when none
+  // -> {stage: {input, output}}, a copy; {} when none. defineProperty: stage names are arbitrary strings, so one named like an Object.prototype member must stay an own key
   function recordsOf(engine, id) {
     const out = {};
     const byStage = root._store[engine]?.[id] ?? {};
@@ -59,6 +59,6 @@ QtObject {
 
   // A plain setter: no owner argument, unlike a registry's acquire(owner)/release(owner)
   function setTracing(on) {
-    root._tracing = on === true;
+    root._tracing = on;
   }
 }
