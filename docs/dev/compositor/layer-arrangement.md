@@ -22,7 +22,7 @@ The daemon reads `LayerStack.qml` as plain JSON (`render.ParseTables`, from the 
 - `LayerManager` runs both once per event turn and answers each owner: `slotOf(owner)` (`{ shown, layer }`), `layerOn(output, namespace)`, `rectOf(owner)`. Hosts read these and never re-derive them; nothing outside it reads `supports.layerOrder` or `supports.layerRestack`.
 
 ### Per compositor
-- **Hyprland**: the daemon's order rules are in (`layerOrder`), so Hyprland keeps axiom's order whatever the map order, and a window moved to another layer keeps its place: nothing maps again at a fullscreen change. Axiom's own calculation doesn't see Hyprland's reserved space or other apps' layers, so it is corrected from Hyprland's list (below).
+- **Hyprland**: the daemon's order rules are in (`layerOrder`), so Hyprland keeps axiom's order whatever the map order, and a window moved to another layer keeps its place: nothing maps again at a fullscreen change. Axiom's own calculation doesn't see what Hyprland reserves for itself (`addreserved` on a monitor) or other apps' layers, so it is corrected from Hyprland's list (below).
 - **sway** (`layerRestack`, no order): a window moved to another layer lands on top of it, so only the open overlay page moves over a fullscreen window and what is ordered over a moved window maps again; no dim is drawn over a fullscreen window there. The bars redraw once when a fullscreen window closes with the overlay open.
 - **niri** (no order, no restack): a moved window keeps its place; the windows map in order and the surfaces fill themselves.
 - **The fallback**: when Hyprland refuses a rule, `layerOrder` is false and the windows map one stage at a time in `LayerStack` order, mapping again where they land out of place, as on sway. `LayerManager` logs each change: `LayerManager: the compositor keeps the order (rules in)` or `LayerManager: map order (rules not in)`.
@@ -37,9 +37,6 @@ Probed in nested sway and niri: coloured, overlapping layer windows, a screensho
 - **Margins count.** A surface's margin on its anchored edge adds to its exclusive zone. Zone 20 with margin 10 leaves 30 px for the next surface.
 - **Exclusive surfaces first.** Every surface with an exclusive zone is arranged before any without one, whatever their map order. Non-exclusive surfaces are placed in what's left; `ExclusionMode.Ignore` surfaces get the whole output.
 - **Drawn last is on top.** The surface mapped later is drawn over the earlier one.
-
-### Hyprland
-- Hyprland also counts what it reserves for itself (`addreserved` on a monitor) and other apps' layers. Axiom's own calculation doesn't see either, so on Hyprland it's corrected from Hyprland's list (below).
 
 ### How axiom places its layers
 - Every window whose position matters (bars, border strips, docks, integrated edge menus, free menus, edge popouts) has a `hosts/window/LayerOrigin`. It states how the window asks to be laid out to `LayerManager` (`setLayerSpec`, dropped with `dropLayerSpec`; the window itself is the owner): output, layer, anchors, margins, requested size (0 where it's stretched between two anchors), zone (`Ignore` is -1; `Auto` is its size across the edge), and whether it's mapped.

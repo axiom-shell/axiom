@@ -258,14 +258,22 @@ var ops = map[string]func(t *Tables, a []any) any{
 	"CompositorLayer.sessionEnv":  func(t *Tables, a []any) any { return SessionEnv(arg(a, 0), arg(a, 1), arg(a, 2)) },
 	"CompositorLayer.surfaceBlur": func(t *Tables, a []any) any { return objects(t.SurfaceBlur(arg(a, 0))) },
 
-	"HyprLua.blurLua":       func(t *Tables, a []any) any { return strList(t.BlurLua(arg(a, 0))) },
-	"HyprLua.configTable":   func(t *Tables, a []any) any { return ConfigTable(arg(a, 0), arg(a, 1), arg(a, 2), arg(a, 3)) },
-	"HyprLua.inputLua":      func(t *Tables, a []any) any { return strList(InputLua(arg(a, 0), arg(a, 1))) },
-	"HyprLua.layerRulesLua": func(t *Tables, a []any) any { return strList(t.LayerRulesLua()) },
-	"HyprLua.leaveSubmap":   func(t *Tables, a []any) any { return leaveSubmap(argStr(a, 0)) },
-	"HyprLua.lookLua":       func(t *Tables, a []any) any { return strList(LookLua(arg(a, 0), arg(a, 1))) },
-	"HyprLua.monitorCalls":  func(t *Tables, a []any) any { return strList(MonitorCalls(arg(a, 0), arg(a, 1))) },
-	"HyprLua.monitorSpec":   func(t *Tables, a []any) any { return MonitorSpec(arg(a, 0)) },
+	"HyprLua.blurLua":     func(t *Tables, a []any) any { return strList(t.BlurLua(arg(a, 0))) },
+	"HyprLua.configTable": func(t *Tables, a []any) any { return ConfigTable(arg(a, 0), arg(a, 1), arg(a, 2), arg(a, 3)) },
+	"HyprLua.inputLua":    func(t *Tables, a []any) any { return strList(InputLua(arg(a, 0), arg(a, 1))) },
+	// the rules as the frozen cases pin them: each rule's own Lua, before the
+	// static files guard it (TestLayerRulesLuaGuard)
+	"HyprLua.layerRulesLua": func(t *Tables, a []any) any {
+		out := []string{}
+		for _, r := range t.LayerRules() {
+			out = append(out, r.Lua)
+		}
+		return strList(out)
+	},
+	"HyprLua.leaveSubmap":  func(t *Tables, a []any) any { return leaveSubmap(argStr(a, 0)) },
+	"HyprLua.lookLua":      func(t *Tables, a []any) any { return strList(LookLua(arg(a, 0), arg(a, 1))) },
+	"HyprLua.monitorCalls": func(t *Tables, a []any) any { return strList(MonitorCalls(arg(a, 0), arg(a, 1))) },
+	"HyprLua.monitorSpec":  func(t *Tables, a []any) any { return MonitorSpec(arg(a, 0)) },
 	"HyprLua.serialize": func(t *Tables, a []any) any {
 		pad := ""
 		if p := arg(a, 1); p != nil {

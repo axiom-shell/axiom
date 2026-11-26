@@ -509,7 +509,8 @@ QtObject {
    * One already showing stays. A mapped window that one ordered before it
    * mapped after is out of place: it maps again (`remap`), and so lands
    * after it. Returns { show: [ids], remap: [ids], rules: { [id]: ruleId } }
-   * (`rules` has an entry for each window that wants a place).
+   * (`rules` has an entry for each window that wants a place, is out of place
+   * or is mapping again).
    */
   function sequence(input) {
     const {

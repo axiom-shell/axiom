@@ -181,11 +181,7 @@ func (w *hyprWriter) eval(ctx context.Context, lua string) bool {
 func (w *hyprWriter) addLayerRules(ctx context.Context) bool {
 	lua := []string{"local refused = {}"}
 	for _, r := range w.tables.LayerRules() {
-		retry := ""
-		if r.Retry != "" {
-			retry = "pcall(function() " + r.Retry + " end) "
-		}
-		lua = append(lua, "if not pcall(function() "+r.Lua+" end) then "+retry+"refused[#refused + 1] = "+render.LuaString(r.Name)+" end")
+		lua = append(lua, r.GuardedLua("refused[#refused + 1] = "+render.LuaString(r.Name)))
 	}
 	lua = append(lua, `if #refused > 0 then error("layer rules refused: " .. table.concat(refused, ", ")) end`)
 	return w.eval(ctx, strings.Join(lua, "\n"))

@@ -91,9 +91,9 @@ func TestLayerRules(t *testing.T) {
 			t.Fatalf("%s: nothing sent", name)
 		}
 	}
-	for _, rule := range tables.LayerRulesLua() {
-		if !strings.Contains(want, "pcall(function() "+rule+" end)") {
-			t.Errorf("rule %q not sent in %q", rule, want)
+	for _, rule := range tables.LayerRules() {
+		if !strings.Contains(want, "pcall(function() "+rule.Lua+" end)") {
+			t.Errorf("rule %q not sent in %q", rule.Lua, want)
 		}
 	}
 	if !strings.Contains(want, `name = "axiom-bar"`) || !strings.Contains(want, "order = 5, no_anim = true") {

@@ -311,6 +311,23 @@ func boolText(b bool) string {
 // ("" where the rule has no order to drop).
 type LayerRule struct{ Name, Lua, Retry string }
 
+// GuardedLua is the rule in its own pcall, so Hyprland refusing it doesn't
+// stop the Lua after it: on failure its Retry, in its own pcall, then
+// onRefused, each left out where "".
+func (r LayerRule) GuardedLua(onRefused string) string {
+	then := []string{}
+	if r.Retry != "" {
+		then = append(then, "pcall(function() "+r.Retry+" end)")
+	}
+	if onRefused != "" {
+		then = append(then, onRefused)
+	}
+	if len(then) == 0 {
+		return "pcall(function() " + r.Lua + " end)"
+	}
+	return "if not pcall(function() " + r.Lua + " end) then " + strings.Join(then, " ") + " end"
+}
+
 // LayerRules is one rule per entry with an effect: its place and its
 // animation.
 func (t *Tables) LayerRules() []LayerRule {
@@ -339,11 +356,13 @@ func (t *Tables) LayerRules() []LayerRule {
 	return out
 }
 
-// LayerRulesLua is each LayerRules rule's Lua.
+// LayerRulesLua is each LayerRules rule's Lua for the static files, each rule
+// guarded as the runtime add guards it (GuardedLua), so a Hyprland refusing
+// `order` doesn't stop the setup after it.
 func (t *Tables) LayerRulesLua() []string {
 	out := []string{}
 	for _, r := range t.LayerRules() {
-		out = append(out, r.Lua)
+		out = append(out, r.GuardedLua(""))
 	}
 	return out
 }

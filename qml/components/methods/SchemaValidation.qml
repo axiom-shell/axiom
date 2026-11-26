@@ -75,7 +75,7 @@ QtObject {
 
   // The oneOf option whose `type` const matches value.type, or null
   function _discriminate(value, schema) {
-    if (!_isPlainObject(value))
+    if (!Utils.isPlainObject(value))
       return null;
     for (const option of schema.oneOf) {
       const resolved = _resolve(option);
@@ -83,10 +83,6 @@ QtObject {
         return resolved;
     }
     return null;
-  }
-
-  function _isPlainObject(value) {
-    return typeof value === 'object' && value !== null && !Array.isArray(value);
   }
 
   function _applyDefaults(value, schema) {
@@ -102,7 +98,7 @@ QtObject {
     if (schema.type === 'object' && schema.properties) {
       if (value === undefined)
         value = {};
-      if (_isPlainObject(value)) {
+      if (Utils.isPlainObject(value)) {
         for (const key in schema.properties) {
           const filled = _applyDefaults(value[key], schema.properties[key]);
           if (filled !== undefined)

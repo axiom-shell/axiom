@@ -67,17 +67,13 @@ They follow the same pattern:
 - **Restarting** is `axiom restart` (`Paths.restartCommand`), what every compositor's `restartShell` bind runs (the daemon's `render`; the bind merge (`compositor/actions`) reads it back as `restartShell`). The daemon restarts its quickshell child; it keeps one instance per display itself (its instance lock), so the shell no longer checks for others ([The axiom binary](../backend/README.md)).
 - `qs list` / `qs kill` match the display (`WAYLAND_DISPLAY`), so a nested axiom (`scripts/dev/nested.sh`) and the live one never end each other.
 
-Feature services each have their own doc under `docs/dev/features/`, `docs/dev/hyprland/` and `docs/dev/theming/` (see the index).
-
-## Service base
-
-### Base shape
-- `OwnerRegistry` (`qml/services/core/OwnerRegistry.qml`) holds what each owner holds (a request, a frame, a window), one entry per owner, for the service that owns it; not a singleton, each service has its own.
+### OwnerRegistry
+- `OwnerRegistry` (`qml/services/core/OwnerRegistry.qml`) holds what each owner holds (a request, a frame, a window), one entry per owner, for the service that owns it.
 - Members: `entries` (`[{owner, value}]`), `values` (the entries' values), `active` (any entry), `set(owner, value)` (value omitted is `true`), `drop(owner)`, `valueOf(owner)` (`undefined` when not held).
 - Order: a new owner appends, a re-`set` keeps its place, `drop` removes.
 - One equality gate: `set` with a value `Utils.deepEqual` to the held one changes nothing and notifies nobody. Plain data and value types (`Qt.rect`) are compared by content; a QObject (an `Item`, a window) only by identity.
 - The owner is the reporting object itself, never a uid.
-
-### Lifecycle
 - Created with its service.
 - An owner calls `drop` in `Component.onDestruction`; a destroyed owner that never dropped stays listed.
+
+Feature services each have their own doc under `docs/dev/features/`, `docs/dev/hyprland/` and `docs/dev/theming/` (see the index).
