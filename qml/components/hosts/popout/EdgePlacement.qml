@@ -221,12 +221,6 @@ QtObject {
   readonly property var _joins: SurfaceContext.joinsOf(root.frame, root._toScreen(root.probeStart), root.probeLength, root.connectorGap)
   readonly property bool joinStart: root._joins.joinStart
   readonly property bool joinEnd: root._joins.joinEnd
-  // Where windows past a perpendicular edge start, or a frame line plus
-  // `gap`, in from where windows start there (a held box's room)
-  function heldInset(side, gap) {
-    return ScreenEdgeManager.heldInset(root.screen, side, gap, root.bare);
-  }
-
   // The followed bar's pills or islands, in screen coordinates
   readonly property var _pills: root.pillBar ? (root.container?.pillRects ?? []).map(p => Object.assign({}, p, {
       "start": p.start + root.barStart
