@@ -81,6 +81,13 @@ Scope {
     if (root.showing)
       Qt.callLater(root._snap);
   }
+  // The auto-hiding bars on its screen out of place: showing toasts jump to
+  // their place measured past the bars in place, as at a fullscreen change
+  readonly property string _away: ScreenEdgeManager.awayOn(root.screen).join(" ")
+  on_AwayChanged: {
+    if (root.showing)
+      Qt.callLater(root._snap);
+  }
   function _snap() {
     root._still = true;
     root._snapping = true;

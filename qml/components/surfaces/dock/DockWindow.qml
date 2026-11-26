@@ -54,7 +54,7 @@ Scope {
   readonly property string _edgeName: ScreenEdge.name(root.edge)
   readonly property int connectorGap: placement.connectorGap
   // Held off the edge (`distance` across the free screen from it)
-  readonly property bool held: root.dock.detached
+  readonly property bool held: root.dock.detached || placement.edgeAway
   // Held off the edge, it fades in and out where it sits instead of sliding
   readonly property bool fades: root.held && root.dock.animation === "fade"
   // Where the window starts across the edge (what's reserved there; not

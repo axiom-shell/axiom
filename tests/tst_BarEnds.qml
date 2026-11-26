@@ -304,6 +304,37 @@ TestCase {
     compare(edge([], "top", borderless).frame, 0);
   }
 
+  // A bar out of place (hidden, or sliding) is absent from its edge:
+  // inner and frame are of what lies outside it
+  function test_away_bars_are_absent_from_the_edge() {
+    const bars = [bar("top", "floating"), bar("top", "transparent")];
+    const outer = edge([bars[0]], "top", withBorder);
+    const both = edge(bars, "top", withBorder);
+    compare(both.inner.id, "top:transparent");
+    const innerAway = edge(bars, "top", Object.assign({}, withBorder, {
+      "away": ["top:transparent"]
+    }));
+    compare(innerAway.inner.id, "top:floating", "the bar outside it");
+    compare(innerAway.frame, outer.frame, "its frame");
+    compare(innerAway.reserved, both.reserved, "reserving as before");
+    compare(innerAway.facing.id, both.facing.id);
+    const allAway = ["top:floating", "top:transparent"];
+    const border = edge(bars, "top", Object.assign({}, withBorder, {
+      "away": allAway
+    }));
+    compare(border.inner, null);
+    compare(border.frame, 8, "the border's margin");
+    compare(edge(bars, "top", Object.assign({}, borderless, {
+      "away": allAway
+    })).frame, 0, "no border");
+    compare(both.frame, edge(bars, "top", Object.assign({}, withBorder, {
+      "away": []
+    })).frame, "none away");
+    compare(edge(bars, "top", Object.assign({}, withBorder, {
+      "away": ["left:solid"]
+    })).inner.id, "top:transparent", "another edge's bars match nothing");
+  }
+
   // Switching a bar between solid and pills moves nothing: the same
   // reserve (windows start at the same line), its widgets the same
   // distance from the screen edge, border on or off

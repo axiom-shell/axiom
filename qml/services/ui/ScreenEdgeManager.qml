@@ -87,11 +87,26 @@ QtObject {
     return BarEnds.stacksOn(root.bars, screen?.name)[ScreenEdge.name(location)];
   }
 
+  // The ids of the auto-hiding bars on a screen out of place (hidden, or
+  // sliding): what surfaces measure past and what re-places them at once
+  // as it changes
+  function awayOn(screen) {
+    return Object.values(BarEnds.stacksOn(root.bars, screen?.name)).flat().filter(bar => bar.autoHiding && !(root.barOn(screen?.name ?? "", bar.location, bar.id)?.inPlace ?? false)).map(bar => bar.id).sort();
+  }
+
   // What a screen edge's bars and the border leave on it (BarEnds.edgeOf:
   // reserved, frame, corner, solidZone, insideTaken, inner, facing), integrated
-  // menus not counted
+  // menus not counted, the bars out of place (awayOn) absent
   function edgeOn(screen, location) {
-    return BarEnds.edgeOf(root.stackOn(screen, location), root.endsOptions);
+    return BarEnds.edgeOf(root.stackOn(screen, location), Object.assign({}, root.endsOptions, {
+      "away": root.awayOn(screen)
+    }));
+  }
+
+  // An edge whose bars are all out of place, with no border: what was
+  // attached there is held, as over a fullscreen window
+  function edgeAway(screen, location) {
+    return !Appearance.screenBorder && root.stackOn(screen, location).length > 0 && root.edgeOn(screen, location).inner === null;
   }
 
   // Where the open popouts of the bars outside a bar (a `bars` entry)
@@ -127,7 +142,7 @@ QtObject {
     return SurfaceContext.endKind({
       "border": Appearance.screenBorder,
       "bar": bar,
-      "barShowing": !bar || (root.barOn(screen?.name ?? "", location)?.present ?? false),
+      "barShowing": !bar || (root.barOn(screen?.name ?? "", location)?.inPlace ?? false),
       "menuZone": root.zoneOn(screen?.name ?? "", name)
     });
   }
@@ -202,7 +217,7 @@ QtObject {
         "start": gap,
         "end": gap
       };
-    const bar = root.edgesFor(screen)[ScreenEdge.name(location)];
+    const bar = root.edgeOn(screen, location).inner;
     const windowGap = bare ? side => root.floatGaps[ScreenEdge.name(side)] ?? 0 : side => bar?.island && side === location ? bar.floatingGap : side === location && bar ? Math.max(0, root.windowsPast(screen, side, root.frameLine(screen, side), bar.trim)) : Math.max(0, root.barReservedOn(screen, side) + (bar?.island ? root.floatGaps : CompositorManager.gapsOut)[ScreenEdge.name(side)] - root.frameLine(screen, side));
     const vertical = location === ScreenEdge.Left || location === ScreenEdge.Right;
     return {

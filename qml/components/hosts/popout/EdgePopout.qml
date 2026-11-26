@@ -209,7 +209,14 @@ PopoutWrapperBase {
   }
   readonly property bool _overFullscreen: root._fullscreenLatch.value ?? false
   property bool _snapping: false
-  onFullscreenChanged: {
+  onFullscreenChanged: root._jump()
+  // The auto-hiding bars on its screen out of place, as a string so it
+  // changes only when the set does: its edges' frame lines move with it
+  readonly property string _away: ScreenEdgeManager.awayOn(root.screen).join(" ")
+  on_AwayChanged: root._jump()
+  // Re-placed at once, with no animation (a slide would need each host to
+  // read the bar's Glide progress)
+  function _jump() {
     // Closed, it follows anyway; closing, it's on its way out
     if (!root.occupied || root.isClosing)
       return;

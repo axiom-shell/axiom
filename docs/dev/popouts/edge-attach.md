@@ -47,6 +47,7 @@
   - Examples: another bar on the perpendicular edge that is transparent or floating, or an integrated menu's strip.
   - A pill bar is joined, not walled; see [Bar popouts on pill bars](pill-and-floating-bars.md#bar-popouts-and-pill-bars).
   - This is `SurfaceContext.end`'s `wall`.
+- **Hidden auto-hiding bars:** an edge's `inner` bar and frame line are of the bars in place (`BarEnds.edgeOf` `away`), so a box follows or joins what lies outside a hidden bar ([held off an edge](held-off-edge.md)).
 - **Where the box sits:** a box at a wall (a bar popout's, an edge popout's or a dock's) sits in line with the windows there.
   - **That line** is `SurfaceContext.wallLine`: the further of that edge's frame line and its reserved space plus gaps_out, with the border on or off.
   - **Its fillet** curves past that line, beside the stroke it stands on.
