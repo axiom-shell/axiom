@@ -1,38 +1,38 @@
 {
   "qml/components/views/Settings/BarLookSample.qml": {
-    "rules": ["R7"],
+    "rules": ["color-property"],
     "reason": "draws a bar sample in its bar palette (BarsConfig/BarLook colours: the bar keeps its look, D-24)"
   },
   "qml/components/content/ColorSwatch/ColorSwatch.qml": {
-    "rules": ["R6"],
+    "rules": ["color-function"],
     "reason": "shows a colour value; its label reads on it (`Tone.bestOn` once per colour)"
   },
   "qml/components/content/NightLightControls/NightLightControls.qml": {
-    "rules": ["R6"],
+    "rules": ["color-function"],
     "reason": "the night light's colour temperature and the ink that reads on it"
   },
   "qml/components/views/Layouts/CanvasModule.qml": {
-    "rules": ["R6"],
+    "rules": ["color-function"],
     "reason": "a module tile's fill is the user's colour; its ink is picked once per fill (`Tone.bestOn`)"
   },
   "qml/components/surfaces/lockscreen/LockPreviewWindow.qml": {
-    "rules": ["R2", "R7"],
+    "rules": ["raw-color", "color-property"],
     "reason": "\"black\" stands in for the screen behind a preview"
   },
   "qml/components/surfaces/greeter/GreeterPreviewWindow.qml": {
-    "rules": ["R2", "R7"],
+    "rules": ["raw-color", "color-property"],
     "reason": "\"black\" stands in for the screen behind a preview"
   },
   "qml/shell/NoParentNotice.qml": {
-    "rules": ["R2", "R5", "R7"],
+    "rules": ["raw-color", "font-weight", "color-property"],
     "reason": "shown when axiom didn't start the shell: reads no config, creates no Style"
   },
   "qml/components/hosts/popout/SurfaceShadow.qml": {
-    "rules": ["R6"],
+    "rules": ["color-function"],
     "reason": "draws the shell's shadow for a look it is handed: Style.shadowColor(look), memoised per look (tokens.md › Performance 6)"
   },
   "qml/components/bar/**": {
-    "rules": ["R7"],
+    "rules": ["color-property"],
     "reason": "colours come from the bar palette (paint, BarColors), D-24"
   }
 }

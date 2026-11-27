@@ -3,7 +3,7 @@ import QtQuick
 
 // The shell's colour math: mixing, compositing, WCAG contrast and nudging a
 // colour until it reads. Every colour decision (Style, the bar's
-// BarWidgetStyle) calls these; UI never does (check.md R6). Pure: no files,
+// BarWidgetStyle) calls these; UI never does (`check_style` › `color-function`). Pure: no files,
 // processes or services.
 //
 // Two layers, one formula. The colour functions (`mix`, `nudged`, ...) take
