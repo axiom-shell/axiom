@@ -1,6 +1,6 @@
 # Review lenses
 
-What a reviewer agent reads besides its brief: "Every reviewer", then the lens sections its brief names. `review-branch` uses the six lenses here, over slices of a diff (`bugs`, `regressions`) and over the whole branch (the rest); `review-system` (`../review-system/lenses.md`) adds its own and reads "the branch" as "the system", where nothing is pre-existing.
+What a reviewer agent reads besides its brief: "Every reviewer", then the lens sections its brief names. `review-branch` uses the six lenses here, over slices of a diff (`bugs`, `regressions`) and over the whole branch (the rest).
 
 ## Every reviewer
 
@@ -49,11 +49,10 @@ The code should end smaller and plainer than the first draft that worked.
 
 Walk the rules in `CLAUDE.md`, the area's rules file against the code; report a break only with the rule quoted. The checks hold structure, sizes, imports, the Quickshell.Io allowlist, live Repeater models, `Quickshell.screens`, `Qt.formatDateTime` and readers' `??`: skip those. Most often broken and unchecked: the layering (UI polling or reading `ConfigManager.config`); the compositor reached past `CompositorManager` or gated on a name, not `supports`; `acquire`/`release` pairing; config written past `ConfigManager`/`SettingsManager` or a preview by mutation; a schema change without default, `x-scope`, migration or test; geometry not from `SurfaceContext`/`EdgeAttach`, a popout that moves, anything over fullscreen; radii, easing, `StyledIcon`, `ClippingRectangle`; `I18n.tr` sentences; `~` unexpanded, writes under `Paths.treePath`, secrets past `SecretsManager`, greeter side effects without `Paths.greeter`; a new methods case, migration step or script without its test; a new dependency missing from install.sh, `Packages.packages` or the PKGBUILDs.
 
-## design: does it make sense, and is it described truthfully
+## design: does it make sense
 
 - Is each piece in the layer and place the area's docs lead a reader to expect? Does a new abstraction earn its keep, or is an existing one bent to fit?
 - Illogical choices: a value computed in one place and corrected in another, a workaround where the cause is fixable, a fix in the consumer for the producer's problem, two sources of truth, a name saying the opposite of what it does, a timing hack (`Qt.callLater` chains, magic delays) standing in for an ordering the code could state.
-- Docs: every doc covering the changed files still true, describing the final code; a user-visible feature missing from `README.md` / `docs/features.md` / `docs/usage.md` where its kind is listed.
 - Intent: what the branch's purpose implies and the change doesn't do (a compositor left out, a setting not exposed), and changes the purpose doesn't explain.
 
 ## consistency: one way, one name, the codebase's way

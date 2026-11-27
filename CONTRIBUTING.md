@@ -62,7 +62,7 @@ You work in a clone of your own, anywhere, which axiom runs in **dev mode**: its
 2. **Find your way in.** Use the table below to find the doc for what you're touching, and read it first. Check the [open issues](https://github.com/axiom-shell/axiom/issues) in that area too.
 3. **Edit and save.** With dev mode running your clone, the shell reloads, so you see the change straight away, and a saved Go file rebuilds the binary too.
 4. **Check it** with `scripts/dev/verify.sh` until it prints `verify ok`. It formats your QML, runs the checks your change touches and shows the shell's log.
-5. **Update the docs** that describe what you changed (verify.sh lists them).
+5. **Keep each file's purpose comment true** if its why changed.
 6. **Open a pull request** against `main` and fill in the template, linking the issue it closes (`Fixes #123`). CI runs every check (`scripts/dev/verify.sh --all` locally).
 
 Found an unrelated bug along the way? [Report it](https://github.com/axiom-shell/axiom/issues/new?template=01-bug.yml) rather than fixing it in the same pull request.
@@ -129,13 +129,18 @@ More tricks for debugging the running shell are in [docs/dev/testing.md](docs/de
 
 ## Using AI
 
-Coding agents are welcome, and the repository is set up for Claude Code:
+- AI-generated code is welcome.
+- PR and issue descriptions must be written by you, to show you understand the problem and the fix. AI help with grammar or translation is fine.
+- Maintainers are exempt.
+- Use the repository's Claude Code setup as it is (recommended), or adapt it to your own workflow.
+
+The Claude Code setup:
 
 - `CLAUDE.md` holds the agent instructions, and `.claude/rules/` adds rules per area. They load on their own.
-- Every change starts with `/orchestrate <what you want>`. It sizes the change (T0 Fix, T1 Improvement, T2 Feature, T3 Cross-system), has the plan written and checked, builds it in a worktree in groups with alignment gates, reviews it and opens the pull request. It never merges.
+- Every change starts with `/orchestrate <what you want>`. It sizes the change (T0 Fix, T1 Improvement, T2 Feature, T3 Cross-system), has the plan written and checked, builds it in a worktree in groups with alignment gates, reviews it, then stops with a report of what changed and what to try live (`.plans/<slug>/report.md`). You push and open the pull request; if CI fails, run `/orchestrate resume <slug>` and say so. A stack stops after each part: once it has merged, run `/orchestrate resume <slug>` for the next.
 - `.claude/agents/` defines four roles: `architect` (Opus) writes specs and judges findings, `implementer` (Sonnet) builds from a spec or recipe, `reviewer` (Sonnet) reviews a small slice, `checker` (Haiku) runs the checks. `.claude/templates/`: how each skill starts an agent and what it returns.
 - Notes go in `.plans/<slug>/` (gitignored) and worktrees in `.claude/worktrees/`. Your `CLAUDE.local.md` can name other folders (`Plans folder:`, `Worktrees folder:`, and `Follow-ups file:` for review items outside the branch). A folder outside your clone must be a working directory (`permissions.additionalDirectories` in `.claude/settings.local.json`).
-- The skills: each recipe has one (`/bar-widget`, `/setting`, …) that runs it on `implementer`; `/keep-order`, `/align`, `/review-branch` and `/review-system` check alignment and review; `/verify` runs the checks.
+- The skills: each recipe has one (`/bar-widget`, `/setting`, …) that runs it on `implementer`; `/keep-order`, `/align` and `/review-branch` check alignment and review; `/verify` runs the checks.
 - Other agent tools: `AGENTS.md` points to the same files.
 
 You're still responsible for what you submit: read it, run it, and check the log.

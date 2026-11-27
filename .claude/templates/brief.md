@@ -1,6 +1,5 @@
 # Brief
 
-Used by: `.claude/skills/keep-order/SKILL.md`, `.claude/skills/review-branch/SKILL.md`, `.claude/skills/review-system/SKILL.md`, `.claude/skills/align/SKILL.md`, `/orchestrate`, the recipe skills.
 Filled by: the lead, for every agent it starts (fresh agent, `subagent_type: <role>`).
 
 ```
@@ -15,7 +14,7 @@ Done when: <acceptance ids, verbatim> + `verify.sh` → `verify ok` (`--all` →
 Report: <template path>; nothing it lists is dropped
 ```
 
-- Quote ledger rows; never paraphrase a name.
+- ~500 words. In a group run, Binding also quotes the plan's Binding, amendment and name rows, never the plan or amendments file, and asks the agent to report any plan error it finds (a contradicted plan row, a stale cite). A brief that won't fit goes to the architect to split the group.
 - An agent with no `Tree:` stops (a recipe skill typed directly: › Recipe skills).
 - Add your own decisions to `Binding` only as quoted D/R ids.
 
@@ -25,6 +24,5 @@ Report: <template path>; nothing it lists is dropped
 - Typed directly, with no `Tree:` or `Base:` in the task: Tree is `git rev-parse --show-toplevel` of the start folder, and Base is `git -C <tree> merge-base origin/main HEAD`.
 - Follow the recipe's Copy from, Steps and Watch out for.
 - Run its Check it steps (if it has none, the checks its Steps name), then verify until `verify ok`.
-- Update its Docs to update.
 - Stop on an open behaviour decision or a case the recipe doesn't cover, and name the question.
 - Report in `.claude/templates/implementer-report.md`, with **Names added**.

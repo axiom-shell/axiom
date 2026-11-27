@@ -1,7 +1,6 @@
 # Ledger
 
-Used by: `.claude/agents/architect.md`, `.claude/agents/implementer.md`, `.claude/skills/keep-order/SKILL.md`, `.claude/skills/align/SKILL.md`, `.claude/skills/review-branch/lenses.md` (consistency).
-Filled by: the architect, as `ledger.md` in the state folder; only an architect's ruling changes it. Implementers build against it: its names, units, reuse and patterns are binding.
+Filled by: the architect, as `ledger.md` in the state folder; only an architect's ruling changes it.
 
 ## Where to search
 
@@ -11,7 +10,7 @@ The one home of the search-before-writing list: the engine manifest `scripts/eng
 # <slug>: ledger
 ## Reuse          job | existing piece (path:line) | how used | differs by ("nothing" proven)
 ## Becomes        X | built from (X's own implementation, path) | each behaviour X has today | kept by (path:line) or LOST → open question
-## Names          name | kind | file | type and unit | meaning | status
+## Names          name | kind | file | type and unit | meaning | status (moved from path:line, changed, or new: why) | siblings (two existing, path:line; or none + grep)
 ## Patterns       kind of site | the one way (precedent path:line)
 ## Precedents     new file or member | what it mirrors
 ## Strings        user string | reused from or new
@@ -20,8 +19,5 @@ The one home of the search-before-writing list: the engine manifest `scripts/eng
 ## Disagreements  (audit-built ledgers only)
 ```
 
-- A piece that almost fits is extended, never copied; a difference the request doesn't ask for is an open question.
-- Becomes: X keeps its own implementation; building it from another piece needs a row per behaviour lost.
-- One concept, one name; a name the codebase uses for something else is not reused; siblings share a unit and argument order.
 - Changed pieces: not "shared piece", which names reusable/forms/parts files.
 - In a stack, rows are tagged `[P<n>]`.

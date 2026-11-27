@@ -1,7 +1,6 @@
 # Review report
 
-Used by: `.claude/skills/review-branch/SKILL.md` (§ Branch), `.claude/skills/review-system/SKILL.md` (§ System).
-Filled by: the lead of the review, from the confirmed findings.
+Filled by: the lead of the review, from the confirmed findings. Outside the branch and Outside the system are for the user only: never fixed here; the lead reports them (and `/orchestrate` writes them to the follow-ups file when CLAUDE.local.md names one), never files them elsewhere.
 
 ## Branch
 
@@ -17,8 +16,6 @@ Filled by: the lead of the review, from the confirmed findings.
 ## Unsure            (what would settle each)
 ## Outside the branch (problems the reviewers saw that the branch didn't cause: title and `path:line`)
 ```
-
-Outside the branch is for the user only: those are never fixed here; the lead reports them (and `/orchestrate` writes them to the follow-ups file when CLAUDE.local.md names one), never files them elsewhere.
 
 ## System
 
@@ -36,5 +33,3 @@ Outside the branch is for the user only: those are never fixed here; the lead re
 ## Coverage        (the slices and the lenses each got; files left out and why)
 ## Outside the system (problems in other systems' files: title and `path:line`)
 ```
-
-Outside the system is for the user only: those are never fixed here; the lead reports them (and `/orchestrate` writes them to the follow-ups file when CLAUDE.local.md names one), never files them elsewhere.

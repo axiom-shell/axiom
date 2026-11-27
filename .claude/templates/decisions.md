@@ -1,6 +1,5 @@
 # Decisions
 
-Used by: `.claude/skills/keep-order/SKILL.md`, `.claude/agents/architect.md` (Checking a plan), `/orchestrate`.
 Filled by: the lead, as `decisions.md` in the state folder, from the user's own words.
 
 ```
@@ -14,5 +13,5 @@ Filled by: the lead, as `decisions.md` in the state folder, from the user's own 
 
 - Quote the user; never paraphrase a request or an answer.
 - Product choices are D ids (the user's answer); technical scope calls with no product stake are R ids.
-- The plan check reads every "becomes", "acts as", "is treated as", "like", "same as" or "exactly as" in Request, Plan rows included.
-- Plan rows never become R rows and never reach a commit, a PR title or a PR body.
+- A later answer or ruling replaces the entry it supersedes, in place (same id, new date); nothing is kept for history.
+- Plan rows never become R rows and never reach a commit or the report.
