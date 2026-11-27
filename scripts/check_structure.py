@@ -35,9 +35,10 @@ running anything:
     (an entry no longer used is an error); every BlurShape's `shown:` reads
     `backed`
   - no Repeater model or acquire() request in the UI reads a polled
-    service's member (one owning an OwnerRegistry or DeadlineTicker), a
-    model also not a push service's array rebuilt per push, in the expression or through a property of the file; a model may
-    count one (`.length`, `.count`)
+    service's member (one owning an OwnerRegistry or DeadlineTicker), or,
+    for a model, a push service's array rebuilt per push, in the
+    expression or through a property of the file; a model may count one
+    (`.length`, `.count`)
   - the config UI and onboarding build no hover tint (StateLayer), key
     handler, sunken box, `onRowClicked`, `first:` literal or kept pushed
     `text`, and no SegmentButton outside a SegmentRow, SegmentTabs or
@@ -196,14 +197,14 @@ SEGMENT_ROW_SCOPES = ("qml/components/views/", "qml/components/content/", "qml/c
 SEGMENT_HOSTS = ("SegmentRow", "SegmentTabs", "StyledToggle")
 WIDGETS_DIR = "qml/components/bar/widgets"
 WIDGET_RULES = {
-    "widget-root": "has a root other than BarWidget or AudioLevelWidget",
-    "resolved-color": "resolves a colour: name a colour field, the base resolves it",
-    "opacity-fade": "fades by opacity or dims by a dim: a dim is a colour the base draws",
-    "color-field": "has a colour field nothing uses, or names a *Color that isn't one of its colour fields",
-    "base-output": "sets or writes what the base computes (WIDGET_OUTPUTS)",
-    "folder-files": "has a file in its folder besides <Type>.qml and schema.yaml",
-    "box-read": "reads .box (or a bare box in <Type>.qml): read shownItems",
-    "state-color-name": "names stateColorName: a state names its colour field (accentField)",
+    "widget-root": "a root other than BarWidget or AudioLevelWidget",
+    "resolved-color": "a resolved colour: name a colour field, the base resolves it",
+    "opacity-fade": "a fade by opacity or a dim by a dim: a dim is a colour the base draws",
+    "color-field": "a colour field nothing uses, or a *Color named that isn't one of the widget's colour fields",
+    "base-output": "a set or write of what the base computes (WIDGET_OUTPUTS)",
+    "folder-files": "a file in the widget's folder besides <Type>.qml and schema.yaml",
+    "box-read": "a .box read (or a bare box in <Type>.qml): read shownItems",
+    "state-color-name": "stateColorName named: a state names its colour field (accentField)",
 }
 WIDGET_ROOTS = {"BarWidget", "AudioLevelWidget"}
 # What the base computes: a widget declares data, never these (base-output)
@@ -1122,13 +1123,17 @@ def main():
     # BackendManager's or NotesManager's acquire()), read in the expression
     # or through one property of the same file; a model's live set also
     # holds the arrays a push service (one calling BackendManager.listen)
-    # assigns per push. A model may count one
+    # assigns per push (any `var` or `list` member it assigns: an
+    # approximation). A model may count one
     # (`.length`, `.count`: an int notifies only when it changes); a request
     # may not read one at all
-    polled = {f.stem for f in QML_ROOT.glob("services/*/*.qml") if re.search(r"\b(?:OwnerRegistry|DeadlineTicker)\s*\{", f.read_text())}
+    polled = set()
     pushed = {}
     for f in QML_ROOT.glob("services/*/*.qml"):
-        code = re.sub(r"//[^\n]*", "", f.read_text())
+        text = f.read_text()
+        if re.search(r"\b(?:OwnerRegistry|DeadlineTicker)\s*\{", text):
+            polled.add(f.stem)
+        code = re.sub(r"//[^\n]*", "", text)
         if "BackendManager.listen(" in code:
             pushed[f.stem] = {m for m in re.findall(r"\bproperty\s+(?:var|list<[^>]*>)\s+(\w+)", code)
                               if re.search(rf"(?<![\w.])(?<!let )(?<!const )(?<!var )(?:root\.)?{m}\s*=(?![=>])", code)}

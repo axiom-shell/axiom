@@ -4,7 +4,7 @@
 Every hit fails (docs/dev/core/style.md; the checks are listed in
 docs/dev/testing.md > The checks). The rules are `RULES`: each id and what it fails.
 
-Every hit fails; a line is waived with `// style-exempt: <reason>`, a file with an
+A line is waived with `// style-exempt: <reason>`, a file with an
 entry in scripts/style-exceptions.json (rules and reason; an entry no longer needed
 fails). A public `Style` member nothing reads fails too.
 
@@ -27,12 +27,12 @@ EXCEPTIONS = ROOT / "scripts" / "style-exceptions.json"
 
 RULES = {
     "theme-read": "a `Theme.` read (but the pickers' passthroughs), `Theme.resolveColor(` included",
-    "raw-color": "Qt.alpha/rgba/hsla/hsva/lighter/darker/tint, a quoted hex or CSS color",
+    "raw-color": "Qt.alpha/rgba/hsla/hsva/lighter/darker/tint, a quoted hex or CSS colour",
     "fractional-opacity": "a fractional opacity (a property named opacity or ...Opacity, an animation on it)",
     "text-size": "fontSizeBy(, fontSizeLarge, Appearance.fontSize as a text/icon size, a numeric textSize, a fitted size without its Style.type floor",
     "font-weight": "font.bold; font.weight set to anything but a role's weight",
-    "color-function": "a color function called in UI (Tone., StyleTokens., Qt.color(, Utils.contrast(, ...); in a service or reader: a stored resolved color",
-    "color-property": "a color property set to anything but a Style role, an ink, \"transparent\" or a property of the file itself",
+    "color-function": "a colour function called in UI (Tone., StyleTokens., Qt.color(, Utils.contrast(, ...); in a service or reader: a stored resolved colour",
+    "color-property": "a colour property set to anything but a Style role, an ink, \"transparent\" or a property of the file itself",
     "clip-color": "a ClippingRectangle with no color (its default is white)",
     "palette-part": "a Qt Quick Controls visual that leaves a part to the Qt palette",
     "canvas-revision": "a Canvas painting from Style with no Style.revision in its repaint key",
@@ -45,7 +45,7 @@ RULES = {
     "layer-over-content": "layer.enabled / layer.effect over content",
     "unhosted-scale": "a scale over content with no `contentZoom` host",
     "widget-radius": "`Widget.radius` read in UI: use Style.radius / Style.radiusInner",
-    "transparent-glide": "a color with a glide (ColorGlide / Behavior / ColorAnimation) bound to a bare \"transparent\": the fade passes through black; rest on Tone.cleared(<fill>)",
+    "transparent-glide": "a colour with a glide (ColorGlide / Behavior / ColorAnimation) bound to a bare \"transparent\": the fade passes through black; rest on Tone.cleared(<fill>)",
     "trough-read": "`Style.trough` read outside the trough pieces (StyledVolumeBar, StyledSlider, LevelMeter, SegmentMeter, PercentageCircle): draw the bar with one of them",
 }
 EVERYWHERE = {"redeclared-property", "bold-styled-text", "text-render-type"}
