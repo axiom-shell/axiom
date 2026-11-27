@@ -37,6 +37,7 @@ ROOT = Path(__file__).resolve().parent.parent
 # The shell's QML: `qs.` module names are relative to it
 QML_ROOT = ROOT / "qml"
 QML_DIRS = ["components", "shell", "services", "config"]
+METHODS = "qml/components/methods"
 
 # The colour calls a bar widget may not make (check_structure T2): the shell's colour functions and raw colours
 WIDGET_COLOR_CALLS = re.compile(

@@ -32,7 +32,6 @@ import manifests  # noqa: E402
 import qml_modules  # noqa: E402
 
 ROOT = qml_modules.ROOT
-METHODS = "qml/components/methods"
 MANIFEST = manifests.ENGINES.relative_to(ROOT).as_posix()
 SELF = "scripts/check_engines.py"
 DOC = "docs/dev/core/engines.md"
@@ -176,8 +175,8 @@ def _api_of(facade):
 
 
 def _placed(hits, engines, domains):
-    listed = [e["folder"] for e in engines.values() if e["folder"]] + [f"{METHODS}/{d}" for d in domains]
-    for folder in sorted((ROOT / METHODS).iterdir()):
+    listed = [e["folder"] for e in engines.values() if e["folder"]] + [f"{qml_modules.METHODS}/{d}" for d in domains]
+    for folder in sorted((ROOT / qml_modules.METHODS).iterdir()):
         rel = folder.relative_to(ROOT).as_posix()
         if folder.is_dir() and not any(manifests.within(rel, p) for p in listed):
             hits.add(rel, "placed", folder.name)
@@ -192,11 +191,11 @@ def _placed(hits, engines, domains):
 
 
 def _purity(hits, engines, domains):
-    for f in _expand([METHODS], ".qml"):
+    for f in _expand([qml_modules.METHODS], ".qml"):
         text = (ROOT / f).read_text()
         uses = next((e["uses"] for e in engines.values() if manifests.within(f, e["folder"])), None)
         if uses is None:
-            uses = next((d["uses"] for k, d in domains.items() if manifests.within(f, f"{METHODS}/{k}")), [])
+            uses = next((d["uses"] for k, d in domains.items() if manifests.within(f, f"{qml_modules.METHODS}/{k}")), [])
         allowed = {"QtQuick", "qs.components.methods", *(f"qs.components.methods.{u}" for u in uses)}
         code = qml_modules.blank_comments(text)
         found = [(m.start(1), m.group(1)) for m in IMPORT.finditer(code) if m.group(1) not in allowed]
@@ -324,7 +323,7 @@ def _trace(hits, engines):
 
 
 def _apply(hits, engines):
-    for f in _expand([p for e in engines.values() for p in (*e["adapters"], *e["itemPaths"])], ".qml"):
+    for f in _expand(manifests.adapter_paths(engines), ".qml"):
         text = (ROOT / f).read_text()
         lines = text.split("\n")
         found = [(at, token) for at, token in _matches(text, APPLY)
@@ -504,8 +503,8 @@ def _axes_of(file):
 def _tables_of(engines, flat, domains):
     """[(owner, tables, files, folder, entry)] of every rules-table owner: the engines, `$flat` and `$domains`."""
     owners = [(name, e["tables"], _engine_files(e), "", e) for name, e in engines.items()]
-    owners += [(f"$flat.{k}", v["tables"], None, METHODS, None) for k, v in flat.items()]
-    owners += [(f"$domains.{k}", v["tables"], None, f"{METHODS}/{k}", None) for k, v in domains.items()]
+    owners += [(f"$flat.{k}", v["tables"], None, qml_modules.METHODS, None) for k, v in flat.items()]
+    owners += [(f"$domains.{k}", v["tables"], None, f"{qml_modules.METHODS}/{k}", None) for k, v in domains.items()]
     return owners
 
 

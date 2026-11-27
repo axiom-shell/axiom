@@ -1,0 +1,3452 @@
+{
+  "qml/components/bar/BarContainer.qml": {
+    "bool-is-prefix": [
+      "isVertical:isVertical"
+    ],
+    "collection-suffix": [
+      "_endReachList:_endReachList",
+      "_openingList:_openingList",
+      "_stretchList:_stretchList"
+    ],
+    "getter-pairs": [
+      "barAt:barAt"
+    ],
+    "retired": [
+      "_endReach:joinGap",
+      "joinedGroups:joinGap",
+      "pillShapes:joinGap"
+    ],
+    "side-order": [
+      "BarContainer:joinEnd",
+      "BarContainer:joinStart",
+      "BarContainer:squareEnd",
+      "BarContainer:squareEnd#2",
+      "BarContainer:squareStart",
+      "BarContainer:squareStart#2",
+      "sectionJoins:chainEnd",
+      "sectionJoins:chainStart"
+    ]
+  },
+  "qml/components/bar/BarPanel.qml": {
+    "banner-style": [
+      "BarPanel:---"
+    ],
+    "handler-shaped-property": [
+      "onOverlayLayer:onOverlayLayer"
+    ]
+  },
+  "qml/components/bar/BarWidgetHost.qml": {
+    "bool-is-prefix": [
+      "isVertical:isVertical"
+    ]
+  },
+  "qml/components/bar/WidgetDecorations.qml": {
+    "retired": [
+      "WidgetDecorations:ctx",
+      "WidgetDecorations:ctx#2",
+      "WidgetDecorations:ctx#3",
+      "ctx:ctx"
+    ],
+    "side-order": [
+      "chainEnd:chainEnd"
+    ]
+  },
+  "qml/components/bar/WidgetGroup.qml": {
+    "bool-is-prefix": [
+      "isVertical:isVertical"
+    ],
+    "side-order": [
+      "chainEnd:chainEnd",
+      "chainStart:chainStart",
+      "joinEnd:joinEnd",
+      "joinStart:joinStart"
+    ]
+  },
+  "qml/components/bar/look/CellLook.qml": {
+    "handler-shaped-property": [
+      "onBar:onBar"
+    ]
+  },
+  "qml/components/bar/look/LevelFill.qml": {
+    "side-order": [
+      "seamEnd:seamEnd",
+      "seamStart:seamStart"
+    ]
+  },
+  "qml/components/bar/look/WidgetBackground.qml": {
+    "side-order": [
+      "openEnd:openEnd",
+      "openStart:openStart",
+      "seamEnd:seamEnd",
+      "seamStart:seamStart"
+    ]
+  },
+  "qml/components/bar/widgets/Battery/Battery.qml": {
+    "bool-is-prefix": [
+      "isCharging:isCharging"
+    ],
+    "unit-suffix": [
+      "Battery:/ 100"
+    ]
+  },
+  "qml/components/bar/widgets/Button/Button.qml": {
+    "timer-name": [
+      "Button:labelRefresh"
+    ]
+  },
+  "qml/components/bar/widgets/ClaudeUsage/ClaudeUsage.qml": {
+    "unit-suffix": [
+      "ClaudeUsage:/ 100"
+    ]
+  },
+  "qml/components/bar/widgets/Markets/Markets.qml": {
+    "short-params": [
+      "valueText:f"
+    ]
+  },
+  "qml/components/bar/widgets/Network/Network.qml": {
+    "unit-suffix": [
+      "Network:/ 100"
+    ]
+  },
+  "qml/components/bar/widgets/Separator/Separator.qml": {
+    "unit-suffix": [
+      "Separator:/ 100"
+    ]
+  },
+  "qml/components/bar/widgets/SystemStats/SystemStats.qml": {
+    "unit-suffix": [
+      "SystemStats:/ 100",
+      "SystemStats:/ 100#2"
+    ]
+  },
+  "qml/components/bar/widgets/Tailscale/Tailscale.qml": {
+    "bool-is-prefix": [
+      "isConnected:isConnected"
+    ]
+  },
+  "qml/components/bar/widgets/Workspaces/ActiveCellIndicator.qml": {
+    "bool-is-prefix": [
+      "isVertical:isVertical"
+    ]
+  },
+  "qml/components/bar/widgets/Workspaces/ActiveStrip.qml": {
+    "bool-is-prefix": [
+      "isVertical:isVertical"
+    ]
+  },
+  "qml/components/bar/widgets/Workspaces/SpecialCells.qml": {
+    "bool-is-prefix": [
+      "isVertical:isVertical"
+    ]
+  },
+  "qml/components/bar/widgets/Workspaces/StripWindows.qml": {
+    "bool-is-prefix": [
+      "isVertical:isVertical"
+    ]
+  },
+  "qml/components/bar/widgets/Workspaces/StripWindowsBox.qml": {
+    "bool-is-prefix": [
+      "StripWindowsBox:isFocused",
+      "isVertical:isVertical"
+    ]
+  },
+  "qml/components/bar/widgets/Workspaces/WorkspaceCell.qml": {
+    "bool-is-prefix": [
+      "isActive:isActive",
+      "isVertical:isVertical"
+    ]
+  },
+  "qml/components/bar/widgets/Workspaces/WorkspaceCellRow.qml": {
+    "bool-is-prefix": [
+      "isVertical:isVertical"
+    ]
+  },
+  "qml/components/bar/widgets/Workspaces/WorkspaceGridStrip.qml": {
+    "bool-is-prefix": [
+      "isVertical:isVertical"
+    ],
+    "getter-pairs": [
+      "placeOf:placeOf"
+    ]
+  },
+  "qml/components/bar/widgets/Workspaces/WorkspaceStrip.qml": {
+    "bool-is-prefix": [
+      "isVertical:isVertical"
+    ]
+  },
+  "qml/components/bar/widgets/base/AudioLevelWidget.qml": {
+    "unit-suffix": [
+      "AudioLevelWidget:/ 100",
+      "maxVolume:/ 100"
+    ]
+  },
+  "qml/components/bar/widgets/base/BarWidget.qml": {
+    "bool-is-prefix": [
+      "isVertical:isVertical"
+    ],
+    "side-order": [
+      "pinStart:pinStart"
+    ]
+  },
+  "qml/components/bar/widgets/base/IconTextRow.qml": {
+    "bool-is-prefix": [
+      "isVertical:isVertical"
+    ]
+  },
+  "qml/components/bar/widgets/base/ValueGraphic.qml": {
+    "spelling": [
+      "ValueGraphic:centre"
+    ]
+  },
+  "qml/components/bar/widgets/base/WidgetSegments.qml": {
+    "bool-is-prefix": [
+      "isVertical:isVertical"
+    ]
+  },
+  "qml/components/content/AudioMixer/AudioMixer.qml": {
+    "unit-suffix": [
+      "maxVolume:/ 100"
+    ]
+  },
+  "qml/components/content/Battery/Battery.qml": {
+    "unit-suffix": [
+      "Battery:/ 100"
+    ]
+  },
+  "qml/components/content/Calculator/Calculator.qml": {
+    "spelling": [
+      "Calculator:centred"
+    ],
+    "timer-name": [
+      "Calculator:copiedReset"
+    ]
+  },
+  "qml/components/content/ClaudeUsage/ClaudeUsage.qml": {
+    "getter-pairs": [
+      "toneFor:toneFor"
+    ],
+    "short-params": [
+      "duration:ms"
+    ],
+    "unit-suffix": [
+      "ClaudeUsage:/ 100"
+    ]
+  },
+  "qml/components/content/ClipboardHistory/ClipboardHistory.qml": {
+    "timer-name": [
+      "ClipboardHistory:copiedReset"
+    ]
+  },
+  "qml/components/content/Clock/Clock.qml": {
+    "unit-suffix": [
+      "capRatio:/ 100",
+      "lineRatio:/ 100"
+    ]
+  },
+  "qml/components/content/ClockCalendar/ClockCalendar.qml": {
+    "handler-shaped-property": [
+      "onLockscreen:onLockscreen"
+    ]
+  },
+  "qml/components/content/Disks/Disks.qml": {
+    "unit-suffix": [
+      "Disks:/ 100",
+      "Disks:/ 100#2"
+    ]
+  },
+  "qml/components/content/EmojiPicker/EmojiPicker.qml": {
+    "getter-pairs": [
+      "nameOf:nameOf"
+    ],
+    "timer-name": [
+      "EmojiPicker:copiedReset"
+    ]
+  },
+  "qml/components/content/Greeting/Greeting.qml": {
+    "handler-shaped-property": [
+      "onGreeter:onGreeter"
+    ]
+  },
+  "qml/components/content/Login/Login.qml": {
+    "handler-shaped-property": [
+      "onGreeter:onGreeter"
+    ]
+  },
+  "qml/components/content/NightLightControls/NightLightControls.qml": {
+    "unit-suffix": [
+      "kelvinAt:/ 100"
+    ]
+  },
+  "qml/components/content/NowPlaying/NowPlaying.qml": {
+    "banner-style": [
+      "NowPlaying:---",
+      "NowPlaying:---#2",
+      "NowPlaying:---#3",
+      "NowPlaying:---#4"
+    ]
+  },
+  "qml/components/content/Password/Password.qml": {
+    "handler-shaped-property": [
+      "onLockscreen:onLockscreen"
+    ]
+  },
+  "qml/components/content/Submenu/Submenu.qml": {
+    "bool-is-prefix": [
+      "isOpen:isOpen"
+    ]
+  },
+  "qml/components/content/Tailscale/Tailscale.qml": {
+    "short-params": [
+      "osIcon:os"
+    ]
+  },
+  "qml/components/content/VolumeDials/VolumeDials.qml": {
+    "unit-suffix": [
+      "VolumeDials:/ 100",
+      "VolumeDials:/ 100#2",
+      "VolumeDials:/ 100#3",
+      "VolumeDials:/ 100#4"
+    ]
+  },
+  "qml/components/content/WifiNetworks/WifiNetworks.qml": {
+    "unit-suffix": [
+      "kindIcon:/ 100"
+    ]
+  },
+  "qml/components/content/WorkspaceStrips/WorkspaceStrips.qml": {
+    "bool-is-prefix": [
+      "WorkspaceStrips:isActive"
+    ]
+  },
+  "qml/components/content/base/CardHeader.qml": {
+    "signal-shape": [
+      "reset:reset",
+      "save:save"
+    ]
+  },
+  "qml/components/content/base/SaveResetActions.qml": {
+    "signal-shape": [
+      "reset:reset",
+      "save:save"
+    ]
+  },
+  "qml/components/content/base/TitledCard.qml": {
+    "signal-shape": [
+      "reset:reset",
+      "save:save"
+    ]
+  },
+  "qml/components/content/parts/CodeLine.qml": {
+    "timer-name": [
+      "CodeLine:copiedTimer"
+    ]
+  },
+  "qml/components/content/parts/CountdownTimer.qml": {
+    "bool-is-prefix": [
+      "CountdownTimer:isRecent"
+    ],
+    "signal-shape": [
+      "reset:reset"
+    ]
+  },
+  "qml/components/content/parts/DefaultAppPickers.qml": {
+    "banner-style": [
+      "DefaultAppPickers:---"
+    ],
+    "getter-pairs": [
+      "optionsOf:optionsOf"
+    ]
+  },
+  "qml/components/content/parts/PriceChart.qml": {
+    "short-params": [
+      "xOf:t",
+      "yOf:p"
+    ]
+  },
+  "qml/components/content/parts/TrayMenuItem.qml": {
+    "timer-name": [
+      "TrayMenuItem:submenuHoverTimer"
+    ]
+  },
+  "qml/components/content/parts/WifiJoinForm.qml": {
+    "spelling": [
+      "cancelled:cancelled"
+    ]
+  },
+  "qml/components/content/parts/chat/ChatCodeBlock.qml": {
+    "timer-name": [
+      "ChatCodeBlock:copiedTimer"
+    ]
+  },
+  "qml/components/content/parts/chat/ChatHeader.qml": {
+    "signal-shape": [
+      "toggleList:toggleList",
+      "togglePicker:togglePicker"
+    ]
+  },
+  "qml/components/content/parts/chat/ChatMessage.qml": {
+    "banner-style": [
+      "ChatMessage:---",
+      "ChatMessage:---#2",
+      "ChatMessage:---#3"
+    ],
+    "bool-is-prefix": [
+      "isLast:isLast"
+    ]
+  },
+  "qml/components/content/parts/chat/ChatThinking.qml": {
+    "unit-suffix": [
+      "durationMs:durationMs"
+    ]
+  },
+  "qml/components/content/parts/custom/CustomElementBase.qml": {
+    "getter-pairs": [
+      "actionFor:actionFor",
+      "colorFor:colorFor",
+      "colorOf:colorOf",
+      "inkOn:inkOn"
+    ],
+    "short-params": [
+      "placeX:w",
+      "placeY:h"
+    ],
+    "timer-name": [
+      "CustomElementBase:flashTimer"
+    ]
+  },
+  "qml/components/content/parts/custom/elements/Bar/CustomBar.qml": {
+    "getter-pairs": [
+      "valueOf:valueOf"
+    ]
+  },
+  "qml/components/content/parts/custom/elements/Button/CustomButton.qml": {
+    "spelling": [
+      "coloured:coloured"
+    ],
+    "timer-name": [
+      "CustomButton:askTimer"
+    ]
+  },
+  "qml/components/content/parts/custom/elements/List/CustomList.qml": {
+    "timer-name": [
+      "CustomList:askTimer"
+    ]
+  },
+  "qml/components/content/parts/custom/elements/Separator/CustomSeparator.qml": {
+    "unit-suffix": [
+      "CustomSeparator:/ 100"
+    ]
+  },
+  "qml/components/content/parts/notes/NoteBrowser.qml": {
+    "bool-is-prefix": [
+      "NoteBrowser:isCurrent"
+    ],
+    "timer-name": [
+      "NoteBrowser:searchDelay"
+    ]
+  },
+  "qml/components/content/parts/notes/NoteEditor.qml": {
+    "banner-style": [
+      "NoteEditor:---",
+      "NoteEditor:---#2",
+      "NoteEditor:---#3"
+    ]
+  },
+  "qml/components/forms/FieldChangeMarks.qml": {
+    "signal-shape": [
+      "reset:reset"
+    ]
+  },
+  "qml/components/forms/GreeterSetup.qml": {
+    "handler-shaped-property": [
+      "GreeterSetup:onMain"
+    ]
+  },
+  "qml/components/forms/IntegrationHookup.qml": {
+    "short-params": [
+      "outline:t"
+    ]
+  },
+  "qml/components/forms/PickedChips.qml": {
+    "getter-pairs": [
+      "iconOf:iconOf",
+      "labelOf:labelOf"
+    ],
+    "short-params": [
+      "add:v",
+      "iconOf:v",
+      "labelOf:v"
+    ]
+  },
+  "qml/components/forms/SchemaComboBox.qml": {
+    "signal-shape": [
+      "selectionChanged:selectionChanged"
+    ]
+  },
+  "qml/components/forms/SchemaField.qml": {
+    "getter-pairs": [
+      "_valueOf:_valueOf"
+    ]
+  },
+  "qml/components/forms/SchemaNumberField.qml": {
+    "short-params": [
+      "clamp:v",
+      "setValue:v"
+    ],
+    "timer-name": [
+      "SchemaNumberField:commitTimer"
+    ]
+  },
+  "qml/components/forms/SchemaPropertiesForm.qml": {
+    "getter-pairs": [
+      "valueAt:valueAt"
+    ]
+  },
+  "qml/components/forms/ScreenSharingSetup.qml": {
+    "timer-name": [
+      "ScreenSharingSetup:_recheck"
+    ]
+  },
+  "qml/components/forms/SettingRows.qml": {
+    "getter-pairs": [
+      "valueAt:valueAt"
+    ],
+    "timer-name": [
+      "SettingRows:saveTimer"
+    ]
+  },
+  "qml/components/forms/SizingNote.qml": {
+    "getter-pairs": [
+      "lineFor:lineFor"
+    ]
+  },
+  "qml/components/hosts/overlay/ExpandedModule.qml": {
+    "timer-name": [
+      "ExpandedModule:done"
+    ]
+  },
+  "qml/components/hosts/overlay/ModuleGrid.qml": {
+    "short-params": [
+      "rowsFor:px"
+    ]
+  },
+  "qml/components/hosts/overlay/OverlayPageNavigator.qml": {
+    "bool-is-prefix": [
+      "OverlayPageNavigator:isCurrent"
+    ],
+    "signal-shape": [
+      "select:select"
+    ]
+  },
+  "qml/components/hosts/overlay/OverlayPages.qml": {
+    "timer-name": [
+      "OverlayPages:settleTimer"
+    ]
+  },
+  "qml/components/hosts/overlay/OverlayPanel.qml": {
+    "bool-is-prefix": [
+      "isOpen:isOpen"
+    ],
+    "timer-name": [
+      "OverlayPanel:hideTimer",
+      "OverlayPanel:keptTimer"
+    ]
+  },
+  "qml/components/hosts/popout/AttachedSurface.qml": {
+    "banner-style": [
+      "AttachedSurface:----"
+    ],
+    "side-order": [
+      "_straightJoinEnd:_straightJoinEnd",
+      "_straightJoinStart:_straightJoinStart",
+      "flushEnd:flushEnd",
+      "flushStart:flushStart",
+      "joinEnd:joinEnd",
+      "joinStart:joinStart",
+      "straightJoinEnd:straightJoinEnd",
+      "straightJoinStart:straightJoinStart"
+    ]
+  },
+  "qml/components/hosts/popout/BarPopouts.qml": {
+    "banner-style": [
+      "BarPopouts:----",
+      "BarPopouts:----#2",
+      "BarPopouts:----#3",
+      "BarPopouts:----#4",
+      "BarPopouts:----#5",
+      "BarPopouts:----#6",
+      "BarPopouts:----#7",
+      "BarPopouts:----#8"
+    ],
+    "handler-shaped-property": [
+      "onOverlayLayer:onOverlayLayer"
+    ],
+    "spelling": [
+      "anchorCentre:anchorCentre"
+    ]
+  },
+  "qml/components/hosts/popout/EdgePlacement.qml": {
+    "banner-style": [
+      "EdgePlacement:---",
+      "EdgePlacement:---#2",
+      "EdgePlacement:---#3",
+      "EdgePlacement:---#4",
+      "EdgePlacement:---#5"
+    ],
+    "handler-shaped-property": [
+      "onOverlayLayer:onOverlayLayer",
+      "onPill:onPill"
+    ],
+    "retired": [
+      "insetStart:insetStart",
+      "strokeInsetStart:strokeInsetStart",
+      "submenuJoin:joinGap"
+    ],
+    "side-order": [
+      "joinEnd:joinEnd",
+      "joinStart:joinStart",
+      "straightJoinEnd:straightJoinEnd",
+      "straightJoinStart:straightJoinStart"
+    ],
+    "spelling": [
+      "centre:centre"
+    ]
+  },
+  "qml/components/hosts/popout/EdgePopout.qml": {
+    "banner-style": [
+      "EdgePopout:----",
+      "EdgePopout:----#2"
+    ],
+    "handler-shaped-property": [
+      "onOverlayLayer:onOverlayLayer"
+    ],
+    "retired": [
+      "startInset:insetStart",
+      "startStrokeInset:strokeInsetStart"
+    ],
+    "side-order": [
+      "joinEnd:joinEnd",
+      "joinStart:joinStart"
+    ],
+    "spelling": [
+      "triggerCentre:triggerCentre"
+    ],
+    "timer-name": [
+      "graceTimer:graceTimer"
+    ]
+  },
+  "qml/components/hosts/popout/EdgeTrigger.qml": {
+    "spelling": [
+      "_centre:_centre",
+      "centre:centre"
+    ],
+    "timer-name": [
+      "EdgeTrigger:hoverTimer"
+    ]
+  },
+  "qml/components/hosts/popout/PillBarJoin.qml": {
+    "retired": [
+      "filleted:joinGap"
+    ]
+  },
+  "qml/components/hosts/popout/PopoutAnchor.qml": {
+    "timer-name": [
+      "PopoutAnchor:openTimer"
+    ]
+  },
+  "qml/components/hosts/popout/PopoutWrapperBase.qml": {
+    "banner-style": [
+      "PopoutWrapperBase:----",
+      "PopoutWrapperBase:----#2"
+    ],
+    "bool-is-prefix": [
+      "isClosing:isClosing",
+      "isOpen:isOpen"
+    ],
+    "timer-name": [
+      "PopoutWrapperBase:closeDelayTimer",
+      "PopoutWrapperBase:dismissTimer",
+      "PopoutWrapperBase:parkTimer"
+    ]
+  },
+  "qml/components/hosts/popout/ShapeShadow.qml": {
+    "timer-name": [
+      "ShapeShadow:bakeTimer"
+    ]
+  },
+  "qml/components/hosts/popout/SubPopout.qml": {
+    "handler-shaped-property": [
+      "SubPopout:onOverlayLayer"
+    ]
+  },
+  "qml/components/hosts/popout/SubmenuSide.qml": {
+    "side-order": [
+      "joinEnd:joinEnd",
+      "joinStart:joinStart"
+    ],
+    "spelling": [
+      "boxCentreX:boxCentreX",
+      "boxCentreY:boxCentreY"
+    ]
+  },
+  "qml/components/hosts/window/LayerOrigin.qml": {
+    "timer-name": [
+      "_timeout:_timeout"
+    ]
+  },
+  "qml/components/hosts/window/LayerSlot.qml": {
+    "handler-shaped-property": [
+      "onOverlayLayer:onOverlayLayer"
+    ]
+  },
+  "qml/components/methods/AudioDevices.qml": {
+    "short-params": [
+      "deviceName:d"
+    ]
+  },
+  "qml/components/methods/Backdrop.qml": {
+    "banner-style": [
+      "Backdrop:----"
+    ],
+    "positional-args": [
+      "region:region"
+    ],
+    "spelling": [
+      "_grey:_grey",
+      "_lum:grey",
+      "greyOf:greyOf"
+    ]
+  },
+  "qml/components/methods/BackingRule.qml": {
+    "short-params": [
+      "backsOn:o"
+    ]
+  },
+  "qml/components/methods/BarAutoColors.qml": {
+    "short-params": [
+      "distance:a",
+      "distance:b",
+      "similarity:a",
+      "similarity:b"
+    ]
+  },
+  "qml/components/methods/BarCells.qml": {
+    "positional-args": [
+      "cellContains:cellContains",
+      "cellLength:cellLength",
+      "cellRoom:cellRoom",
+      "cellSegment:cellSegment",
+      "cellShape:cellShape",
+      "cellTab:cellTab"
+    ]
+  },
+  "qml/components/methods/BarEnds.qml": {
+    "getter-pairs": [
+      "edgeOf:edgeOf",
+      "edgesOn:edgesOn"
+    ],
+    "object-keys": [
+      "crossGeometry:extent",
+      "crossGeometry:extent#2",
+      "crossGeometry:extent#3",
+      "endsOf:from"
+    ],
+    "positional-args": [
+      "coveredSpans:coveredSpans"
+    ],
+    "retired": [
+      "_barStroke:opts",
+      "_frame:opts",
+      "crossGeometry:opts",
+      "edgeOf:opts",
+      "endInset:opts",
+      "endOf:floatGaps",
+      "endOf:opts",
+      "endsOf:opts",
+      "placeStack:opts",
+      "tabBounds:opts",
+      "tabEndRoom:floatGaps",
+      "tabEndRoom:opts",
+      "windowInset:floatGaps",
+      "windowInset:opts",
+      "withEnds:opts"
+    ]
+  },
+  "qml/components/methods/BarEnrich.qml": {
+    "object-keys": [
+      "enrich:extent"
+    ],
+    "retired": [
+      "endsOptions:floatGaps",
+      "enrich:floatGaps"
+    ],
+    "unit-suffix": [
+      "fontSize:/ 100"
+    ]
+  },
+  "qml/components/methods/BarGradient.qml": {
+    "short-params": [
+      "gradientAt:t"
+    ]
+  },
+  "qml/components/methods/BarLayout.qml": {
+    "object-keys": [
+      "layoutSections:extent",
+      "layoutSections:extent#2",
+      "layoutSections:extent#3",
+      "layoutSections:extent#4",
+      "layoutSections:extent#5",
+      "layoutSections:extent#6",
+      "layoutSections:extent#7",
+      "layoutSections:extent#8",
+      "layoutSections:extent#9"
+    ],
+    "positional-args": [
+      "allocate:allocate",
+      "endReaches:endReaches",
+      "islandRects:islandRects",
+      "layoutSections:layoutSections",
+      "overflowHidden:overflowHidden",
+      "pillRects:pillRects",
+      "sectionRooms:sectionRooms"
+    ],
+    "retired": [
+      "joinGroups:joinGap"
+    ],
+    "side-order": [
+      "endReaches:joinEnd",
+      "endReaches:joinEnd#2",
+      "endReaches:joinEnd#3",
+      "endReaches:joinStart",
+      "endReaches:joinStart#2",
+      "endReaches:joinStart#3",
+      "islandRects:joinEnd",
+      "islandRects:joinStart"
+    ]
+  },
+  "qml/components/methods/BarLook.qml": {
+    "unit-suffix": [
+      "resolve:/ 100"
+    ]
+  },
+  "qml/components/methods/BarOutlines.qml": {
+    "object-keys": [
+      "_pen:to"
+    ],
+    "short-params": [
+      "dashPath:o",
+      "fillets:o",
+      "marks:o",
+      "offsetPath:o",
+      "path:o"
+    ]
+  },
+  "qml/components/methods/BarRuns.qml": {
+    "object-keys": [
+      "runBackground:from",
+      "runBackground:to"
+    ],
+    "positional-args": [
+      "insets:insets",
+      "runBackground:runBackground"
+    ],
+    "retired": [
+      "insets:ctx",
+      "runBackground:ctx",
+      "segmentAt:ctx"
+    ]
+  },
+  "qml/components/methods/BarShapes.qml": {
+    "positional-args": [
+      "boxRect:boxRect",
+      "capPoints:capPoints",
+      "contains:contains",
+      "iconTextSplit:iconTextSplit",
+      "segment:segment",
+      "splitPart:splitPart",
+      "splitRoom:splitRoom"
+    ],
+    "short-params": [
+      "capPoints:d",
+      "capPoints:h",
+      "capPoints:r",
+      "contains:u",
+      "contains:v",
+      "outline:o"
+    ]
+  },
+  "qml/components/methods/BarTabs.qml": {
+    "object-keys": [
+      "sides:to"
+    ],
+    "positional-args": [
+      "tab:tab",
+      "tabFillet:tabFillet"
+    ],
+    "short-params": [
+      "sides:o"
+    ]
+  },
+  "qml/components/methods/BarWidgetStyle.qml": {
+    "object-keys": [
+      "palette:from",
+      "palette:to"
+    ],
+    "positional-args": [
+      "cell:cell",
+      "colors:colors",
+      "fieldColor:fieldColor"
+    ],
+    "short-params": [
+      "mixColors:a",
+      "mixColors:b",
+      "mixColors:t",
+      "pulseLadder:a",
+      "pulseLadder:b"
+    ]
+  },
+  "qml/components/methods/BindActions.qml": {
+    "getter-pairs": [
+      "iconOf:iconOf",
+      "sectionFor:sectionFor"
+    ]
+  },
+  "qml/components/methods/BindConditions.qml": {
+    "short-params": [
+      "exclusive:a",
+      "exclusive:b"
+    ]
+  },
+  "qml/components/methods/BindGroups.qml": {
+    "positional-args": [
+      "groups:groups"
+    ]
+  },
+  "qml/components/methods/CalendarEvents.qml": {
+    "banner-style": [
+      "CalendarEvents:---"
+    ],
+    "object-keys": [
+      "rangeFor:from",
+      "rangeFor:to",
+      "widened:from",
+      "widened:to"
+    ],
+    "positional-args": [
+      "newDraft:newDraft"
+    ],
+    "short-params": [
+      "compare:a",
+      "compare:b"
+    ],
+    "unit-suffix": [
+      "dayMs:dayMs"
+    ]
+  },
+  "qml/components/methods/ChoiceGrid.qml": {
+    "positional-args": [
+      "columns:columns"
+    ]
+  },
+  "qml/components/methods/ColorTemperature.qml": {
+    "unit-suffix": [
+      "rgb:/ 100"
+    ]
+  },
+  "qml/components/methods/ColumnSplit.qml": {
+    "object-keys": [
+      "runsN:from",
+      "runsN:to"
+    ],
+    "positional-args": [
+      "placeN:placeN",
+      "splitsN:splitsN"
+    ]
+  },
+  "qml/components/methods/CustomWidgetData.qml": {
+    "banner-style": [
+      "CustomWidgetData:---",
+      "CustomWidgetData:---#2",
+      "CustomWidgetData:---#3",
+      "CustomWidgetData:---#4"
+    ],
+    "getter-pairs": [
+      "actionOf:actionOf",
+      "colorFor:colorFor"
+    ],
+    "object-keys": [
+      "_el:h",
+      "_el:w",
+      "defaultElements:h",
+      "defaultElements:h#2",
+      "defaultElements:w",
+      "defaultElements:w#2",
+      "presets:h",
+      "presets:h#2",
+      "presets:h#3",
+      "presets:h#4",
+      "presets:h#5",
+      "presets:h#6",
+      "presets:h#7",
+      "presets:h#8",
+      "presets:w",
+      "presets:w#2",
+      "presets:w#3",
+      "presets:w#4",
+      "presets:w#5",
+      "presets:w#6",
+      "presets:w#7",
+      "presets:w#8"
+    ],
+    "positional-args": [
+      "colorFor:colorFor",
+      "previewZoom:previewZoom",
+      "rect:rect"
+    ],
+    "retired": [
+      "commandLine:ctx"
+    ],
+    "short-params": [
+      "asText:v",
+      "rows:v",
+      "series:v",
+      "truthy:v"
+    ]
+  },
+  "qml/components/methods/DockLayout.qml": {
+    "positional-args": [
+      "magnifiedSizes:magnifiedSizes"
+    ],
+    "short-params": [
+      "overlaps:a",
+      "overlaps:b"
+    ]
+  },
+  "qml/components/methods/DynamicWorkspaces.qml": {
+    "object-keys": [
+      "compaction:from",
+      "compaction:to",
+      "compaction:to#2"
+    ]
+  },
+  "qml/components/methods/EdgeAttach.qml": {
+    "positional-args": [
+      "joinOpening:joinOpening",
+      "joins:joins",
+      "pillJoinFilleted:pillJoinFilleted"
+    ],
+    "short-params": [
+      "growth:s",
+      "joins:hi",
+      "joins:lo",
+      "modesAt:s",
+      "place:s"
+    ],
+    "side-order": [
+      "_offPills:flushEnd",
+      "_offPills:flushStart"
+    ],
+    "spelling": [
+      "pillAt:centre"
+    ]
+  },
+  "qml/components/methods/FieldFit.qml": {
+    "positional-args": [
+      "place:place"
+    ],
+    "short-params": [
+      "least:t",
+      "place:t"
+    ]
+  },
+  "qml/components/methods/FlowColumns.qml": {
+    "object-keys": [
+      "blocks:from",
+      "blocks:to"
+    ],
+    "positional-args": [
+      "count:count",
+      "place:place"
+    ]
+  },
+  "qml/components/methods/FrameOutline.qml": {
+    "positional-args": [
+      "screenStrokePieces:screenStrokePieces",
+      "stripStroke:stripStroke"
+    ],
+    "short-params": [
+      "blurRegion:f",
+      "blurRegion:h",
+      "blurRegion:w",
+      "cornerBox:f",
+      "cornerCovered:f",
+      "cornerSize:f",
+      "framePath:f",
+      "framePath:h",
+      "framePath:w",
+      "innerPath:f",
+      "innerPath:h",
+      "innerPath:w",
+      "strokePixels:r",
+      "windowPixels:r"
+    ]
+  },
+  "qml/components/methods/FreeMenuPlace.qml": {
+    "getter-pairs": [
+      "shownOn:shownOn"
+    ],
+    "positional-args": [
+      "hosts:hosts"
+    ],
+    "short-params": [
+      "keepsDrag:p",
+      "openAction:p",
+      "openedOn:p",
+      "place:p",
+      "shownOn:p",
+      "spot:p"
+    ],
+    "unit-suffix": [
+      "place:/ 100",
+      "place:/ 100#2"
+    ]
+  },
+  "qml/components/methods/GridPlacement.qml": {
+    "banner-style": [
+      "GridPlacement:---",
+      "GridPlacement:---#2"
+    ],
+    "getter-pairs": [
+      "offsetFor:offsetFor",
+      "rectOf:rectOf",
+      "zoomOf:zoomOf"
+    ],
+    "object-keys": [
+      "_copy:h",
+      "_copy:w",
+      "alignments:from",
+      "alignments:to",
+      "anchorPlaces:h",
+      "anchorPlaces:w",
+      "canvasDropPlace:h",
+      "canvasDropPlace:w",
+      "canvasExtent:h",
+      "canvasExtent:h#2",
+      "canvasExtent:w",
+      "canvasExtent:w#2",
+      "centreGuides:from",
+      "centreGuides:to",
+      "cover:h",
+      "cover:w",
+      "firstFree:h",
+      "firstFree:h#2",
+      "firstFree:h#3",
+      "firstFree:h#4",
+      "firstFree:w",
+      "firstFree:w#2",
+      "firstFree:w#3",
+      "firstFree:w#4",
+      "firstFreeIn:h",
+      "firstFreeIn:w",
+      "fitPlace:h",
+      "fitPlace:h#2",
+      "fitPlace:w",
+      "fitPlace:w#2",
+      "guideFrame:h",
+      "guideFrame:h#2",
+      "guideFrame:w",
+      "guideFrame:w#2",
+      "scalePlace:h",
+      "scalePlace:h#2",
+      "scalePlace:w",
+      "scalePlace:w#2",
+      "screenBox:h",
+      "screenBox:h#2",
+      "screenBox:w",
+      "screenBox:w#2"
+    ],
+    "positional-args": [
+      "canvasDropPlace:canvasDropPlace",
+      "firstFreeIn:firstFreeIn",
+      "fitFactor:fitFactor",
+      "fitPlace:fitPlace",
+      "guideFrame:guideFrame",
+      "latticeOf:latticeOf",
+      "latticeUnit:latticeUnit",
+      "menuAlong:menuAlong",
+      "menuLattice:menuLattice",
+      "menuPlacement:menuPlacement",
+      "push:push",
+      "screenArrangement:screenArrangement",
+      "screenBox:screenBox",
+      "screenLattice:screenLattice"
+    ],
+    "short-params": [
+      "canvasDropPlace:h",
+      "canvasDropPlace:w",
+      "firstFree:h",
+      "firstFree:w",
+      "firstFreeIn:h",
+      "firstFreeIn:w",
+      "overlaps:a",
+      "overlaps:b",
+      "resizeFrom:dx",
+      "resizeFrom:dy",
+      "samePlace:a",
+      "samePlace:b"
+    ],
+    "spelling": [
+      "centreGuides:centreGuides",
+      "centredIn:centredIn"
+    ],
+    "unit-suffix": [
+      "rectPx:rectPx"
+    ]
+  },
+  "qml/components/methods/GridPosition.qml": {
+    "positional-args": [
+      "head:head",
+      "line:line"
+    ]
+  },
+  "qml/components/methods/HyprState.qml": {
+    "object-keys": [
+      "layerRects:h",
+      "layerRects:h#2",
+      "layerRects:w",
+      "layerRects:w#2",
+      "window:h",
+      "window:w"
+    ],
+    "short-params": [
+      "workspace:ws"
+    ]
+  },
+  "qml/components/methods/InputSources.qml": {
+    "positional-args": [
+      "current:current"
+    ],
+    "short-params": [
+      "current:im"
+    ]
+  },
+  "qml/components/methods/KeyMap.qml": {
+    "getter-pairs": [
+      "labelOf:labelOf"
+    ]
+  },
+  "qml/components/methods/KeyNames.qml": {
+    "short-params": [
+      "fromWheel:dx",
+      "fromWheel:dy"
+    ]
+  },
+  "qml/components/methods/MarketMath.qml": {
+    "short-params": [
+      "portfolio:fx"
+    ]
+  },
+  "qml/components/methods/MonitorLayout.qml": {
+    "banner-style": [
+      "MonitorLayout:---",
+      "MonitorLayout:---#2",
+      "MonitorLayout:---#3",
+      "MonitorLayout:---#4"
+    ],
+    "positional-args": [
+      "fixedSize:fixedSize",
+      "restored:restored"
+    ]
+  },
+  "qml/components/methods/NiriState.qml": {
+    "object-keys": [
+      "windows:h",
+      "windows:h#2",
+      "windows:w",
+      "windows:w#2"
+    ],
+    "positional-args": [
+      "outputs:outputs",
+      "windows:windows"
+    ],
+    "short-params": [
+      "workspace:ws",
+      "workspaceId:ws"
+    ]
+  },
+  "qml/components/methods/NoteMarkdown.qml": {
+    "banner-style": [
+      "NoteMarkdown:---"
+    ],
+    "getter-pairs": [
+      "_lineAt:_lineAt",
+      "lineOf:lineOf"
+    ]
+  },
+  "qml/components/methods/NotificationMatch.qml": {
+    "short-params": [
+      "matches:a",
+      "matches:b"
+    ]
+  },
+  "qml/components/methods/OSDEngine.qml": {
+    "getter-pairs": [
+      "cardOf:cardOf",
+      "entryOf:entryOf",
+      "itemOf:itemOf"
+    ],
+    "positional-args": [
+      "judge:judge",
+      "opens:opens"
+    ],
+    "retired": [
+      "judge:ctx"
+    ]
+  },
+  "qml/components/methods/PopoutGeometry.qml": {
+    "short-params": [
+      "intersects:a",
+      "intersects:b",
+      "rectsOverlap:a",
+      "rectsOverlap:b"
+    ]
+  },
+  "qml/components/methods/Schedules.qml": {
+    "positional-args": [
+      "nextWallpaper:nextWallpaper",
+      "shuffleWallpaper:shuffleWallpaper"
+    ]
+  },
+  "qml/components/methods/SchemaLayout.qml": {
+    "getter-pairs": [
+      "groups:cardFor"
+    ],
+    "object-keys": [
+      "unitScale:h"
+    ]
+  },
+  "qml/components/methods/ScreenRegion.qml": {
+    "short-params": [
+      "between:a",
+      "between:b",
+      "intersect:a",
+      "intersect:b"
+    ]
+  },
+  "qml/components/methods/Search.qml": {
+    "short-params": [
+      "score:q"
+    ]
+  },
+  "qml/components/methods/SectionFolds.qml": {
+    "retired": [
+      "isOpen:SectionFolds.isOpen"
+    ]
+  },
+  "qml/components/methods/SettingsSearch.qml": {
+    "short-params": [
+      "index:tr"
+    ]
+  },
+  "qml/components/methods/ShownLook.qml": {
+    "positional-args": [
+      "wallpapers:wallpapers"
+    ]
+  },
+  "qml/components/methods/Sizing.qml": {
+    "unit-suffix": [
+      "factor:/ 100"
+    ]
+  },
+  "qml/components/methods/SpecialWorkspaces.qml": {
+    "getter-pairs": [
+      "entryFor:entryFor"
+    ],
+    "positional-args": [
+      "content:content"
+    ]
+  },
+  "qml/components/methods/StopwatchClock.qml": {
+    "short-params": [
+      "addTime:ms",
+      "format:ms",
+      "formatShort:ms",
+      "pushRecent:ms"
+    ],
+    "unit-suffix": [
+      "format:/ 100"
+    ]
+  },
+  "qml/components/methods/StyleTokens.qml": {
+    "banner-style": [
+      "StyleTokens:----",
+      "StyleTokens:----#2",
+      "StyleTokens:----#3",
+      "StyleTokens:----#4"
+    ],
+    "handler-shaped-property": [
+      "onAccentContainerMix:onAccentContainerMix",
+      "onAccentHover:onAccentHover",
+      "onAccentPressed:onAccentPressed",
+      "onStatusContainerMix:onStatusContainerMix"
+    ],
+    "spelling": [
+      "_onColour:_onColour",
+      "veilGrey:veilGrey"
+    ],
+    "unit-suffix": [
+      "textPx:textPx"
+    ]
+  },
+  "qml/components/methods/SurfaceContext.qml": {
+    "banner-style": [
+      "SurfaceContext:----"
+    ],
+    "object-keys": [
+      "frame:hi",
+      "frame:lo",
+      "layout:hi",
+      "layout:lo"
+    ],
+    "retired": [
+      "layout:joinGap"
+    ],
+    "short-params": [
+      "contentFrom:p",
+      "end:e",
+      "end:s",
+      "endKind:p",
+      "frame:p",
+      "joinsOf:f",
+      "layout:f",
+      "layout:p",
+      "overBars:p",
+      "shadow:s",
+      "submenuJoin:p",
+      "submenuPlace:p",
+      "wallAt:fm"
+    ],
+    "side-order": [
+      "free:flushEnd",
+      "free:flushStart",
+      "free:joinEnd",
+      "free:joinStart"
+    ]
+  },
+  "qml/components/methods/SurfaceOutline.qml": {
+    "positional-args": [
+      "blurRegion:blurRegion",
+      "rectFrom:rectFrom",
+      "toItem:toItem"
+    ],
+    "short-params": [
+      "blurRegion:dx",
+      "blurRegion:dy",
+      "blurRegion:h",
+      "blurRegion:m",
+      "blurRegion:s",
+      "blurRegion:w",
+      "boxRect:h",
+      "boxRect:m",
+      "boxRect:s",
+      "boxRect:w",
+      "fillPath:h",
+      "fillPath:m",
+      "fillPath:s",
+      "fillPath:w",
+      "footprint:h",
+      "footprint:m",
+      "footprint:s",
+      "footprint:w",
+      "metrics:s",
+      "placeRegion:dx",
+      "placeRegion:dy",
+      "rectFrom:h",
+      "rectFrom:u",
+      "rectFrom:v",
+      "rectFrom:w",
+      "strokePath:h",
+      "strokePath:m",
+      "strokePath:s",
+      "strokePath:w",
+      "toItem:h",
+      "toItem:u",
+      "toItem:v",
+      "toItem:w",
+      "withBoxStart:m",
+      "withBoxStart:s"
+    ]
+  },
+  "qml/components/methods/SwayState.qml": {
+    "object-keys": [
+      "window:h",
+      "window:w"
+    ],
+    "positional-args": [
+      "specialToggle:specialToggle",
+      "window:window",
+      "windowCommands:windowCommands"
+    ],
+    "short-params": [
+      "window:ws",
+      "workspace:ws",
+      "workspaceId:ws"
+    ],
+    "unit-suffix": [
+      "windowCommands:/ 100",
+      "windowCommands:/ 100#2"
+    ]
+  },
+  "qml/components/methods/TextBand.qml": {
+    "positional-args": [
+      "lineAscent:lineAscent"
+    ]
+  },
+  "qml/components/methods/TextRender.qml": {
+    "getter-pairs": [
+      "zoomAt:zoomAt"
+    ]
+  },
+  "qml/components/methods/ThemeFamilies.qml": {
+    "short-params": [
+      "commonLabel:a",
+      "commonLabel:b"
+    ]
+  },
+  "qml/components/methods/ToastMotion.qml": {
+    "short-params": [
+      "slideEdge:p"
+    ]
+  },
+  "qml/components/methods/Tone.qml": {
+    "banner-style": [
+      "Tone:----",
+      "Tone:----#2"
+    ],
+    "positional-args": [
+      "distinctRgb:distinctRgb",
+      "step:step",
+      "stepRgb:stepRgb"
+    ],
+    "short-params": [
+      "alpha:a",
+      "apartRgb:c",
+      "conRgb:a",
+      "conRgb:b",
+      "contrast:a",
+      "contrast:b",
+      "deltaRgb:a",
+      "deltaRgb:b",
+      "faded:f",
+      "fromRgb:c",
+      "lumRgb:c",
+      "mix:a",
+      "mix:b",
+      "mix:t",
+      "mixRgb:a",
+      "mixRgb:b",
+      "mixRgb:t",
+      "nudgedRgb:c",
+      "oklabRgb:c",
+      "toward:t"
+    ]
+  },
+  "qml/components/methods/Utils.qml": {
+    "getter-pairs": [
+      "valueAt:valueAt"
+    ],
+    "short-params": [
+      "deepEqual:a",
+      "deepEqual:b"
+    ]
+  },
+  "qml/components/methods/ValueGraphics.qml": {
+    "positional-args": [
+      "across:across"
+    ]
+  },
+  "qml/components/methods/WallpaperFill.qml": {
+    "positional-args": [
+      "rect:rect"
+    ],
+    "unit-suffix": [
+      "travelPx:travelPx"
+    ]
+  },
+  "qml/components/methods/WallpaperTransitions.qml": {
+    "positional-args": [
+      "pick:pick"
+    ]
+  },
+  "qml/components/methods/WindowRuleIssues.qml": {
+    "short-params": [
+      "atCondition:c"
+    ]
+  },
+  "qml/components/methods/WorkspaceCells.qml": {
+    "getter-pairs": [
+      "labelFor:labelFor"
+    ],
+    "object-keys": [
+      "byPosition:w",
+      "bySize:w",
+      "chosen:w"
+    ],
+    "positional-args": [
+      "splitShift:splitShift"
+    ]
+  },
+  "qml/components/methods/WorkspaceGeometry.qml": {
+    "getter-pairs": [
+      "windowAt:windowAt"
+    ],
+    "object-keys": [
+      "_inCell:h",
+      "_inCell:w",
+      "_scaledRect:h",
+      "_scaledRect:w",
+      "cellRect:h",
+      "cellRect:w",
+      "dropTarget:h",
+      "dropTarget:h#2",
+      "dropTarget:w",
+      "dropTarget:w#2",
+      "rehomeWorkspaces:from",
+      "rehomeWorkspaces:to",
+      "remapWorkspaces:from",
+      "remapWorkspaces:to",
+      "remapWorkspaces:to#2",
+      "returnWindows:to",
+      "specialColumn:h",
+      "specialColumn:w",
+      "stripDropTarget:h",
+      "stripDropTarget:h#2",
+      "stripDropTarget:w",
+      "stripDropTarget:w#2",
+      "usableRect:h",
+      "usableRect:w",
+      "wallpaperRect:h",
+      "wallpaperRect:w"
+    ],
+    "positional-args": [
+      "cellAt:cellAt",
+      "cellRect:cellRect",
+      "fitScale:fitScale",
+      "navigate:navigate",
+      "rehomeWorkspaces:rehomeWorkspaces",
+      "specialColumn:specialColumn",
+      "startFocus:startFocus",
+      "stripRects:stripRects",
+      "windowRect:windowRect"
+    ],
+    "short-params": [
+      "contains:r",
+      "resizeEdges:r"
+    ]
+  },
+  "qml/components/methods/layer/LayerArrange.qml": {
+    "banner-style": [
+      "LayerArrange:---",
+      "LayerArrange:---#2",
+      "LayerArrange:---#3",
+      "LayerArrange:---#4"
+    ],
+    "short-params": [
+      "heldStaysMapped:e",
+      "modalHolds:e",
+      "modalNeverRemaps:e",
+      "modalShowsAtOnce:e",
+      "orderedOnlyTiesByMapOrder:e",
+      "outOfPlaceRemaps:e",
+      "rankWithinOrder:e",
+      "remappingHidden:e",
+      "showingStays:e",
+      "showsAfterPredecessorsMapped:e",
+      "waitsUnderModal:e"
+    ],
+    "spelling": [
+      "centredWhenUnanchored:centredWhenUnanchored"
+    ]
+  },
+  "qml/components/methods/layer/LayerStack.qml": {
+    "banner-style": [
+      "LayerStack:---",
+      "LayerStack:---#2"
+    ],
+    "getter-pairs": [
+      "layerOf:layerOf"
+    ]
+  },
+  "qml/components/reusable/CornerPiece.qml": {
+    "banner-style": [
+      "CornerPiece:---",
+      "CornerPiece:---#2"
+    ],
+    "bool-is-prefix": [
+      "isLeft:isLeft",
+      "isTop:isTop"
+    ],
+    "short-params": [
+      "px:u",
+      "py:v"
+    ]
+  },
+  "qml/components/reusable/FrameNudge.qml": {
+    "timer-name": [
+      "FrameNudge:nudges"
+    ]
+  },
+  "qml/components/reusable/InspectorHeader.qml": {
+    "signal-shape": [
+      "close:close",
+      "remove:remove"
+    ]
+  },
+  "qml/components/reusable/ItemBox.qml": {
+    "signal-shape": [
+      "remove:remove"
+    ]
+  },
+  "qml/components/reusable/PercentageCircle.qml": {
+    "unit-suffix": [
+      "_arcLength:/ 100"
+    ]
+  },
+  "qml/components/reusable/Pressable.qml": {
+    "handler-shaped-property": [
+      "onAccent:onAccent"
+    ]
+  },
+  "qml/components/reusable/ScrollMemory.qml": {
+    "timer-name": [
+      "_settle:_settle"
+    ]
+  },
+  "qml/components/reusable/SettledColumns.qml": {
+    "timer-name": [
+      "_quiet:_quiet"
+    ]
+  },
+  "qml/components/reusable/StateLayer.qml": {
+    "handler-shaped-property": [
+      "onAccent:onAccent"
+    ]
+  },
+  "qml/components/reusable/StyledComboEntry.qml": {
+    "getter-pairs": [
+      "labelOf:labelOf"
+    ]
+  },
+  "qml/components/reusable/StyledSlider.qml": {
+    "bool-is-prefix": [
+      "StyledSlider:isDragging"
+    ]
+  },
+  "qml/components/reusable/StyledText.qml": {
+    "bool-is-prefix": [
+      "isVertical:isVertical"
+    ]
+  },
+  "qml/components/reusable/StyledTextArea.qml": {
+    "banner-style": [
+      "StyledTextArea:---",
+      "StyledTextArea:---#2",
+      "StyledTextArea:---#3"
+    ]
+  },
+  "qml/components/reusable/StyledTextEntry.qml": {
+    "banner-style": [
+      "StyledTextEntry:---",
+      "StyledTextEntry:---#2",
+      "StyledTextEntry:---#3"
+    ]
+  },
+  "qml/components/reusable/StyledVolumeBar.qml": {
+    "bool-is-prefix": [
+      "StyledVolumeBar:isVertical",
+      "isMuted:isMuted"
+    ],
+    "signal-shape": [
+      "volumeChanged:volumeChanged"
+    ]
+  },
+  "qml/components/reusable/SubmitEntry.qml": {
+    "spelling": [
+      "cancelled:cancelled"
+    ]
+  },
+  "qml/components/reusable/TypePickerPopup.qml": {
+    "getter-pairs": [
+      "iconOf:iconOf"
+    ]
+  },
+  "qml/components/surfaces/border/RoundedBorders.qml": {
+    "bool-is-prefix": [
+      "RoundedBorders:isLeft",
+      "RoundedBorders:isTop"
+    ],
+    "short-params": [
+      "blurPieces:h",
+      "blurPieces:w",
+      "framePath:h",
+      "framePath:w"
+    ]
+  },
+  "qml/components/surfaces/dock/DockWindow.qml": {
+    "banner-style": [
+      "DockWindow:---",
+      "DockWindow:---#2",
+      "DockWindow:---#3",
+      "DockWindow:---#4",
+      "DockWindow:---#5",
+      "DockWindow:---#6",
+      "DockWindow:---#7"
+    ],
+    "collection-suffix": [
+      "DockWindow:_zoneSet"
+    ],
+    "retired": [
+      "startInset:insetStart",
+      "startStrokeInset:strokeInsetStart"
+    ],
+    "spelling": [
+      "centre:centre"
+    ],
+    "timer-name": [
+      "DockWindow:closeTimer"
+    ],
+    "unit-suffix": [
+      "DockWindow:/ 100",
+      "_wanted:/ 100"
+    ]
+  },
+  "qml/components/surfaces/greeter/GreeterSurface.qml": {
+    "bool-is-prefix": [
+      "isTarget:isTarget"
+    ]
+  },
+  "qml/components/surfaces/launcher/LauncherPanel.qml": {
+    "banner-style": [
+      "LauncherPanel:---",
+      "LauncherPanel:---#2",
+      "LauncherPanel:---#3"
+    ]
+  },
+  "qml/components/surfaces/lockscreen/LockSurface.qml": {
+    "bool-is-prefix": [
+      "isTarget:isTarget"
+    ]
+  },
+  "qml/components/surfaces/menu/FloatingEdgeMenu.qml": {
+    "spelling": [
+      "_widgetCentre:_widgetCentre"
+    ],
+    "unit-suffix": [
+      "FloatingEdgeMenu:/ 100"
+    ]
+  },
+  "qml/components/surfaces/menu/FreeMenu.qml": {
+    "banner-style": [
+      "FreeMenu:----"
+    ],
+    "handler-shaped-property": [
+      "FreeMenu:onOverlayLayer",
+      "onOverlayLayer:onOverlayLayer"
+    ],
+    "side-order": [
+      "FreeMenu:straightJoinEnd",
+      "FreeMenu:straightJoinStart"
+    ],
+    "timer-name": [
+      "graceTimer:graceTimer"
+    ]
+  },
+  "qml/components/surfaces/menu/MenuHosts.qml": {
+    "banner-style": [
+      "MenuHosts:----",
+      "MenuHosts:----#2"
+    ]
+  },
+  "qml/components/surfaces/menu/MenuSync.qml": {
+    "timer-name": [
+      "_warp:_warp"
+    ]
+  },
+  "qml/components/surfaces/notifications/ToastStack.qml": {
+    "banner-style": [
+      "ToastStack:----",
+      "ToastStack:----#2",
+      "ToastStack:----#3",
+      "ToastStack:----#4"
+    ],
+    "getter-pairs": [
+      "placeOf:placeOf"
+    ]
+  },
+  "qml/components/surfaces/onboarding/StepBar.qml": {
+    "spelling": [
+      "quitCancelled:quitCancelled"
+    ]
+  },
+  "qml/components/surfaces/onboarding/pages/LookPage.qml": {
+    "banner-style": [
+      "LookPage:---",
+      "LookPage:---#2",
+      "LookPage:---#3"
+    ]
+  },
+  "qml/components/surfaces/onboarding/pages/SystemPage.qml": {
+    "collection-suffix": [
+      "greeterSet:greeterSet"
+    ]
+  },
+  "qml/components/surfaces/onboarding/pages/WelcomePage.qml": {
+    "collection-suffix": [
+      "rowList:rowList"
+    ]
+  },
+  "qml/components/surfaces/osd/OSDHost.qml": {
+    "banner-style": [
+      "OSDHost:----",
+      "OSDHost:----#2",
+      "OSDHost:----#3",
+      "OSDHost:----#4",
+      "OSDHost:----#5"
+    ],
+    "getter-pairs": [
+      "_actionOf:_actionOf"
+    ],
+    "timer-name": [
+      "OSDHost:dueTimer"
+    ]
+  },
+  "qml/components/surfaces/osd/engine/OSDSystem.qml": {
+    "getter-pairs": [
+      "actionOf:actionOf"
+    ],
+    "handler-shaped-property": [
+      "onAdd:onAdd",
+      "onChange:onChange",
+      "onEvent:onEvent",
+      "onRemove:onRemove",
+      "onUnexpectedRemove:onUnexpectedRemove",
+      "onUpdate:onUpdate"
+    ],
+    "retired": [
+      "judge:ctx"
+    ]
+  },
+  "qml/components/surfaces/osd/engine/OSDSystemHost.qml": {
+    "getter-pairs": [
+      "actionOf:actionOf"
+    ]
+  },
+  "qml/components/surfaces/osd/engine/OSDWatch.qml": {
+    "timer-name": [
+      "_settle:_settle"
+    ]
+  },
+  "qml/components/surfaces/osd/systems/Recording/Recording.qml": {
+    "getter-pairs": [
+      "actionOf:actionOf"
+    ]
+  },
+  "qml/components/surfaces/screenlayout/ScreenLayoutView.qml": {
+    "unit-suffix": [
+      "ScreenLayoutView:/ 100",
+      "blurAmount:/ 100",
+      "shadeDim:/ 100"
+    ]
+  },
+  "qml/components/surfaces/wallpaper/WallpaperWindow.qml": {
+    "unit-suffix": [
+      "WallpaperWindow:/ 100"
+    ]
+  },
+  "qml/components/surfaces/workspaces/OverviewGrid.qml": {
+    "collection-suffix": [
+      "specialSet:specialSet"
+    ],
+    "getter-pairs": [
+      "itemFor:itemFor"
+    ],
+    "short-params": [
+      "resizeWindow:dh",
+      "resizeWindow:dw",
+      "resizeWindow:dx",
+      "resizeWindow:dy"
+    ]
+  },
+  "qml/components/surfaces/workspaces/OverviewInput.qml": {
+    "timer-name": [
+      "OverviewInput:flushTimer"
+    ]
+  },
+  "qml/components/surfaces/workspaces/WindowPreview.qml": {
+    "timer-name": [
+      "WindowPreview:iconDelay"
+    ]
+  },
+  "qml/components/views/BarEditor/BarsPanel.qml": {
+    "retired": [
+      "BarsPanel:floatGaps"
+    ]
+  },
+  "qml/components/views/BarEditor/LayoutOverrideField.qml": {
+    "bool-is-prefix": [
+      "isSet:isSet"
+    ],
+    "collection-suffix": [
+      "isSet:isSet"
+    ]
+  },
+  "qml/components/views/BarEditor/SectionsBoard.qml": {
+    "bool-is-prefix": [
+      "SectionsBoard:isSelected"
+    ],
+    "retired": [
+      "SectionsBoard:isDirty",
+      "SectionsBoard:isDirty#2",
+      "SectionsBoard:isDirty#3"
+    ]
+  },
+  "qml/components/views/CustomWidgets/CustomWidgets.qml": {
+    "retired": [
+      "CustomWidgets:isDirty",
+      "CustomWidgets:isDirty#2"
+    ]
+  },
+  "qml/components/views/Keybinds/Keybinds.qml": {
+    "retired": [
+      "Keybinds:isDirty",
+      "Keybinds:isDirty#2"
+    ]
+  },
+  "qml/components/views/Layouts/EditTarget.qml": {
+    "spelling": [
+      "canCentre:canCentre",
+      "centre:centre"
+    ]
+  },
+  "qml/components/views/Layouts/EditorInspector.qml": {
+    "spelling": [
+      "EditorInspector:centreButton"
+    ]
+  },
+  "qml/components/views/Layouts/GridCanvas.qml": {
+    "getter-pairs": [
+      "GridCanvas:placeAt",
+      "rectFor:rectFor"
+    ],
+    "short-params": [
+      "screenPx:r"
+    ],
+    "spelling": [
+      "canCentre:canCentre",
+      "centre:centre",
+      "centreLines:centreLines"
+    ],
+    "unit-suffix": [
+      "screenPx:screenPx"
+    ]
+  },
+  "qml/components/views/Layouts/LayoutsEditorLayout.qml": {
+    "signal-shape": [
+      "reset:reset",
+      "save:save"
+    ]
+  },
+  "qml/components/views/Layouts/LayoutsPanel.qml": {
+    "retired": [
+      "LayoutsPanel:isDirty",
+      "LayoutsPanel:isDirty#2",
+      "LayoutsPanel:isDirty#3"
+    ]
+  },
+  "qml/components/views/Layouts/MenuTarget.qml": {
+    "handler-shaped-property": [
+      "onLattice:onLattice"
+    ]
+  },
+  "qml/components/views/Monitors/MonitorInspector.qml": {
+    "unit-suffix": [
+      "MonitorInspector:/ 100",
+      "MonitorInspector:/ 100#2"
+    ]
+  },
+  "qml/components/views/Monitors/Monitors.qml": {
+    "retired": [
+      "Monitors:isDirty",
+      "Monitors:isDirty#2"
+    ]
+  },
+  "qml/components/views/Settings/AccountCard.qml": {
+    "banner-style": [
+      "AccountCard:---",
+      "AccountCard:---#2",
+      "AccountCard:---#3",
+      "AccountCard:---#4",
+      "AccountCard:---#5"
+    ]
+  },
+  "qml/components/views/Settings/BarStyleBlock.qml": {
+    "getter-pairs": [
+      "_valueOf:_valueOf"
+    ]
+  },
+  "qml/components/views/Settings/CompositorStatus.qml": {
+    "banner-style": [
+      "CompositorStatus:---",
+      "CompositorStatus:---#2"
+    ]
+  },
+  "qml/components/views/Settings/DateTimeStatus.qml": {
+    "banner-style": [
+      "DateTimeStatus:---",
+      "DateTimeStatus:---#2",
+      "DateTimeStatus:---#3",
+      "DateTimeStatus:---#4"
+    ]
+  },
+  "qml/components/views/Settings/DefaultAppsCard.qml": {
+    "banner-style": [
+      "DefaultAppsCard:---"
+    ]
+  },
+  "qml/components/views/Settings/EntryListCard.qml": {
+    "signal-shape": [
+      "show:show"
+    ],
+    "unit-suffix": [
+      "spotOf:/ 100",
+      "spotOf:/ 100#2"
+    ]
+  },
+  "qml/components/views/Settings/MarketsWatchlistCard.qml": {
+    "timer-name": [
+      "MarketsWatchlistCard:debounce"
+    ]
+  },
+  "qml/components/views/Settings/OSDSystemsEditor.qml": {
+    "getter-pairs": [
+      "labelOf:labelOf"
+    ]
+  },
+  "qml/components/views/Settings/PlaceIntro.qml": {
+    "unit-suffix": [
+      "PlaceIntro:/ 100",
+      "PlaceIntro:/ 100#2"
+    ]
+  },
+  "qml/components/views/Settings/RemoveAxiomPanel.qml": {
+    "short-params": [
+      "questionText:q"
+    ]
+  },
+  "qml/components/views/Settings/ScreenSpotPicker.qml": {
+    "getter-pairs": [
+      "ScreenSpotPicker:placeAt"
+    ]
+  },
+  "qml/components/views/Settings/SelfUpdateStatus.qml": {
+    "banner-style": [
+      "SelfUpdateStatus:---"
+    ]
+  },
+  "qml/components/views/Settings/SettingsContent.qml": {
+    "getter-pairs": [
+      "valueAt:valueAt"
+    ],
+    "retired": [
+      "SettingsContent:isDirty"
+    ],
+    "timer-name": [
+      "SettingsContent:jumpDelay",
+      "SettingsContent:queryDelay"
+    ]
+  },
+  "qml/components/views/Settings/SettingsField.qml": {
+    "bool-is-prefix": [
+      "isOff:isOff"
+    ]
+  },
+  "qml/components/views/Settings/SettingsGroupCard.qml": {
+    "getter-pairs": [
+      "_fieldAt:_fieldAt"
+    ]
+  },
+  "qml/components/views/Settings/SystemInfoCard.qml": {
+    "banner-style": [
+      "SystemInfoCard:---",
+      "SystemInfoCard:---#2",
+      "SystemInfoCard:---#3"
+    ],
+    "getter-pairs": [
+      "valueOf:valueOf"
+    ],
+    "timer-name": [
+      "SystemInfoCard:copiedReset"
+    ]
+  },
+  "qml/components/views/WindowRules/RulesPanel.qml": {
+    "retired": [
+      "RulesPanel:isDirty",
+      "RulesPanel:isDirty#2"
+    ]
+  },
+  "qml/components/views/WindowRules/WindowRules.qml": {
+    "bool-is-prefix": [
+      "WindowRules:isOn"
+    ],
+    "retired": [
+      "WindowRules:isDirty"
+    ]
+  },
+  "qml/components/views/base/WorkArea.qml": {
+    "signal-shape": [
+      "reset:reset",
+      "save:save"
+    ]
+  },
+  "qml/config/Appearance.qml": {
+    "banner-style": [
+      "Appearance:---",
+      "Appearance:---#2",
+      "Appearance:---#3",
+      "Appearance:---#4",
+      "Appearance:---#5",
+      "Appearance:---#6"
+    ]
+  },
+  "qml/config/BarsConfig.qml": {
+    "retired": [
+      "endsOptions:floatGaps",
+      "enrichBarConfig:floatGaps"
+    ]
+  },
+  "qml/config/DesktopConfig.qml": {
+    "getter-pairs": [
+      "layoutFor:layoutFor"
+    ]
+  },
+  "qml/config/DockConfig.qml": {
+    "getter-pairs": [
+      "labelOf:labelOf",
+      "screensOf:screensOf"
+    ]
+  },
+  "qml/config/DrivesConfig.qml": {
+    "handler-shaped-property": [
+      "onInsert:onInsert"
+    ]
+  },
+  "qml/config/General.qml": {
+    "getter-pairs": [
+      "screensFor:screensFor"
+    ]
+  },
+  "qml/config/I18n.qml": {
+    "unit-suffix": [
+      "formatRelative:epochMs"
+    ]
+  },
+  "qml/config/MenusConfig.qml": {
+    "getter-pairs": [
+      "edgeOf:edgeOf",
+      "layoutOf:layoutOf",
+      "screenFor:screenFor"
+    ]
+  },
+  "qml/config/OSDConfig.qml": {
+    "getter-pairs": [
+      "labelOf:labelOf",
+      "nameOf:nameOf",
+      "schemaOf:schemaOf"
+    ],
+    "handler-shaped-property": [
+      "onScreenChanges:onScreenChanges"
+    ]
+  },
+  "qml/config/OverlayConfig.qml": {
+    "getter-pairs": [
+      "cardUnitFor:cardUnitFor",
+      "cardUnitOn:cardUnitOn",
+      "layoutFor:layoutFor"
+    ]
+  },
+  "qml/config/Paths.qml": {
+    "banner-style": [
+      "Paths:---",
+      "Paths:---#2",
+      "Paths:---#3"
+    ]
+  },
+  "qml/config/PopoutsConfig.qml": {
+    "getter-pairs": [
+      "layoutFor:layoutFor"
+    ]
+  },
+  "qml/config/Style.qml": {
+    "banner-style": [
+      "Style:----",
+      "Style:----#10",
+      "Style:----#2",
+      "Style:----#3",
+      "Style:----#4",
+      "Style:----#5",
+      "Style:----#6",
+      "Style:----#7",
+      "Style:----#8",
+      "Style:----#9"
+    ],
+    "getter-pairs": [
+      "inkOf:inkOf",
+      "toneOn:toneOn"
+    ]
+  },
+  "qml/config/Theme.qml": {
+    "banner-style": [
+      "Theme:---",
+      "Theme:---#2",
+      "Theme:---#3"
+    ],
+    "collection-suffix": [
+      "stringToColorMap:stringToColorMap"
+    ],
+    "spelling": [
+      "grey:grey"
+    ]
+  },
+  "qml/config/Widget.qml": {
+    "unit-suffix": [
+      "textPx:textPx"
+    ]
+  },
+  "qml/config/WindowLookConfig.qml": {
+    "collection-suffix": [
+      "blurSet:blurSet"
+    ]
+  },
+  "qml/services/apps/CalculatorManager.qml": {
+    "banner-style": [
+      "CalculatorManager:---"
+    ],
+    "timer-name": [
+      "CalculatorManager:_debounce"
+    ]
+  },
+  "qml/services/apps/CalendarManager.qml": {
+    "banner-style": [
+      "CalendarManager:---"
+    ],
+    "callback-param": [
+      "_enqueue:callback",
+      "discover:callback",
+      "quickAdd:callback",
+      "remove:callback",
+      "save:callback"
+    ],
+    "timer-name": [
+      "_alarmTimer:_alarmTimer",
+      "_poll:_poll"
+    ]
+  },
+  "qml/services/apps/ChatManager.qml": {
+    "callback-param": [
+      "_run:callback",
+      "fetchModels:callback"
+    ],
+    "timer-name": [
+      "ChatManager:_flush",
+      "ChatManager:_noticeClear"
+    ]
+  },
+  "qml/services/apps/CustomWidgetsEditor.qml": {
+    "banner-style": [
+      "CustomWidgetsEditor:---",
+      "CustomWidgetsEditor:---#2",
+      "CustomWidgetsEditor:---#3"
+    ],
+    "bool-is-prefix": [
+      "isDirty:isDirty"
+    ],
+    "getter-pairs": [
+      "_valueAt:_valueAt"
+    ],
+    "retired": [
+      "_apply:isDirty",
+      "ensureLoaded:isDirty",
+      "isDirty:isDirty",
+      "isDirty:isDirty#2"
+    ]
+  },
+  "qml/services/apps/CustomWidgetsManager.qml": {
+    "timer-name": [
+      "_holdTimer:_holdTimer",
+      "_refreshTimer:_refreshTimer"
+    ]
+  },
+  "qml/services/apps/DeadlineTicker.qml": {
+    "timer-name": [
+      "_alarmTimer:_alarm",
+      "_alarmTimer:_alarmTimer",
+      "_tick:_tick",
+      "_warnAlarmTimer:_warnAlarm",
+      "_warnAlarmTimer:_warnAlarmTimer"
+    ]
+  },
+  "qml/services/apps/EmojiManager.qml": {
+    "banner-style": [
+      "EmojiManager:---"
+    ],
+    "timer-name": [
+      "_typeLater:_typeLater"
+    ]
+  },
+  "qml/services/apps/EventDraft.qml": {
+    "bool-is-prefix": [
+      "isNew:isNew"
+    ]
+  },
+  "qml/services/apps/FileSearchManager.qml": {
+    "banner-style": [
+      "FileSearchManager:---",
+      "FileSearchManager:---#2",
+      "FileSearchManager:---#3",
+      "FileSearchManager:---#4",
+      "FileSearchManager:---#5"
+    ],
+    "getter-pairs": [
+      "iconFor:iconFor"
+    ]
+  },
+  "qml/services/apps/NotesManager.qml": {
+    "banner-style": [
+      "NotesManager:---",
+      "NotesManager:---#2",
+      "NotesManager:---#3",
+      "NotesManager:---#4",
+      "NotesManager:---#5",
+      "NotesManager:---#6"
+    ],
+    "callback-param": [
+      "_create:callback",
+      "_run:callback",
+      "createFolder:callback",
+      "createNote:callback",
+      "listFolder:callback",
+      "rename:callback",
+      "search:callback",
+      "watchFolder:fn"
+    ],
+    "getter-pairs": [
+      "nameOf:nameOf"
+    ],
+    "timer-name": [
+      "_errorClear:_errorClear",
+      "_errorClear:_errorClear#2"
+    ]
+  },
+  "qml/services/apps/ScreenShareManager.qml": {
+    "timer-name": [
+      "_regionDelay:_regionDelay"
+    ]
+  },
+  "qml/services/apps/ScreenshotManager.qml": {
+    "callback-param": [
+      "pick:callback",
+      "pickArea:callback"
+    ],
+    "timer-name": [
+      "_delay:_delay",
+      "_stitchWatchdog:_stitchWatchdog",
+      "_watchdog:_watchdog"
+    ]
+  },
+  "qml/services/apps/StopwatchManager.qml": {
+    "short-params": [
+      "addTimer:ms",
+      "startTimer:ms"
+    ]
+  },
+  "qml/services/apps/TailscaleManager.qml": {
+    "acronym-case": [
+      "authURL:URL"
+    ],
+    "short-params": [
+      "setExitNode:ip"
+    ]
+  },
+  "qml/services/apps/WeatherManager.qml": {
+    "getter-pairs": [
+      "conditionFor:conditionFor",
+      "conditionOf:conditionOf"
+    ]
+  },
+  "qml/services/compositor/CompositorConfigManager.qml": {
+    "banner-style": [
+      "CompositorConfigManager:---",
+      "CompositorConfigManager:---#2",
+      "CompositorConfigManager:---#3",
+      "CompositorConfigManager:---#4",
+      "CompositorConfigManager:---#5",
+      "CompositorConfigManager:---#6",
+      "CompositorConfigManager:---#7"
+    ],
+    "callback-param": [
+      "checkManaged:callback",
+      "checkRules:callback",
+      "withEntries:callback"
+    ],
+    "collection-suffix": [
+      "_lookSet:_lookSet"
+    ]
+  },
+  "qml/services/compositor/CompositorManager.qml": {
+    "banner-style": [
+      "CompositorManager:---",
+      "CompositorManager:---#2",
+      "CompositorManager:---#3",
+      "CompositorManager:---#4",
+      "CompositorManager:---#5",
+      "CompositorManager:---#6",
+      "CompositorManager:---#7"
+    ],
+    "callback-param": [
+      "setKeyboardLayout:callback",
+      "setUpGreeter:then",
+      "withBinds:callback",
+      "withCursorPos:callback",
+      "withHoveredScreen:callback",
+      "withKeyboard:callback",
+      "withLayerRects:callback",
+      "withOutputDetails:callback",
+      "withSetupCheck:callback"
+    ],
+    "getter-pairs": [
+      "_screenAt:_screenAt",
+      "nameOf:nameOf",
+      "outputFor:outputFor"
+    ],
+    "short-params": [
+      "resizeWindow:dh",
+      "resizeWindow:dw",
+      "resizeWindow:dx",
+      "resizeWindow:dy"
+    ],
+    "signal-shape": [
+      "keyboardLayoutChanged:keyboardLayoutChanged",
+      "layersChanged:layersChanged"
+    ]
+  },
+  "qml/services/compositor/FocusGrab.qml": {
+    "banner-style": [
+      "FocusGrab:---"
+    ]
+  },
+  "qml/services/compositor/FocusLeave.qml": {
+    "timer-name": [
+      "FocusLeave:_lost"
+    ]
+  },
+  "qml/services/compositor/HyprlandManager.qml": {
+    "banner-style": [
+      "HyprlandManager:---",
+      "HyprlandManager:---#2",
+      "HyprlandManager:---#3",
+      "HyprlandManager:---#4",
+      "HyprlandManager:---#5",
+      "HyprlandManager:---#6",
+      "HyprlandManager:---#7",
+      "HyprlandManager:---#8",
+      "HyprlandManager:---#9"
+    ],
+    "callback-param": [
+      "_eval:callback",
+      "_evalLua:callback",
+      "_json:callback",
+      "_jsonBatch:callback",
+      "_request:callback",
+      "setKeyboardLayout:callback",
+      "withCursorPos:callback",
+      "withKeyboard:callback",
+      "withLayerRects:callback",
+      "withMainBinds:callback",
+      "withOutputDetails:callback",
+      "withSetupCheck:callback"
+    ],
+    "short-params": [
+      "resizeWindow:dh",
+      "resizeWindow:dw",
+      "resizeWindow:dx",
+      "resizeWindow:dy"
+    ],
+    "signal-shape": [
+      "keyboardLayoutChanged:keyboardLayoutChanged",
+      "layersChanged:layersChanged"
+    ],
+    "timer-name": [
+      "_compaction:_compaction",
+      "_debounce:_debounce",
+      "_slideTimer:_slideTimer"
+    ]
+  },
+  "qml/services/compositor/KeybindEditor.qml": {
+    "banner-style": [
+      "KeybindEditor:---",
+      "KeybindEditor:---#2",
+      "KeybindEditor:---#3",
+      "KeybindEditor:---#4"
+    ],
+    "retired": [
+      "_mergeWatch:isDirty",
+      "isDirty:isDirty",
+      "isDirty:isDirty#2"
+    ]
+  },
+  "qml/services/compositor/KeybindManager.qml": {
+    "timer-name": [
+      "_refreshDelay:_refreshDelay"
+    ]
+  },
+  "qml/services/compositor/KeybindsPageState.qml": {
+    "banner-style": [
+      "KeybindsPageState:---"
+    ]
+  },
+  "qml/services/compositor/LayerManager.qml": {
+    "banner-style": [
+      "LayerManager:---",
+      "LayerManager:---#2"
+    ],
+    "getter-pairs": [
+      "layerOn:layerOn",
+      "rectOf:rectOf",
+      "slotOf:slotOf",
+      "slotOn:slotOn"
+    ],
+    "timer-name": [
+      "_check:_check",
+      "_settle:_settle"
+    ]
+  },
+  "qml/services/compositor/MonitorManager.qml": {
+    "banner-style": [
+      "MonitorManager:---",
+      "MonitorManager:---#2",
+      "MonitorManager:---#3",
+      "MonitorManager:---#4",
+      "MonitorManager:---#5",
+      "MonitorManager:---#6",
+      "MonitorManager:---#7",
+      "MonitorManager:---#8",
+      "MonitorManager:---#9"
+    ],
+    "getter-pairs": [
+      "_ruleOf:_ruleOf",
+      "labelFor:labelFor",
+      "rectFor:rectFor"
+    ],
+    "retired": [
+      "_untouched:isDirty",
+      "ensureLoaded:isDirty",
+      "isDirty:isDirty",
+      "isDirty:isDirty#2"
+    ],
+    "timer-name": [
+      "_countdown:_countdown",
+      "_identifyTimer:_identifyTimer",
+      "_refreshLater:_refreshLater"
+    ]
+  },
+  "qml/services/compositor/NiriManager.qml": {
+    "banner-style": [
+      "NiriManager:---",
+      "NiriManager:---#10",
+      "NiriManager:---#2",
+      "NiriManager:---#3",
+      "NiriManager:---#4",
+      "NiriManager:---#5",
+      "NiriManager:---#6",
+      "NiriManager:---#7",
+      "NiriManager:---#8",
+      "NiriManager:---#9"
+    ],
+    "callback-param": [
+      "_action:callback",
+      "_command:callback",
+      "_request:callback",
+      "setKeyboardLayout:callback",
+      "withKeyboard:callback",
+      "withOutputDetails:callback"
+    ],
+    "getter-pairs": [
+      "_outputOf:_outputOf"
+    ],
+    "short-params": [
+      "resizeWindow:dh",
+      "resizeWindow:dw",
+      "resizeWindow:dx",
+      "resizeWindow:dy"
+    ],
+    "signal-shape": [
+      "keyboardLayoutChanged:keyboardLayoutChanged"
+    ],
+    "timer-name": [
+      "_outputsTimer:_outputsTimer"
+    ]
+  },
+  "qml/services/compositor/SwayIpcManager.qml": {
+    "callback-param": [
+      "command:callback",
+      "json:callback"
+    ]
+  },
+  "qml/services/compositor/SwayManager.qml": {
+    "banner-style": [
+      "SwayManager:---",
+      "SwayManager:---#2",
+      "SwayManager:---#3",
+      "SwayManager:---#4",
+      "SwayManager:---#5",
+      "SwayManager:---#6",
+      "SwayManager:---#7",
+      "SwayManager:---#8",
+      "SwayManager:---#9"
+    ],
+    "callback-param": [
+      "setKeyboardLayout:callback",
+      "withKeyboard:callback",
+      "withOutputDetails:callback"
+    ],
+    "short-params": [
+      "resizeWindow:dh",
+      "resizeWindow:dw",
+      "resizeWindow:dx",
+      "resizeWindow:dy"
+    ],
+    "signal-shape": [
+      "keyboardLayoutChanged:keyboardLayoutChanged"
+    ],
+    "timer-name": [
+      "_debounce:_debounce",
+      "_settle:_settle",
+      "_versionRetry:_versionRetry"
+    ],
+    "unit-suffix": [
+      "setLiveLook:/ 100"
+    ]
+  },
+  "qml/services/compositor/WindowRulesEditor.qml": {
+    "banner-style": [
+      "WindowRulesEditor:---"
+    ],
+    "bool-is-prefix": [
+      "isDirty:isDirty"
+    ],
+    "retired": [
+      "isDirty:isDirty",
+      "isDirty:isDirty#2",
+      "report:isDirty"
+    ],
+    "short-params": [
+      "removeCondition:c",
+      "setCondition:c"
+    ],
+    "timer-name": [
+      "_timer:_timer"
+    ]
+  },
+  "qml/services/compositor/WindowRulesManager.qml": {
+    "callback-param": [
+      "applyNow:callback",
+      "builtin:callback",
+      "fromWindow:callback",
+      "match:callback",
+      "windows:callback"
+    ]
+  },
+  "qml/services/compositor/WindowSwitcherManager.qml": {
+    "timer-name": [
+      "WindowSwitcherManager:showTimer"
+    ]
+  },
+  "qml/services/compositor/WorkspaceRemap.qml": {
+    "banner-style": [
+      "WorkspaceRemap:---",
+      "WorkspaceRemap:---#2",
+      "WorkspaceRemap:---#3",
+      "WorkspaceRemap:---#4"
+    ],
+    "timer-name": [
+      "_rehomeTimer:_rehomeTimer",
+      "_returnTimer:_returnTimer",
+      "_timer:_timer"
+    ]
+  },
+  "qml/services/core/BackendManager.qml": {
+    "callback-param": [
+      "callLocal:fn",
+      "listen:fn"
+    ],
+    "timer-name": [
+      "_reconnect:_reconnect",
+      "_resubscribe:_resubscribe"
+    ]
+  },
+  "qml/services/core/BuildQueueManager.qml": {
+    "timer-name": [
+      "_timer:_timer"
+    ]
+  },
+  "qml/services/core/CommandManager.qml": {
+    "callback-param": [
+      "run:callback"
+    ]
+  },
+  "qml/services/core/ConfigDraft.qml": {
+    "bool-is-prefix": [
+      "isDirty:isDirty"
+    ],
+    "retired": [
+      "_refusals:isDirty",
+      "_refusals:isDirty#2",
+      "adopt:isDirty",
+      "changed:isDirty",
+      "isDirty:isDirty",
+      "load:isDirty",
+      "loadIfStale:isDirty",
+      "save:isDirty"
+    ]
+  },
+  "qml/services/core/ConfigManager.qml": {
+    "banner-style": [
+      "ConfigManager:---",
+      "ConfigManager:---#2"
+    ]
+  },
+  "qml/services/core/ConfirmGate.qml": {
+    "timer-name": [
+      "_timer:_timer"
+    ]
+  },
+  "qml/services/core/DailySchedule.qml": {
+    "timer-name": [
+      "_start:_start",
+      "_tick:_tick"
+    ]
+  },
+  "qml/services/core/DependencyManager.qml": {
+    "timer-name": [
+      "DependencyManager:_checkTextFont"
+    ]
+  },
+  "qml/services/core/DueTimer.qml": {
+    "unit-suffix": [
+      "_recheckMs:_recheckMs"
+    ]
+  },
+  "qml/services/core/FileManager.qml": {
+    "callback-param": [
+      "watch:fn"
+    ]
+  },
+  "qml/services/core/OwnerRegistry.qml": {
+    "getter-pairs": [
+      "valueOf:valueOf"
+    ]
+  },
+  "qml/services/core/SecretsManager.qml": {
+    "banner-style": [
+      "SecretsManager:---"
+    ]
+  },
+  "qml/services/core/SelfUpdateManager.qml": {
+    "retired": [
+      "_notify:opts"
+    ],
+    "timer-name": [
+      "SelfUpdateManager:_reloadTimer",
+      "SelfUpdateManager:_startup"
+    ]
+  },
+  "qml/services/core/StateManager.qml": {
+    "timer-name": [
+      "_saveTimer:_saveTimer"
+    ]
+  },
+  "qml/services/core/ThemeManager.qml": {
+    "banner-style": [
+      "ThemeManager:---",
+      "ThemeManager:---#2",
+      "ThemeManager:---#3",
+      "ThemeManager:---#4",
+      "ThemeManager:=========================================================================",
+      "ThemeManager:=========================================================================#2",
+      "ThemeManager:=========================================================================#3",
+      "ThemeManager:=========================================================================#4",
+      "ThemeManager:=========================================================================#5",
+      "ThemeManager:=========================================================================#6"
+    ],
+    "bool-is-prefix": [
+      "isGenerating:isGenerating"
+    ],
+    "timer-name": [
+      "ThemeManager:_emptied"
+    ]
+  },
+  "qml/services/session/AuthManager.qml": {
+    "bool-is-prefix": [
+      "isAuthenticating:isAuthenticating"
+    ]
+  },
+  "qml/services/session/GreetdManager.qml": {
+    "banner-style": [
+      "GreetdManager:---",
+      "GreetdManager:---#2",
+      "GreetdManager:---#3",
+      "GreetdManager:---#4",
+      "GreetdManager:---#5"
+    ]
+  },
+  "qml/services/session/GreeterManager.qml": {
+    "banner-style": [
+      "GreeterManager:---",
+      "GreeterManager:---#2",
+      "GreeterManager:---#3",
+      "GreeterManager:---#4",
+      "GreeterManager:---#5",
+      "GreeterManager:---#6"
+    ],
+    "callback-param": [
+      "_writeBundle:then"
+    ],
+    "timer-name": [
+      "_exportDelay:_exportDelay",
+      "_startup:_startup"
+    ]
+  },
+  "qml/services/session/IdleManager.qml": {
+    "short-params": [
+      "addCaffeineTime:ms",
+      "startCaffeine:ms"
+    ]
+  },
+  "qml/services/session/LockManager.qml": {
+    "banner-style": [
+      "LockManager:---"
+    ]
+  },
+  "qml/services/session/OnboardingManager.qml": {
+    "banner-style": [
+      "OnboardingManager:---",
+      "OnboardingManager:---#2",
+      "OnboardingManager:---#3"
+    ],
+    "bool-is-prefix": [
+      "isLast:isLast"
+    ]
+  },
+  "qml/services/session/PolkitManager.qml": {
+    "banner-style": [
+      "PolkitManager:---"
+    ],
+    "callback-param": [
+      "_probe:then"
+    ],
+    "timer-name": [
+      "_lateCheck:_lateCheck",
+      "_registerCheck:_registerCheck",
+      "_resume:_resume"
+    ]
+  },
+  "qml/services/session/RecommendedSetupManager.qml": {
+    "banner-style": [
+      "RecommendedSetupManager:---",
+      "RecommendedSetupManager:---#2",
+      "RecommendedSetupManager:---#3"
+    ],
+    "timer-name": [
+      "_polkitWait:_polkitWait"
+    ]
+  },
+  "qml/services/system/BatteryManager.qml": {
+    "bool-is-prefix": [
+      "isAvailable:isAvailable",
+      "isCharging:isCharging",
+      "isCritical:isCritical",
+      "isFull:isFull",
+      "isLow:isLow"
+    ],
+    "timer-name": [
+      "_settle:_settle"
+    ]
+  },
+  "qml/services/system/BluetoothManager.qml": {
+    "banner-style": [
+      "BluetoothManager:---"
+    ],
+    "timer-name": [
+      "_countdown:_countdown"
+    ],
+    "unit-suffix": [
+      "_show:/ 100"
+    ]
+  },
+  "qml/services/system/BrightnessManager.qml": {
+    "getter-pairs": [
+      "valueFor:valueFor"
+    ],
+    "signal-shape": [
+      "brightnessChanged:brightnessChanged"
+    ],
+    "timer-name": [
+      "_redetect:_redetect"
+    ],
+    "unit-suffix": [
+      "_ipc:/ 100",
+      "_ipc:/ 100#2",
+      "_ipc:/ 100#3"
+    ]
+  },
+  "qml/services/system/ClipboardManager.qml": {
+    "banner-style": [
+      "ClipboardManager:---",
+      "ClipboardManager:---#2"
+    ],
+    "getter-pairs": [
+      "labelOf:labelOf"
+    ]
+  },
+  "qml/services/system/ConnectionNotes.qml": {
+    "timer-name": [
+      "_settle:_settle"
+    ]
+  },
+  "qml/services/system/DefaultAppsManager.qml": {
+    "collection-suffix": [
+      "roleList:roleList"
+    ],
+    "getter-pairs": [
+      "iconOf:iconOf"
+    ]
+  },
+  "qml/services/system/DrivesManager.qml": {
+    "getter-pairs": [
+      "nameOf:nameOf"
+    ],
+    "retired": [
+      "_eventNotice:opts",
+      "_notify:opts",
+      "_say:opts",
+      "_say:opts#2"
+    ]
+  },
+  "qml/services/system/FootprintManager.qml": {
+    "getter-pairs": [
+      "labelOf:labelOf"
+    ]
+  },
+  "qml/services/system/InputSourceManager.qml": {
+    "banner-style": [
+      "InputSourceManager:---",
+      "InputSourceManager:---#2",
+      "InputSourceManager:---#3",
+      "InputSourceManager:---#4"
+    ],
+    "getter-pairs": [
+      "iconFor:iconFor",
+      "labelFor:labelFor",
+      "nameFor:nameFor"
+    ]
+  },
+  "qml/services/system/MediaManager.qml": {
+    "banner-style": [
+      "MediaManager:---",
+      "MediaManager:---#2",
+      "MediaManager:---#3",
+      "MediaManager:---#4",
+      "MediaManager:---#5",
+      "MediaManager:---#6"
+    ],
+    "bool-is-prefix": [
+      "isPlaying:isPlaying"
+    ],
+    "timer-name": [
+      "_positionTimer:_positionTimer"
+    ]
+  },
+  "qml/services/system/NightLightManager.qml": {
+    "banner-style": [
+      "NightLightManager:---"
+    ],
+    "timer-name": [
+      "_change:_change"
+    ],
+    "unit-suffix": [
+      "_command:/ 100"
+    ]
+  },
+  "qml/services/system/NotificationFiles.qml": {
+    "callback-param": [
+      "missing:callback"
+    ]
+  },
+  "qml/services/system/NotificationManager.qml": {
+    "getter-pairs": [
+      "ruleFor:ruleFor",
+      "windowOf:windowOf"
+    ],
+    "retired": [
+      "_file:opts",
+      "announce:opts",
+      "sendNotification:opts"
+    ],
+    "signal-shape": [
+      "showPopup:showPopup"
+    ],
+    "timer-name": [
+      "_ageTimer:_ageTimer"
+    ]
+  },
+  "qml/services/system/TimeZoneManager.qml": {
+    "getter-pairs": [
+      "offsetOf:offsetOf"
+    ],
+    "timer-name": [
+      "_timer:_timer"
+    ]
+  },
+  "qml/services/system/VpnManager.qml": {
+    "timer-name": [
+      "_tailscaleWait:_tailscaleWait",
+      "_tailscaleWait:tailscaleWait"
+    ]
+  },
+  "qml/services/ui/BackdropManager.qml": {
+    "banner-style": [
+      "BackdropManager:---"
+    ]
+  },
+  "qml/services/ui/BarManager.qml": {
+    "banner-style": [
+      "BarManager:---",
+      "BarManager:---#2",
+      "BarManager:---#3"
+    ],
+    "getter-pairs": [
+      "_sectionOf:_sectionOf"
+    ],
+    "retired": [
+      "applyChanges:isDirty",
+      "ensureLoaded:isDirty",
+      "isDirty:isDirty",
+      "isDirty:isDirty#2",
+      "previewConfig:floatGaps"
+    ]
+  },
+  "qml/services/ui/BarRevealManager.qml": {
+    "banner-style": [
+      "BarRevealManager:---",
+      "BarRevealManager:---#2",
+      "BarRevealManager:---#3",
+      "BarRevealManager:---#4"
+    ],
+    "getter-pairs": [
+      "shownOf:shownOf"
+    ],
+    "short-params": [
+      "reveal:ms"
+    ],
+    "timer-name": [
+      "_timer:_timer"
+    ],
+    "unit-suffix": [
+      "_settleMs:_settleMs"
+    ]
+  },
+  "qml/services/ui/DesktopManager.qml": {
+    "banner-style": [
+      "DesktopManager:---"
+    ],
+    "getter-pairs": [
+      "screenFor:screenFor"
+    ]
+  },
+  "qml/services/ui/DockManager.qml": {
+    "banner-style": [
+      "DockManager:---",
+      "DockManager:---#2",
+      "DockManager:---#3",
+      "DockManager:---#4"
+    ],
+    "getter-pairs": [
+      "entryFor:entryFor",
+      "iconFor:iconFor",
+      "nameFor:nameFor"
+    ],
+    "timer-name": [
+      "_previewEnd:_previewEnd",
+      "_previewHold:_previewHold",
+      "_refresh:_refresh"
+    ]
+  },
+  "qml/services/ui/EditsManager.qml": {
+    "retired": [
+      "discardAll:isDirty",
+      "discardAll:isDirty#2",
+      "discardAll:isDirty#3",
+      "discardAll:isDirty#4",
+      "discardAll:isDirty#5",
+      "layoutSectionOpen:SectionFolds.isOpen",
+      "saveAll:isDirty",
+      "saveAll:isDirty#2",
+      "saveAll:isDirty#3",
+      "saveAll:isDirty#4",
+      "saveAll:isDirty#5",
+      "unsaved:isDirty",
+      "unsaved:isDirty#2",
+      "unsaved:isDirty#3",
+      "unsaved:isDirty#4",
+      "unsaved:isDirty#5",
+      "unsaved:isDirty#6"
+    ]
+  },
+  "qml/services/ui/GridEditor.qml": {
+    "banner-style": [
+      "GridEditor:---",
+      "GridEditor:---#2",
+      "GridEditor:---#3",
+      "GridEditor:---#4"
+    ],
+    "short-params": [
+      "canResize:h",
+      "canResize:w",
+      "grow:dx",
+      "grow:dy",
+      "nudge:dx",
+      "nudge:dy",
+      "planMoveGroup:dx",
+      "planMoveGroup:dy"
+    ],
+    "spelling": [
+      "centreSelection:centreSelection",
+      "planCentre:planCentre"
+    ]
+  },
+  "qml/services/ui/IconManager.qml": {
+    "banner-style": [
+      "IconManager:---"
+    ]
+  },
+  "qml/services/ui/LauncherCommands.qml": {
+    "banner-style": [
+      "LauncherCommands:---",
+      "LauncherCommands:---#2",
+      "list:---",
+      "list:---#2",
+      "list:---#3",
+      "list:---#4",
+      "list:---#5",
+      "list:---#6",
+      "list:---#7",
+      "list:---#8"
+    ],
+    "unit-suffix": [
+      "list:/ 100"
+    ]
+  },
+  "qml/services/ui/LauncherFiles.qml": {
+    "banner-style": [
+      "LauncherFiles:---",
+      "LauncherFiles:---#2",
+      "LauncherFiles:---#3"
+    ],
+    "short-params": [
+      "mainRows:q"
+    ]
+  },
+  "qml/services/ui/LauncherManager.qml": {
+    "banner-style": [
+      "LauncherManager:---",
+      "LauncherManager:---#10",
+      "LauncherManager:---#11",
+      "LauncherManager:---#2",
+      "LauncherManager:---#3",
+      "LauncherManager:---#4",
+      "LauncherManager:---#5",
+      "LauncherManager:---#6",
+      "LauncherManager:---#7",
+      "LauncherManager:---#8",
+      "LauncherManager:---#9"
+    ],
+    "callback-param": [
+      "afterClose:fn"
+    ],
+    "timer-name": [
+      "_refreshLater:_refreshLater"
+    ]
+  },
+  "qml/services/ui/MenuEditor.qml": {
+    "banner-style": [
+      "MenuEditor:---",
+      "MenuEditor:---#2"
+    ],
+    "getter-pairs": [
+      "_fieldOf:_fieldOf"
+    ],
+    "retired": [
+      "applyChanges:isDirty",
+      "ensureLoaded:isDirty",
+      "isDirty:isDirty",
+      "isDirty:isDirty#2",
+      "references:isDirty"
+    ],
+    "short-params": [
+      "setGridOffset:px"
+    ],
+    "spelling": [
+      "centreSelected:centreSelected"
+    ]
+  },
+  "qml/services/ui/OverlayManager.qml": {
+    "banner-style": [
+      "OverlayManager:---",
+      "OverlayManager:---#2",
+      "OverlayManager:---#3",
+      "OverlayManager:---#4",
+      "OverlayManager:---#5",
+      "OverlayManager:---#6"
+    ],
+    "retired": [
+      "ensureLoaded:isDirty",
+      "isDirty:isDirty",
+      "isDirty:isDirty#2",
+      "layoutsDirty:isDirty",
+      "layoutsProblems:isDirty",
+      "resetLayouts:isDirty",
+      "saveLayouts:isDirty"
+    ]
+  },
+  "qml/services/ui/PageWindowManager.qml": {
+    "banner-style": [
+      "PageWindowManager:---"
+    ],
+    "getter-pairs": [
+      "_windowOf:_windowOf",
+      "screenOf:screenOf"
+    ]
+  },
+  "qml/services/ui/PopoutManager.qml": {
+    "getter-pairs": [
+      "_entryOf:_entryOf"
+    ],
+    "short-params": [
+      "claim:c",
+      "release:c",
+      "update:c"
+    ]
+  },
+  "qml/services/ui/ScreenEdgeManager.qml": {
+    "getter-pairs": [
+      "barOn:barOn",
+      "edgeOn:edgeOn",
+      "edgesFor:edgesFor"
+    ],
+    "retired": [
+      "_freshBarsFor:floatGaps",
+      "detachedGaps:floatGaps",
+      "detachedGaps:floatGaps#2",
+      "endsOptions:floatGaps",
+      "floatGaps:floatGaps"
+    ]
+  },
+  "qml/services/ui/ScreenLayoutEditor.qml": {
+    "banner-style": [
+      "ScreenLayoutEditor:---"
+    ],
+    "retired": [
+      "_syncPreview:isDirty",
+      "ensureLoaded:isDirty",
+      "isDirty:isDirty",
+      "isDirty:isDirty#2"
+    ]
+  },
+  "qml/services/ui/SettingsManager.qml": {
+    "banner-style": [
+      "SettingsManager:---"
+    ],
+    "collection-suffix": [
+      "changedSet:changedSet"
+    ],
+    "getter-pairs": [
+      "optionsFor:optionsFor",
+      "schemaAt:schemaAt",
+      "valueOf:valueOf"
+    ],
+    "retired": [
+      "isDirty:isDirty",
+      "isDirty:isDirty#2"
+    ]
+  },
+  "qml/services/ui/ShellManager.qml": {
+    "signal-shape": [
+      "closeOverlay:closeOverlay",
+      "openOverlayPage:openOverlayPage",
+      "showOsd:showOsd",
+      "showOverlayPage:showOverlayPage",
+      "toggleAppLauncher:toggleAppLauncher",
+      "toggleOverlay:toggleOverlay",
+      "togglePowerMenu:togglePowerMenu",
+      "toggleWorkspaceOverlay:toggleWorkspaceOverlay"
+    ]
+  },
+  "qml/services/ui/SurfaceManager.qml": {
+    "banner-style": [
+      "SurfaceManager:---"
+    ]
+  },
+  "qml/services/ui/WallpaperManager.qml": {
+    "banner-style": [
+      "WallpaperManager:---",
+      "WallpaperManager:---#2",
+      "WallpaperManager:---#3",
+      "WallpaperManager:---#4"
+    ],
+    "timer-name": [
+      "_recheck:_recheck",
+      "_rotation:_rotation"
+    ]
+  },
+  "qml/services/ui/WallpaperToneManager.qml": {
+    "banner-style": [
+      "WallpaperToneManager:----",
+      "WallpaperToneManager:----#2"
+    ],
+    "unit-suffix": [
+      "regionOn:/ 100"
+    ]
+  },
+  "qml/shell/BlurBacking.qml": {
+    "handler-shaped-property": [
+      "BlurBacking:onScreen"
+    ]
+  },
+  "qml/shell/HotCorners.qml": {
+    "timer-name": [
+      "HotCorners:dwell"
+    ]
+  },
+  "qml/shell/Notifications.qml": {
+    "signal-shape": [
+      "hideEverywhere:hideEverywhere"
+    ]
+  },
+  "qml/shell/OSD.qml": {
+    "unit-suffix": [
+      "OSD:/ 100",
+      "OSD:/ 100#2"
+    ]
+  }
+}

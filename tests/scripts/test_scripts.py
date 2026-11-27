@@ -1048,6 +1048,13 @@ class Manifests(unittest.TestCase):
             self.assertEqual(len(errors), 1, errors)
             self.assertIn(bad, errors[0])
 
+    def test_adapter_paths(self):
+        other = demo_entry(prefix="OTHER", adapters=["qml/components/OtherAdapter.qml"], itemPaths=["qml/components/OtherItem.qml"])
+        text = manifest_text(demo_entry(), other=other)
+        self.assertEqual(self.m.adapter_paths(self.m.engines(text=text)[0]),
+                         ["qml/components/OtherAdapter.qml", "qml/components/OtherItem.qml",
+                          "qml/components/DemoAdapter.qml", "qml/components/DemoItem.qml"])
+
     def test_tests_for(self):
         text = manifest_text(demo_entry())
         names = ["DemoEngine", "DemoGolden", "DemoPixels", "DemoSweep"]
@@ -1380,7 +1387,7 @@ class CheckNames(unittest.TestCase):
 
     def test_each_rule_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root, _ = fixture_repo(tmp)
+            root, base = demo_repo(tmp)
             c = "qml/components"
             files = [
                 (f"{c}/NameBool.qml", self.named("  property bool isVisibleNow: true\n  property bool isColor: true")),
@@ -1397,8 +1404,14 @@ class CheckNames(unittest.TestCase):
                 (f"{c}/NameAcronym.qml", self.named("  property string authURL: \"\"\n  property real OSDTile: 0\n  property string authUrl: \"\"")),
                 (f"{c}/NameSpelling.qml", self.named("  property real centreX: 0\n  property real accentRest: 0\n  signal picked(colourName: string)")),
                 (f"{c}/NameRetired.qml", self.named("  property var opts: null\n  property var other: thing.ctx\n  property var folded: SectionFolds.isOpen(a, b)\n  property var okay: ctx\n  property var d: schema.definitions.Bar")),
+                (f"{c}/methods/NameKeys.qml", self.named('  function span(first, second) { return {"lo": first, hi: second, "start": first, extent: 1, end: second}; }\n  function four(first, second, third, fourth) { return first; }')),
+                (f"{c}/methods/demo/NameArgs.qml", self.named("  function five(first, second, third, fourth, fifth) { return first; }\n  function _five(first, second, third, fourth, fifth) { return first; }")),
+                (f"{c}/DemoAdapter.qml", self.named("  property real pillClearance: placement.attachClearance\n  property real attachClearance: placement.attachClearance\n  property real sum: placement.a + 1")),
+                (f"{c}/NameTimer.qml", self.named("  property Timer _timer: Timer {}\n  property Timer doneTimeout: Timer {}\n  Timer { id: closeDelay }\n  Timer { id: openSoon }\n  Timer { id: pollTick }")),
+                (f"{c}/NameTimerRoot.qml", "import QtQuick\n// A fixture.\nTimer {\n  id: root\n}\n"),
+                (f"{c}/NameBanner.qml", "import QtQuick\n// A fixture.\n// ==== Public ====\n// -- Public --\nItem {\n  // ---- x\n  // ~~~ x\n  // a === b\n  // (\"~~~~\")\n}\n"),
             ]
-            code, out = run_check(root, "check_names.py", files=files)
+            code, out = run_check(root, "check_names.py", "--base", base, files=files)
         self.assertEqual(code, 1)
         n = f"{c}/Name"
         self.assertEqual(missed(out, [
@@ -1424,11 +1437,22 @@ class CheckNames(unittest.TestCase):
             f"{n}Retired.qml: retired opts:opts",
             f"{n}Retired.qml: retired other:ctx",
             f"{n}Retired.qml: retired folded:SectionFolds.isOpen",
+            f"{c}/methods/NameKeys.qml: object-keys span:lo",
+            f"{c}/methods/NameKeys.qml: object-keys span:hi",
+            f"{c}/methods/NameKeys.qml: object-keys span:extent",
+            f"{c}/methods/demo/NameArgs.qml: positional-args five:five",
+            f"{c}/DemoAdapter.qml: forward-rename pillClearance:pillClearance",
+            f"{n}Timer.qml: timer-name _timer:_timer",
+            f"{n}Timer.qml: timer-name NameTimer:closeDelay",
+            f"{n}Banner.qml: banner-style NameBanner:====",
+            f"{n}Banner.qml: banner-style NameBanner:----",
+            f"{n}Banner.qml: banner-style NameBanner:~~~",
         ]), [], out)
         lines = out.splitlines()
         for quiet in ("isColor", "filletOpen", "shapeOf", "showRequested", "closed", "selectionChanged", "kilo", "items",
                       "px", "at:", "OSDTile", "authUrl", "okay", "atStart", "canStart", "saveRefused", "r:/ 100", "itemLength",
-                      "showList", "find:", "_inner:", "accentRest", "d:Bar"):
+                      "showList", "find:", "_inner:", "accentRest", "d:Bar", "span:start", "span:end", "four:", "attachClearance",
+                      "sum:", "doneTimeout", "openSoon", "pollTick", "Public --", "_five", "NameTimerRoot", "a === b", "~~~~"):
             self.assertEqual([l for l in lines if f"/Name" in l and quiet in l], [], quiet + "\n" + out)
         sys.path.insert(0, str(SCRIPTS))
         import check_names
@@ -1439,8 +1463,8 @@ class CheckNames(unittest.TestCase):
 
     def test_type_key_site_is_its_file(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root, _ = fixture_repo(tmp)
-            code, out = run_check(root, "check_names.py", files=[
+            root, base = fixture_repo(tmp)
+            code, out = run_check(root, "check_names.py", "--base", base, files=[
                 ("qml/components/StyledContainer.qml", self.named("")),
                 ("qml/components/UsesIt.qml", self.named("  StyledContainer {}"))])
         self.assertEqual(code, 1)
@@ -1449,14 +1473,14 @@ class CheckNames(unittest.TestCase):
 
     def test_exceptions(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root, _ = fixture_repo(tmp)
+            root, base = fixture_repo(tmp)
             edit_json(root / "scripts/names-exceptions.json", lambda data: data.update({
                 "centreX": {"rules": ["spelling"], "reason": "fixture"},
                 "Foo.outline": {"rules": ["short-params"], "reason": "fixture"},
                 "neverUsed": {"rules": ["spelling"], "reason": "fixture"},
                 "qml/nowhere/*.qml": {"rules": ["retired"], "reason": "fixture"}}))
             c = "qml/components"
-            code, out = run_check(root, "check_names.py", files=[
+            code, out = run_check(root, "check_names.py", "--base", base, files=[
                 (f"{c}/NameSpelling.qml", CheckNames.named("  property real centreX: 0\n  property real colourY: 0")),
                 (f"{c}/Foo.qml", CheckNames.named("  function outline(o, w, h) { return o; }\n  function other(o) { return o; }"))])
         self.assertEqual(code, 1)
@@ -1467,6 +1491,66 @@ class CheckNames(unittest.TestCase):
             "scripts/names-exceptions.json: qml/nowhere/*.qml lists retired, which no file under it hits"]), [], out)
         self.assertEqual([l for l in out.splitlines() if "centreX" in l or "Foo.qml: short-params outline" in l or ": acronym-case OSD" in l
                           or "shell/Bar.qml: retired" in l], [], out)
+
+    @staticmethod
+    def baselined(root):
+        """`Old.qml` with a `spelling` hit, listed in the baseline."""
+        write(root, "qml/components/Old.qml", CheckNames.named("  property real centreX: 0"))
+        edit_json(root / "scripts/names-baseline.json", lambda data: data.update(
+            {"qml/components/Old.qml": {"spelling": ["centreX:centreX"]}}))
+
+    def test_baseline(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, plant=self.baselined)
+            code, out = run_check(root, "check_names.py", "--base", base)
+            self.assertEqual((code, out), (0, "names ok\n"))
+            code, out = run_check(root, "check_names.py", "--base", base, files=[
+                ("qml/components/New.qml", self.named("  property real colourY: 0"))])
+            self.assertEqual(code, 1)
+            self.assertEqual(missed(out, ["qml/components/New.qml: spelling colourY:colourY: not in the baseline"]), [], out)
+            (root / "qml/components/New.qml").unlink()
+            code, out = run_check(root, "check_names.py", "--base", base, files=[
+                ("qml/components/Old.qml", self.named("  property real centerX: 0"))])
+            self.assertEqual(code, 1)
+            self.assertIn("qml/components/Old.qml: spelling centreX:centreX: fixed, still baselined", out)
+            write(root, "qml/components/Old.qml", self.named("  property real centreX: 0"))
+            edit_json(root / "scripts/names-baseline.json", lambda data: data.update(
+                {"qml/components/Other.qml": {"spelling": ["centreY:centreY"]}}))
+            code, out = run_check(root, "check_names.py", "--base", base, files=[
+                ("qml/components/Other.qml", self.named("  property real centreY: 0"))])
+            self.assertEqual(code, 1)
+            self.assertIn("qml/components/Other.qml: spelling centreY:centreY: added to the baseline since", out)
+
+    def test_new_rule_entries_and_update(self):
+        def without_spelling(root):
+            self.baselined(root)
+            path = root / "scripts/check_names.py"
+            path.write_text("".join(l for l in path.read_text().splitlines(keepends=True) if not l.startswith('    "spelling": "')))
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, plant=without_spelling)
+            shutil.copy2(ROOT / "scripts/check_names.py", root / "scripts/check_names.py")
+            write(root, "qml/components/Other.qml", self.named("  property real centreY: 0"))
+            code, out = run_check(root, "check_names.py", "--base", base, "--update-baseline")
+            self.assertEqual(code, 0, out)
+            data = json.loads((root / "scripts/names-baseline.json").read_text())
+            self.assertEqual(data["qml/components/Other.qml"], {"spelling": ["centreY:centreY"]})
+            self.assertTrue(all(isinstance(syms, list) and all(isinstance(x, str) for x in syms)
+                                for rules in data.values() for syms in rules.values()), data)
+            code, out = run_check(root, "check_names.py", "--base", base)
+            self.assertEqual((code, out), (0, "names ok\n"))
+
+    def test_files_reports_only_the_named_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, plant=self.baselined)
+            edit_json(root / "scripts/names-exceptions.json", lambda data: data.update(
+                {"neverUsed": {"rules": ["spelling"], "reason": "fixture"}}))
+            write(root, "qml/components/Old.qml", self.named("  property real centerX: 0"))
+            code, out = run_check(root, "check_names.py", "--base", base, "--files", "qml/components/New.qml", files=[
+                ("qml/components/New.qml", self.named("  property real colourY: 0"))])
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, ["qml/components/New.qml: spelling colourY:colourY"]), [], out)
+        self.assertNotIn("Old.qml", out)
+        self.assertEqual([l for l in out.splitlines() if l.startswith("scripts/names-exceptions.json")], [], out)
 
     def test_moved_names_have_no_site(self):
         sys.path.insert(0, str(SCRIPTS))

@@ -165,6 +165,11 @@ def within(path, held):
     return bool(held) and (path == held or path.startswith(held + "/"))
 
 
+def adapter_paths(engines):
+    """The adapters and itemPaths of these engines, in order: the files whose properties forward an engine's outputs."""
+    return [p for e in engines.values() for p in (*e["adapters"], *e["itemPaths"])]
+
+
 def held_paths(entry):
     """The repo-relative paths (files or folders) a filled engine entry holds, empties dropped."""
     folder = entry["folder"]
