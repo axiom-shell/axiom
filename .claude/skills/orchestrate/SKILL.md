@@ -12,7 +12,7 @@ Arguments: `$ARGUMENTS`
 - Free text: the request, quoted verbatim into decisions.md.
 - `align <description>`: an alignment request; step 2 runs `/align`.
 - `group <plan file> [--stack <k>]`: run one stack of a plan file (`stacks.md`). `<plan file>` is an absolute path, or a file name in the plan files folder (› State). `--stack <k>` picks the k-th stack and is required when the plan has two or more; one run owns one stack.
-- `resume <slug>`: continue a run: read state.md and decisions.md, `git -C <tree> status` and `log -3`, and the PR (`gh pr view <branch> --json number,comments`: its number goes into state.md, its answers become D; a stack: `stacks.md` › Resume); continue at Next.
+- `resume <slug>`: continue a run: read state.md and decisions.md, `git -C <tree> status` and `log -3`, and the PR (`gh pr view <branch> --json number,comments`: its number goes into state.md, its answers become D; none yet: skip it; a stack: `stacks.md` › Resume); continue at Next.
 
 Layouts: one file per hand-off in `.claude/templates/`; fill them, never restate them. Steps 1–3 are in `start.md`, 5–8 in `finish.md`, beside this file: read each before running any step it holds, never earlier. A `group` run, or its resume, reads `stacks.md` first; a run whose spec the architect splits into a stack reads it before the plan check.
 
