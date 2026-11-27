@@ -192,6 +192,7 @@ PopoutWrapperBase {
             x: (placeOnScreen.origin?.x ?? 0) + slide.slideX
             y: (placeOnScreen.origin?.y ?? 0) + slide.slideY
             shown: panel.backed && panel.visible
+            paintRank: PaintOrder.rankOf("base")
           }
         }
 
@@ -211,13 +212,28 @@ PopoutWrapperBase {
         }
 
         // With the screen border off, nothing inside draws the frame's stroke
+        // (drawn by the backing window while it backs: its BlurShape, a
+        // stroke alone over the strip's fill)
         Rectangle {
+          id: borderOffLine
           visible: !Appearance.screenBorder
-          color: Style.frameStroke
+          color: panel.backed ? "transparent" : Style.frameStroke
           width: root.vertical ? Appearance.borderWidth : parent.width
           height: root.vertical ? parent.height : Appearance.borderWidth
           x: root.edge === ScreenEdge.Left ? parent.width - width : 0
           y: root.edge === ScreenEdge.Top ? parent.height - height : 0
+
+          BlurShape {
+            source: borderOffLine
+            kind: "rect"
+            color: "transparent"
+            strokeColor: Style.frameStroke
+            paintRank: PaintOrder.rankOf("frame")
+            screen: root.screen?.name ?? ""
+            x: (placeOnScreen.origin?.x ?? 0) + slide.slideX + borderOffLine.x
+            y: (placeOnScreen.origin?.y ?? 0) + slide.slideY + borderOffLine.y
+            shown: panel.backed && panel.visible && !Appearance.screenBorder
+          }
         }
 
         Loader {

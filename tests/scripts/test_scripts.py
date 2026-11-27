@@ -1270,20 +1270,29 @@ class CheckPackages(unittest.TestCase):
 
 
 class CheckShaders(unittest.TestCase):
-    """scripts/check_shaders.py fails when a wallpaper shader's .qsb is stale
-    or missing, or a .qsb or stamp has no source."""
+    """scripts/check_shaders.py fails when a shader's .qsb is stale or
+    missing, or a .qsb or stamp has no source, in each of its folders."""
 
-    SHADERS = "qml/components/surfaces/wallpaper/shaders"
+    SHADERS = ["qml/components/surfaces/wallpaper/shaders", "qml/components/hosts/popout/shaders"]
 
     def test_clean(self):
         with tempfile.TemporaryDirectory() as tmp:
-            code, out = run_check(fixture_root(tmp, self.SHADERS), "check_shaders.py")
+            code, out = run_check(fixture_root(tmp, *self.SHADERS), "check_shaders.py")
         self.assertEqual(code, 0, out)
+
+    def test_composite_folder_is_checked(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, *self.SHADERS)
+            frag = root / self.SHADERS[1] / "chrome-composite.frag"
+            frag.write_text(frag.read_text() + "// edited\n")
+            code, out = run_check(root, "check_shaders.py")
+        self.assertEqual(code, 1)
+        self.assertIn("chrome-composite.frag: changed since its .qsb was built", out)
 
     def test_each_rule_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = fixture_root(tmp, self.SHADERS)
-            shaders = root / self.SHADERS
+            root = fixture_root(tmp, *self.SHADERS)
+            shaders = root / self.SHADERS[0]
             (shaders / "fade.frag").write_text((shaders / "fade.frag").read_text() + "// edited\n")
             (shaders / "wipe.frag.qsb").unlink()
             (shaders / "ghost.frag.qsb").write_bytes(b"x")

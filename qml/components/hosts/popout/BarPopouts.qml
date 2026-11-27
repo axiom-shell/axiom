@@ -254,7 +254,7 @@ PopoutWrapperBase {
     probeStart: mainPopup.alignedBoxStart
     probeLength: mainPopup.boxLength
     coverStart: surface.coverStart
-    coverLength: surface.coverLength
+    coverEnd: surface.coverEnd
     drawnSurfaceStart: mainPopup.shownAlongPos
     submenu: slot
     owner: "barPopout:" + root.barConfig.id

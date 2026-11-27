@@ -221,6 +221,13 @@ QtObject {
 
   readonly property real bytesPerGiB: 1073741824
 
+  // A 64th of a px (a power of two, exact in float): how far an edge is
+  // drawn in so it never lands on a device pixel's centre at a fractional
+  // scale, where Qt rounds a clip edge .5 up (HoledCopy's holes) and a
+  // CurveRenderer stroke gives the pixel its full coverage (AttachedSurface's
+  // outline)
+  readonly property real tieInset: 1 / 64
+
   // A transfer rate as [value, unit]: "B/s" to "GB/s", one decimal under
   // 10 (past bytes), e.g. [1.5, "MB/s"], [512, "KB/s"]
   function rateParts(bytesPerSecond) {
@@ -314,5 +321,49 @@ QtObject {
         "end": end
       });
     return pieces;
+  }
+
+  // `bounds` (a rect) with `rects` (any order, may overlap or reach past it)
+  // taken out: disjoint rects covering the rest, row by row (cut at every
+  // top and bottom of `rects` inside `bounds`; in each row, the x-spans
+  // left by subtractSpans). [] when nothing is left, [bounds] when nothing
+  // is taken. Reads x, y, width and height; returns Qt.rects.
+  function subtractRects(bounds, rects) {
+    const top = bounds.y, bottom = bounds.y + bounds.height;
+    const inside = rects.filter(r => r.width > 0 && r.height > 0 && r.y + r.height > top && r.y < bottom && r.x + r.width > bounds.x && r.x < bounds.x + bounds.width);
+    if (inside.length === 0)
+      return bounds.width > 0 && bounds.height > 0 ? [Qt.rect(bounds.x, bounds.y, bounds.width, bounds.height)] : [];
+    const edges = [top, bottom];
+    for (const r of inside) {
+      edges.push(Math.max(top, Math.min(bottom, r.y)), Math.max(top, Math.min(bottom, r.y + r.height)));
+    }
+    const ys = edges.filter((y, i) => edges.indexOf(y) === i).sort((a, b) => a - b);
+    const pieces = [];
+    for (let i = 0; i + 1 < ys.length; i++) {
+      const y0 = ys[i], y1 = ys[i + 1];
+      const row = inside.filter(r => r.y < y1 && r.y + r.height > y0).map(r => ({
+            "start": r.x,
+            "end": r.x + r.width
+          }));
+      for (const span of root.subtractSpans(bounds.x, bounds.x + bounds.width, row))
+        pieces.push(Qt.rect(span.start, y0, span.end - span.start, y1 - y0));
+    }
+    return pieces;
+  }
+
+  // The part of `bounds` that `rects` cover (subtractRects' rects), drawn in
+  // by `by` on every edge it has against the rest of `bounds`; edges where
+  // two of `rects` meet stay where they are. Disjoint Qt.rects, [] when
+  // nothing is covered.
+  function insetUnion(bounds, rects, by) {
+    const rest = root.subtractRects(bounds, rects).map(r => Qt.rect(r.x - by, r.y - by, r.width + by * 2, r.height + by * 2));
+    return root.subtractRects(bounds, rest);
+  }
+
+  // `bounds` less `holes` (rects, same coordinates), the holes' outer edges
+  // drawn in by tieInset so a pixel centred on a hole's edge stays the
+  // drawing's: subtractRects, but for that inset. Disjoint Qt.rects.
+  function subtractHoles(bounds, holes) {
+    return root.subtractRects(bounds, root.insetUnion(bounds, holes, root.tieInset));
   }
 }

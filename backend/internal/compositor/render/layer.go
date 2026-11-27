@@ -190,7 +190,7 @@ func jsCat(v any) string {
 
 // SurfaceBlur is CompositorLayer.surfaceBlur: what blurs behind axiom's
 // surfaces, by namespace, as rule groups ({ name, namespaces, on, blur,
-// popups, threshold, xray, noAnim }). surfaces: { blur, throughWindows,
+// popups, threshold, xray }). surfaces: { blur, throughWindows,
 // backdrops, threshold }.
 func (t *Tables) SurfaceBlur(surfaces any) []*jsonx.Object {
 	on := isTrue(get(surfaces, "blur"))
@@ -198,7 +198,7 @@ func (t *Tables) SurfaceBlur(surfaces any) []*jsonx.Object {
 	threshold := get(surfaces, "threshold")
 	row := func(name string, namespaces []string, rowOn bool, fields ...any) *jsonx.Object {
 		r := jsonx.Obj("name", name, "namespaces", strs(namespaces), "on", rowOn, "blur", false, "popups", false,
-			"threshold", nil, "xray", nil, "noAnim", false)
+			"threshold", nil, "xray", nil)
 		for i := 0; i < len(fields); i += 2 {
 			r.Set(fields[i].(string), fields[i+1])
 		}
@@ -209,7 +209,6 @@ func (t *Tables) SurfaceBlur(surfaces any) []*jsonx.Object {
 		// Hyprland never blurs a popup with xray; niri is told the same
 		row("axiom-blur-popups", t.BlurChrome, on, "popups", true, "threshold", threshold, "xray", false),
 		row("axiom-blur-backdrops", t.BlurBackdrops, on && isTrue(get(surfaces, "backdrops")), "blur", true, "threshold", 0.01, "xray", xray),
-		row("axiom-blur-no-anim", t.BlurBacked, on, "noAnim", true),
 		row("axiom-blur-over-overlay", t.BlurOverOverlay, on, "blur", true, "threshold", threshold, "xray", false),
 	}
 }

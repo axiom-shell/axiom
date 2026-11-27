@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.config
 import qs.services.ui
+import qs.components.methods
 
 // A surface's shape, registered with BlurManager for the blur window
 // (shell/BlurBacking) to draw and blur in its place. `source` is an
@@ -17,6 +18,13 @@ QtObject {
   // surface's own fillColor unless its site sets one; a rect's or frame's
   // what its site sets
   property color color: root._surface?.fillColor ?? Style.surfacePage
+  // The stroke its copy draws over its fill: an attached surface's own
+  // strokeColor unless its site sets one (as `shadow` follows its source);
+  // a rect has none unless its site sets one; transparent for none
+  property color strokeColor: root._surface?.strokeColor ?? "transparent"
+  // Where it stands in the backing window's painter's order (PaintOrder.rankOf:
+  // lower first; a higher shape's fill hides the stroke of one under it)
+  property int paintRank: PaintOrder.rankOf("base")
   // How far its copy has faded in (a toast or menu tile fading), applied to the copy alone
   property real fade: 1
   property string kind: "attached"
@@ -32,7 +40,8 @@ QtObject {
   // Its key in BlurManager, set as it registers
   property int uid: -1
   // What of it shows, on screen: its window's rect, for a shape that moves
-  // past its window's edges (a hiding dock); null for the whole screen
+  // past its window's edges (a hiding dock, an edge popout longer than its
+  // window); null for the whole screen
   property var clipRect: null
 
   // The shadow it casts there (a SurfaceShadow look: BarStyle's or a

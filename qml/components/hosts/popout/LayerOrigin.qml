@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 
 import qs.services.compositor
+import qs.services.ui
 import qs.components.methods
 
 // Where a layer-shell `window` is on its screen, as LayerManager works it
@@ -74,6 +75,8 @@ QtObject {
 
   readonly property var _rect: LayerManager.rectOf(root._uid, root._output)
   readonly property var origin: root._rect ? Qt.point(root._rect.x, root._rect.y) : null
+  // The window on screen: what of a surface in it shows, BlurShape.clipRect
+  readonly property rect screenRect: Qt.rect(root.origin?.x ?? 0, root.origin?.y ?? 0, root.window?.width ?? 0, root.window?.height ?? 0)
 
   // Where it is, else where it most likely is: on its edge, centred along
   // it (what's reserved at either end roughly balancing). Close enough for
@@ -103,5 +106,20 @@ QtObject {
   onOriginChanged: {
     if (root.origin !== null)
       root._timedOut = false;
+  }
+
+  // Its watchdog has looked at its window's first frame
+  property bool _warned: false
+  // A window the backing window backs, drawn before it was placed, shows
+  // its chrome beside a fill that isn't there yet (a seam): said once, at
+  // its first frame
+  property Connections _firstFrame: Connections {
+    target: root.window?.contentItem?.Window.window ?? null
+    enabled: !root._warned
+    function onFrameSwapped() {
+      root._warned = true;
+      if (root.origin === null && BlurManager.backingOn(root._output))
+        console.warn(`${root.namespace} on ${root._output}: drawn before it was placed`);
+    }
   }
 }

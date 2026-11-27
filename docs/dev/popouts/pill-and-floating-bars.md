@@ -31,11 +31,11 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
 ### Bar popouts and pill bars
 - **Joining ends:** bar popouts join an end the same way edge popouts do (`EdgeAttach.joins`).
 - **Pill bar on a perpendicular edge:** bar popouts, edge popouts and docks all also join a pill bar (`surface: "pills"`, not floating) there.
-  - **The joining piece:** `hosts/popout/PillBarJoin`, a `PillStretch` on that bar's container. Its `joined` comes from the end's `sink: "pillBar"` (`SurfaceContext.end`).
+  - **The joining piece:** `hosts/popout/PillBarJoin`, a `PillStretch` on that bar's container. Its `joined` comes from the end's `sink: "pillBar"` (`SurfaceContext.end`), and `drawnStart` (where its surface's joined end is drawn from across that bar, set by `EdgePlacement`) from the surface.
   - **Where the end sits:** on that bar's far stroke. Its window reaches a stroke's width onto it, as it does onto the border's or a solid bar's stroke.
     - Every end does this except a bare screen edge's (`EdgePopout.startStrokeInset`/`endStrokeInset`; the dock's likewise).
   - **The bar's end pill runs out along the box** (the `endReach` of its `BarContainer.setRequest`).
-    - The reach comes from `joinReach`, the far wall's reach (`AttachedSurface.joinWall`).
+    - The reach comes from `joinReach`, the far wall's reach (`AttachedSurface.joinSide`).
     - It follows the box's far wall as it slides (`hidden`), and its far stroke opens only as far as the box has come ([Choreography](edge-attach.md#choreography)).
     - Either the end pill is stretched, or a stub is grown where the bar has no pill near its end (`BarLayout.endReaches`).
 - **Filleted join:** this applies where one of the bar's own pills (`groupPills`, before any stretch) shows past the wall's outer edge at all (half a stroke out from where it rests, where a straight join would square it) and reaches within a fillet, a corner and `joinGap` of it (`EdgeAttach.pillJoinFilleted`, read as `PillBarJoin.filleted`).
@@ -47,7 +47,8 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
 - **Straight join:** otherwise the end runs straight (`straightJoinStart`/`End`).
   - It runs into a pill or stub that goes only as far as the far wall and squares there (`square`).
   - The wall runs on into its end.
-  - Its far stroke is left open inside the wall under a translucent box.
+  - The stub's square corner under the wall is cut from where the surface's copy begins across the far stroke (the opening's `coverStart`, from `PillBarJoin.drawnStart`) out to the stroke's fringe, through the wall's rows, so only the wall's stroke is drawn there; the far stroke's band stops a pixel short of the wall, where the corner piece takes over, so at a fractional scale the band's last device row is never the wall's first.
+  - Its far stroke is left open inside the wall, in every mode.
 - **The pill still curves out** to the border as ever, following the surface along its slide ([Choreography](edge-attach.md#choreography)).
 - **A bar popout joining one** stretches its own pill to its bar's end (`pillJoins`).
   - On a pill, the box joins an end that `joins` asks for wherever its pill can reach that edge, or where its fillet would pass the stroke there.

@@ -158,11 +158,14 @@ QtObject {
       "endReach": root.endReach
     });
   }
-  // At the end of the pass: what it sends reshapes the pills it reads
+  // End reaches and openings follow their surface along a slide, as does a
+  // tracking stretch: sent in the pass they change in, so the bar draws them
+  // in the frame the surface moves in. A gliding stretch and a new container
+  // go at the end of the pass: what they send reshapes the pills they read
   // (pillRects), and several changes in one pass go as one
-  on_DrawnChanged: Qt.callLater(root._push)
-  onOpeningChanged: Qt.callLater(root._push)
-  onEndReachChanged: Qt.callLater(root._push)
+  on_DrawnChanged: root.tracks ? root._push() : Qt.callLater(root._push)
+  onOpeningChanged: root._push()
+  onEndReachChanged: root._push()
   onContainerChanged: Qt.callLater(root._push)
   Component.onDestruction: root._clear()
 }

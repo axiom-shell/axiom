@@ -190,14 +190,15 @@ Item {
     });
     return runs;
   }
-  // A copy of a surface (AttachedSurfaceCopy): its fill alone, its stroke
-  // in `mirrorStroke`
+  // A copy of a surface (AttachedSurfaceCopy): its fill in `fillColor`, its
+  // stroke in `mirrorStroke`, both set per capture by the blur window
+  // (Copies.draws); cut by its own `strokeHoles` through HoledCopy
   property bool mirror: false
   property color mirrorStroke: "transparent"
-  // (a copy is drawn opaque: the blur window applies the opacity to all
-  // of them at once, so where they overlap they don't stack)
+  // (a copy is drawn opaque: the blur window blends the strokes over the
+  // fills itself, ChromeComposite)
   readonly property color _fill: root.mirror ? root.fillColor : root.backed || root.hollow ? "transparent" : root.opaque ? root.fillColor : Style.edgeFill(root.fillColor, false)
-  readonly property color _stroke: root.mirror ? root.mirrorStroke : root.hollow ? "transparent" : root.strokeColor
+  readonly property color _stroke: root.mirror ? root.mirrorStroke : root.backed || root.hollow ? "transparent" : root.strokeColor
   // Rects (in this item's coordinates) where its outline is left open:
   // what's joined to it over them (a submenu on its side, a popout on
   // a pill's far stroke) carries on there, its fill no longer hiding it
@@ -248,13 +249,13 @@ Item {
   // stroke lies over the one it opens, so opening it early shows nothing.
   readonly property real _filletHidden: Math.max(0, root.hiddenNow - root.strokeWidth)
   readonly property real coverStart: root._filletIn(root.startMargin, root._filletHidden)
-  // (nothing once it's all behind the edge)
-  readonly property real coverLength: root.hiddenNow >= root.depth ? 0 : root.alongLength - root.coverStart - root._filletIn(root.endMargin, root._filletHidden)
+  // ...to where it ends (at its start, so nothing, once it's all behind the edge)
+  readonly property real coverEnd: root.hiddenNow >= root.depth ? root.coverStart : root.alongLength - root._filletIn(root.endMargin, root._filletHidden)
   // How much of that is the fillet curving up into each wall from the
   // attach edge (0 at a joined, flush or straight end): what it covers
   // shows round its curve, not across its square (a solid bar's shadow)
   readonly property real coverStartFillet: root._natural.filletStart ? Math.max(0, root.startMargin - root.coverStart) : 0
-  readonly property real coverEndFillet: root._natural.filletEnd && root.coverLength > 0 ? Math.max(0, root.endMargin - (root.alongLength - root.coverStart - root.coverLength)) : 0
+  readonly property real coverEndFillet: root._natural.filletEnd && root.coverEnd > root.coverStart ? Math.max(0, root.endMargin - (root.alongLength - root.coverEnd)) : 0
 
   readonly property bool vertical: edge === ScreenEdge.Left || edge === ScreenEdge.Right
   readonly property bool attachLeft: edge === ScreenEdge.Left
@@ -365,7 +366,7 @@ Item {
   // it curves in from)
   // (from the metrics without the joins' straightness, which a pill bar's
   // join decides from where this wall is: PillBarJoin.filleted)
-  readonly property real joinWall: root._back + root.boxStart + root.boxDepth - root._natural.half
+  readonly property real joinSide: root._back + root.boxStart + root.boxDepth - root._natural.half
   // The fillet each joined end curves into that stroke with, at the far
   // end of its cover (0 for one running straight into it)
   readonly property real joinFillet: root._straightJoinStart ? 0 : root.filletRadius
@@ -417,11 +418,13 @@ Item {
 
   // Fill: the outline, closed back along the attach edge.
   // Joined ends also cover the perpendicular stroke up to the fillet.
-  readonly property string fillPath: SurfaceOutline.fillPath(root._spec, root._m, root.width, root.height)
+  // (a copy reads its source's: AttachedSurfaceCopy)
+  property string fillPath: SurfaceOutline.fillPath(root._spec, root._m, root.width, root.height)
 
   // Stroke: the outline alone, open along the attach edge and on joined
   // ends, whose ends sit exactly on the strokes they continue
-  readonly property string strokePath: SurfaceOutline.strokePath(root._spec, root._m, root.width, root.height)
+  // (a copy reads its source's: AttachedSurfaceCopy)
+  property string strokePath: SurfaceOutline.strokePath(root._spec, root._m, root.width, root.height)
 
   SlideAnimation {
     id: slideContainer
@@ -437,6 +440,13 @@ Item {
 
     // Room for the shadow (and the row past a joined end, joinBackfill, which it covers)
     overflow: Math.max(root.shadowReach, root.joinBackfill)
+    // A copy draws its stroke: a pixel past a wall standing on its start
+    // or end edge (no fillet or join there: flush, straight), its
+    // anti-aliased fringe, which the clip cut at a fractional scale; never
+    // past a filleted end, whose stroke's cap there is the lower shape's
+    // pixel (HoledCopy). A host keeps its window's own clip
+    startOverflow: root.mirror && !root.detached && !root._natural.filletStart && !root.joinStart ? 1 : 0
+    endOverflow: root.mirror && !root.detached && !root._natural.filletEnd && !root.joinEnd ? 1 : 0
 
     // The shadow the outline casts, only outside it (none shows
     // through a translucent fill), from a copy of it filled (its own fill
@@ -537,33 +547,64 @@ Item {
         }
       }
 
-      Rectangle {
+      DetachedBox {
         visible: root.detached
-        x: detachedBox.x
-        y: detachedBox.y
-        width: detachedBox.width
-        height: detachedBox.height
-        topLeftRadius: detachedBox.topLeftRadius
-        topRightRadius: detachedBox.topRightRadius
-        bottomLeftRadius: detachedBox.bottomLeftRadius
-        bottomRightRadius: detachedBox.bottomRightRadius
         color: "black" // style-exempt: mask
       }
     }
 
-    // The outline (or detached box)
+    // The outline (or detached box): a host draws it inside a HoledItem
+    // (its stroke left open in `strokeHoles` while unbacked); a copy hands it
+    // to a HoledCopy, its fill whole and its stroke outside the holes
     Item {
       id: outlineLayer
       anchors.fill: parent
 
       HoledItem {
         anchors.fill: parent
-        visible: !root.detached
-        holes: root.strokeHoles
+        visible: !root.mirror && !root.detached
+        holes: root.mirror || root.backed ? [] : root.strokeHoles
         keepLayer: root._holesReady && !root.detached
 
+        Loader {
+          anchors.fill: parent
+          active: !root.mirror
+          sourceComponent: outlineFill
+        }
+
+        Loader {
+          anchors.fill: parent
+          active: !root.mirror
+          sourceComponent: outlineStrokeOnly
+        }
+      }
+
+      HoledCopy {
+        anchors.fill: parent
+        visible: root.mirror
+        holes: root.mirror ? root.strokeHoles : []
+        fillOnly: root.mirror ? (root.detached ? detachedFill : outlineFill) : null
+        strokeOnly: root.mirror ? (root.detached ? detachedStrokeOnly : outlineStrokeOnly) : null
+      }
+
+      // Detached: a box of its own, not joined to anything
+      HoledItem {
+        anchors.fill: parent
+        visible: !root.mirror && root.detached
+        holes: root.mirror || root.backed ? [] : root.strokeHoles
+        keepLayer: root._holesReady && root.detached
+
+        Loader {
+          anchors.fill: parent
+          active: !root.mirror
+          sourceComponent: detachedDrawing
+        }
+      }
+
+      Component {
+        id: outlineFill
+
         Shape {
-          id: outline
           anchors.fill: parent
           preferredRendererType: Shape.CurveRenderer
 
@@ -576,11 +617,21 @@ Item {
               path: root.fillPath
             }
           }
+        }
+      }
+
+      Component {
+        id: outlineStrokeOnly
+
+        Shape {
+          anchors.fill: parent
+          preferredRendererType: Shape.CurveRenderer
 
           ShapePath {
             fillColor: "transparent"
             strokeColor: root._stroke
-            strokeWidth: root.strokeWidth
+            // Drawn a 64th in on each edge (Utils.tieInset): a CurveRenderer stroke whose edge is on a device pixel's centre draws that pixel full
+            strokeWidth: root.strokeWidth - Utils.tieInset * 2
             capStyle: ShapePath.FlatCap
             joinStyle: ShapePath.MiterJoin
 
@@ -591,31 +642,38 @@ Item {
         }
       }
 
-      // Detached: a box of its own, not joined to anything. Its far
-      // corners square as the outline's do (start/endCornerRadius, the
-      // stroke's centre line: the outer edge is half a stroke out).
-      HoledItem {
-        anchors.fill: parent
-        visible: root.detached
-        holes: root.strokeHoles
-        keepLayer: root._holesReady && root.detached
+      Component {
+        id: detachedDrawing
 
-        Rectangle {
-          id: detachedBox
-          readonly property real startRadius: root.startCornerRadius > 0 ? root.startCornerRadius + root.half : 0
-          readonly property real endRadius: root.endCornerRadius > 0 ? root.endCornerRadius + root.half : 0
-          // Far corners from start/endRadius, near ones from start/endNearRadius
-          topLeftRadius: root.attachBottom || root.attachRight ? detachedBox.startRadius : root.startNearRadius
-          topRightRadius: root.attachLeft ? detachedBox.startRadius : root.attachBottom ? detachedBox.endRadius : root.attachTop ? root.endNearRadius : root.startNearRadius
-          bottomLeftRadius: root.attachTop ? detachedBox.startRadius : root.attachRight ? detachedBox.endRadius : root.attachBottom ? root.startNearRadius : root.endNearRadius
-          bottomRightRadius: root.attachTop || root.attachLeft ? detachedBox.endRadius : root.endNearRadius
-          x: root.boxRect.x
-          y: root.boxRect.y
-          width: root.boxRect.width
-          height: root.boxRect.height
-          color: root._fill
-          border.color: root._stroke
-          border.width: root.strokeWidth
+        // (in an Item: a sized Loader would resize the box to the surface)
+        Item {
+          DetachedBox {
+            color: root._fill
+            border.color: root._stroke
+            border.width: root.strokeWidth
+          }
+        }
+      }
+
+      Component {
+        id: detachedStrokeOnly
+
+        Item {
+          DetachedBox {
+            color: "transparent"
+            border.color: root._stroke
+            border.width: root.strokeWidth
+          }
+        }
+      }
+
+      Component {
+        id: detachedFill
+
+        Item {
+          DetachedBox {
+            color: root._fill
+          }
         }
       }
     }
@@ -667,5 +725,23 @@ Item {
         parent: root
       }
     }
+  }
+
+  // The detached box's rect and corner radii, defined once: its far corners
+  // square as the outline's do (start/endCornerRadius, the stroke's centre
+  // line: the outer edge is half a stroke out), its near ones from
+  // start/endNearRadius. The shadow's mask and the box drawn (host or copy)
+  component DetachedBox: Rectangle {
+    id: box
+    readonly property real startRadius: root.startCornerRadius > 0 ? root.startCornerRadius + root.half : 0
+    readonly property real endRadius: root.endCornerRadius > 0 ? root.endCornerRadius + root.half : 0
+    topLeftRadius: root.attachBottom || root.attachRight ? box.startRadius : root.startNearRadius
+    topRightRadius: root.attachLeft ? box.startRadius : root.attachBottom ? box.endRadius : root.attachTop ? root.endNearRadius : root.startNearRadius
+    bottomLeftRadius: root.attachTop ? box.startRadius : root.attachRight ? box.endRadius : root.attachBottom ? root.startNearRadius : root.endNearRadius
+    bottomRightRadius: root.attachTop || root.attachLeft ? box.endRadius : root.endNearRadius
+    x: root.boxRect.x
+    y: root.boxRect.y
+    width: root.boxRect.width
+    height: root.boxRect.height
   }
 }

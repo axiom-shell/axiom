@@ -133,7 +133,7 @@ Scope {
     aligned: root.centre - root.currentLength / 2
     contentLength: root.currentLength
     coverStart: surface.coverStart
-    coverLength: surface.coverLength
+    coverEnd: surface.coverEnd
     owner: "dock:" + root.dock.id + ":" + (root.screen?.name ?? "") + (root.preview ? ":preview" : "")
     // Its pill stretches as it's wanted, and draws back once it's gone
     showing: (root.wantShown || root._out) && root.count > 0
@@ -539,8 +539,6 @@ Scope {
       edge: root.edge
       layer: panelWindow.windowLayer
     }
-    // The window on screen: a hiding box goes past its edge
-    readonly property rect screenRect: Qt.rect(placeOnScreen.origin?.x ?? 0, placeOnScreen.origin?.y ?? 0, panelWindow.width, panelWindow.height)
 
     Item {
       id: dockContent
@@ -581,7 +579,7 @@ Scope {
         geometry: placement
         screenName: root.screen?.name ?? ""
         windowShown: panelWindow.visible && dockContent.visible
-        blurClip: panelWindow.screenRect
+        blurClip: placeOnScreen.screenRect
         active: true
         detachedOffset: Math.max(0, root._detachedBox - root.connectorGap / 2)
         boxWidth: root.vertical ? root.thickness + (root.attached ? placement.attachClearance : 0) : root.surfaceBoxLength

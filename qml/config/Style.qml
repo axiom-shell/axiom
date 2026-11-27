@@ -453,12 +453,12 @@ QtObject {
   // The edge family's alpha: the user's opacity, raised to what the bars'
   // content needs over the wallpapers (the one value for every screen and
   // the whole family, so surfaces that join never differ)
-  readonly property real edgeAlpha: Appearance.surfaceAlpha < 1 ? Math.max(Appearance.surfaceAlpha, Appearance.wallpaperEdgeFloor) : 1
-  // edgeAlpha's end value, which the bars' content colours are computed for
+  readonly property real _edgeAlpha: Appearance.surfaceAlpha < 1 ? Math.max(Appearance.surfaceAlpha, Appearance.wallpaperEdgeFloor) : 1
+  // _edgeAlpha's end value, which the bars' content colours are computed for
   readonly property real edgeAlphaSettled: Appearance.surfaceAlpha < 1 ? Math.max(Appearance.surfaceAlpha, Appearance.wallpaperEdgeTarget) : 1
   // `color` at the edge family's alpha, unless `opaque`
   function edgeFill(color, opaque) {
-    return opaque || root.edgeAlpha >= 1 ? color : Tone.alpha(color, Qt.color(color).a * root.edgeAlpha);
+    return opaque || root._edgeAlpha >= 1 ? color : Tone.alpha(color, Qt.color(color).a * root._edgeAlpha);
   }
 
   // The smallest square a small icon button is hit at: the small control height, or what the glyph

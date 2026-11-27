@@ -1,6 +1,6 @@
 # Bars and the screen border: layering and corners
 
-> **Files:** `qml/shell/Bar.qml`, `qml/shell/ScreenBorder.qml`, `qml/components/surfaces/border/RoundedBorders.qml`, `qml/components/surfaces/border/BorderPanel.qml`, `qml/components/reusable/CornerPiece.qml`, `qml/components/methods/BarEnds.qml`, `tests/tst_BarEnds.qml`, `qml/components/bar/BarContainer.qml`, `qml/components/bar/CornerMerge.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/services/ui/ScreenEdgeManager.qml`, `qml/services/compositor/HyprlandManager.qml`
+> **Files:** `qml/shell/Bar.qml`, `qml/shell/ScreenBorder.qml`, `qml/components/surfaces/border/RoundedBorders.qml`, `qml/components/methods/FrameOutline.qml`, `tests/tst_FrameOutline.qml`, `qml/components/surfaces/border/BorderPanel.qml`, `qml/components/reusable/CornerPiece.qml`, `qml/components/methods/BarEnds.qml`, `tests/tst_BarEnds.qml`, `qml/components/bar/BarContainer.qml`, `qml/components/bar/CornerMerge.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/services/ui/ScreenEdgeManager.qml`, `qml/services/compositor/HyprlandManager.qml`
 > **Config:** `Appearance.shape.screenBorder`, `Bars[].background`, `BarStyle` shadow group. (`insideBorder`, `innerStroke` are derived `barConfig` values from `BarsConfig.enrichBarConfig`, not config keys.)
 > **Related:** [Pill and floating bars](../popouts/pill-and-floating-bars.md), [Held off an edge](../popouts/held-off-edge.md), [Edge attach](../popouts/edge-attach.md), [Surface context](../popouts/surface-context.md), [Widget shapes](widget-shapes-runs.md)
 
@@ -11,6 +11,8 @@ How bars and the screen border share an edge through layer-shell ordering. Cover
 ### The border
 - `Appearance.screenBorder` turns the border off.
 - The border is `qml/shell/ScreenBorder`, which is `surfaces/border/RoundedBorders`: four `BorderPanel` strips and four `CornerPiece` corners, in the layer namespace `axiom-border`.
+- The frame's geometry (the stroke's inner path, the corner pieces' boxes, which corners an opening covers, the strip strokes `stripStroke`, `strokePixels`, `windowPixels` and `screenStrokePieces`, its blur region) is `FrameOutline`, read by `RoundedBorders`, `BlurBackingWindow` and the layout test.
+- When the blur window backs the border, it draws the frame's stroke as the strips and corner pieces do, on the device pixels their windows show on (`BorderPanel.screenStrokePieces`, the strips' stroke cut at their openings, the corner window's `screenBox`, `FrameOutline.strokePixels`/`windowPixels`), so backed and unbacked look the same at any scale.
 
 ### Solid bar (`Bars.items[].surface: "bar"`)
 - It is on the Top layer, at the screen edge.
@@ -70,7 +72,7 @@ Each bar end's `kind`, joining rules, pill bars merging at a corner, and pills t
 - Bar popouts use `adjustment: PopupAdjustment.None`. Their placement is computed, and Hyprland would otherwise nudge one sitting flush on the screen edge a few pixels inwards.
 
 ### Border off
-- A solid bar draws its own inner stroke (`barConfig.innerStroke`) on its innermost `borderWidth` pixels, where its popouts attach.
+- A solid bar draws its own inner stroke (`barConfig.innerStroke`) on its innermost `borderWidth` pixels, where its popouts attach. While the backing window backs it, that stroke is a stroke-only `BlurShape` rect (`PaintOrder` `frame`, over the bar's own fill and under what joins it) the window draws, its openings cut by the copy; the bar's pieces draw it only unbacked. Islands' borders and pills' strokes likewise.
 - Surfaces on a bare screen edge (`ScreenEdgeManager.screenEdgeOpen(screen, location)`: no border and no bar there) run straight off it, with no fillets and no `-borderWidth` margin.
   - For pills, merged popouts and EdgePopout, that is `AttachedSurface.straight` (attach edge) / `straightJoins` (joined ends).
   - The overlay panel pushes its corners and stroke past the window on those sides.

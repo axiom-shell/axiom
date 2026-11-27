@@ -5,6 +5,10 @@ import qs.components.methods
 TestCase {
   name: "Utils"
 
+  RepoFiles {
+    id: files
+  }
+
   function test_valueAt() {
     const object = {
       "Bar": {
@@ -152,6 +156,9 @@ TestCase {
     verify(!Utils.deepEqual(null, {}));
     verify(!Utils.deepEqual("1", 1));
     verify(Utils.deepEqual("x", "x"));
+    verify(Utils.deepEqual([Qt.rect(1, 2, 3, 4)], [Qt.rect(1, 2, 3, 4)]), "equal rects");
+    verify(!Utils.deepEqual([Qt.rect(1, 2, 3, 4)], [Qt.rect(1, 2, 3, 5)]), "a rect's size differs");
+    verify(!Utils.deepEqual([Qt.rect(1, 2, 3, 4)], [Qt.rect(1, 2, 3, 4), Qt.rect(0, 0, 1, 1)]), "a rect more");
   }
 
   function test_withEntry() {
@@ -364,6 +371,88 @@ TestCase {
     compare(Utils.fromCelsius(100, "fahrenheit"), 212);
     compare(Utils.fromCelsius(-40, "fahrenheit"), -40);
     compare(Utils.fromCelsius(36.6, "celsius"), 36.6);
+  }
+
+  // The pieces are disjoint, inside `bounds`, none overlapping a rect, and
+  // their area is `bounds`' less the rects' union (counted per unit cell)
+  function checkRects(bounds, rects) {
+    const pieces = Utils.subtractRects(bounds, rects);
+    let area = 0;
+    for (let i = 0; i < pieces.length; i++) {
+      const p = pieces[i];
+      verify(p.x >= bounds.x && p.y >= bounds.y && p.x + p.width <= bounds.x + bounds.width && p.y + p.height <= bounds.y + bounds.height, "inside bounds");
+      for (let j = i + 1; j < pieces.length; j++) {
+        const q = pieces[j];
+        verify(p.x >= q.x + q.width || q.x >= p.x + p.width || p.y >= q.y + q.height || q.y >= p.y + p.height, "disjoint");
+      }
+      for (const r of rects)
+        verify(p.x >= r.x + r.width || r.x >= p.x + p.width || p.y >= r.y + r.height || r.y >= p.y + p.height, "outside the rects");
+      area += p.width * p.height;
+    }
+    let covered = 0;
+    for (let y = bounds.y; y < bounds.y + bounds.height; y++) {
+      for (let x = bounds.x; x < bounds.x + bounds.width; x++) {
+        if (rects.some(r => x >= r.x && x < r.x + r.width && y >= r.y && y < r.y + r.height))
+          covered++;
+      }
+    }
+    compare(area, bounds.width * bounds.height - covered);
+    return pieces;
+  }
+
+  function test_subtractRects() {
+    const bounds = Qt.rect(10, 10, 100, 50);
+    // None taken
+    compare(checkRects(bounds, []).length, 1);
+    compare(checkRects(bounds, [Qt.rect(200, 200, 5, 5)]).length, 1);
+    // One inside: four pieces
+    compare(checkRects(bounds, [Qt.rect(30, 20, 10, 10)]).length, 4);
+    // One reaching past an edge
+    checkRects(bounds, [Qt.rect(100, 40, 50, 50)]);
+    // Two overlapping
+    checkRects(bounds, [Qt.rect(20, 15, 40, 20), Qt.rect(40, 25, 40, 30)]);
+    // One covering all
+    compare(checkRects(bounds, [Qt.rect(0, 0, 200, 200)]), []);
+  }
+
+  function test_insetUnion() {
+    const flat = rs => rs.map(r => [r.x, r.y, r.width, r.height]);
+    const bounds = Qt.rect(0, 0, 100, 100);
+    // Two meeting at x 30: the shared edge stays
+    compare(flat(Utils.insetUnion(bounds, [Qt.rect(10, 10, 20, 10), Qt.rect(30, 10, 20, 10)], 0.5)), [[10.5, 10.5, 39, 9]]);
+    // An L
+    compare(flat(Utils.insetUnion(bounds, [Qt.rect(10, 10, 40, 4), Qt.rect(46, 14, 4, 6)], 0.25)), [[10.25, 10.25, 39.5, 3.5], [46.25, 13.75, 3.5, 0.5], [46.25, 14.25, 3.5, 5.5]]);
+    // By 0: as it is
+    compare(flat(Utils.insetUnion(bounds, [Qt.rect(10, 10, 20, 10)], 0)), [[10, 10, 20, 10]]);
+    // None
+    compare(Utils.insetUnion(bounds, [], 0.5), []);
+    // One reaching past bounds: its edge on bounds stays
+    compare(flat(Utils.insetUnion(bounds, [Qt.rect(90, 40, 20, 10)], 0.5)), [[90.5, 40.5, 9.5, 9]]);
+  }
+
+  function test_subtractHoles() {
+    const flat = rs => rs.map(r => [r.x, r.y, r.width, r.height]);
+    const bounds = Qt.rect(0, 0, 100, 100);
+    const t = Utils.tieInset;
+    // No holes: bounds as it is
+    compare(flat(Utils.subtractHoles(bounds, [])), [[0, 0, 100, 100]]);
+    // One hole: its edges drawn in by tieInset
+    const one = Utils.subtractHoles(bounds, [Qt.rect(10, 10, 20, 10)]);
+    compare(flat(one), flat(Utils.subtractRects(bounds, [Qt.rect(10 + t, 10 + t, 20 - 2 * t, 10 - 2 * t)])));
+    verify(t > 0);
+    // Two meeting at x 30: the shared edge keeps its place
+    compare(flat(Utils.subtractHoles(bounds, [Qt.rect(10, 10, 20, 10), Qt.rect(30, 10, 20, 10)])), flat(Utils.subtractRects(bounds, [Qt.rect(10 + t, 10 + t, 40 - 2 * t, 10 - 2 * t)])));
+    // One past bounds: its edge on bounds stays
+    compare(flat(Utils.subtractHoles(bounds, [Qt.rect(90, 40, 20, 10)])), flat(Utils.subtractRects(bounds, [Qt.rect(90 + t, 40 + t, 10 - t, 10 - 2 * t)])));
+  }
+
+  function test_cut_rule_has_one_place() {
+    // The holes' cut is Utils.subtractHoles: no other file calls insetUnion
+    for (const path of ["qml/components/methods/FrameOutline.qml", "qml/components/reusable/HoledCopy.qml"]) {
+      const source = files.text(path);
+      verify(source.indexOf("insetUnion(") < 0, path);
+      verify(source.indexOf("Utils.subtractHoles(") >= 0, path);
+    }
   }
 
   function test_temperatureSymbol() {

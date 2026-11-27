@@ -106,6 +106,56 @@ TestCase {
     compare(pieces[2].cuts[0].x, 226);
   }
 
+  // The centres a path's arcs may turn about: for each quarter-circle `A`,
+  // the two corners of the box its ends span
+  function arcCentres(path) {
+    const t = path.trim().split(/\s+/);
+    const out = [];
+    let x = 0, y = 0;
+    for (let i = 0; i < t.length; ) {
+      if (t[i] === "M" || t[i] === "L") {
+        x = Number(t[i + 1]);
+        y = Number(t[i + 2]);
+        i += 3;
+      } else if (t[i] === "A") {
+        const x1 = Number(t[i + 6]), y1 = Number(t[i + 7]);
+        out.push([[x, y1], [x1, y]]);
+        x = x1;
+        y = y1;
+        i += 8;
+      } else {
+        i++;
+      }
+    }
+    return out;
+  }
+
+  // A fitted fillet (a fractional arc radius, so the arc's centre is off its
+  // square's corner by δ > 0) on a vertical edge, where u runs down the
+  // item: blurRegion's circle round each fillet's arc is centred on the arc
+  // the stroke draws, to the half pixel its pieces are rounded to (the top edge's tests
+  // do the same for the horizontal case)
+  function test_blurRegion_fillet_cuts_centre_on_the_arcs_vertical() {
+    for (const edge of [ScreenEdge.Left, ScreenEdge.Right]) {
+      const s = spec({
+        "edge": edge,
+        "strokeWidth": 1,
+        "filletRadius": 28,
+        "cornerRadius": 27.5,
+        "attachFilletRadius": 26.2
+      });
+      const m = SurfaceOutline.metrics(s);
+      verify(m.sideU - 26.2 > 0, "the arc's centre is off the square's corner (δ)");
+      const arcs = arcCentres(SurfaceOutline.strokePath(s, m, m.depth, m.alongLength));
+      const cuts = SurfaceOutline.blurRegion(s, m, m.depth, m.alongLength, 0, 0).filter(p => p.cuts && p.cuts.length > 0 && p.cuts[0].ellipse).map(p => p.cuts[0]);
+      compare(cuts.length, 2, "one circle per fillet, edge " + edge);
+      for (const c of cuts) {
+        const cx = c.x + c.width / 2, cy = c.y + c.height / 2;
+        verify(arcs.some(candidates => candidates.some(a => Math.abs(a[0] - cx) <= 0.5 && Math.abs(a[1] - cy) <= 0.5)), `a circle's centre (${cx}, ${cy}) is no arc's, edge ${edge}: ${JSON.stringify(arcs)}`);
+      }
+    }
+  }
+
   function test_metrics_shallow_box_pushed_back() {
     // fillet 29 + corner 27 + half 1 - depth 20 = 37, capped at half the gap
     compare(SurfaceOutline.metrics(spec({

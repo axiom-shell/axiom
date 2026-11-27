@@ -274,6 +274,36 @@ QtObject {
   }
 
   /**
+   * Where a stroke hole lies across a stroke, wherever a copy draws it
+   * (every stroke-hole publisher reads it): the stroke's own width and the
+   * anti-aliased fringe a pixel either side. `from` is the stroke's edge at
+   * the smaller coordinate across it, as px; `start` is where the hole
+   * begins across, `size` how wide it is. Along the stroke: strokeHoleAlong.
+   */
+  function strokeHoleAcross(from, strokeWidth) {
+    return {
+      "start": from - 1,
+      "size": strokeWidth + 2
+    };
+  }
+
+  /**
+   * Where a stroke hole lies along a stroke: the span the covering
+   * surface runs over (`start`, `end`), run on a pixel past an end of the
+   * stroked box (`boxStart`, `boxEnd`) it reaches, the anti-aliased
+   * fringe strokeHoleAcross takes across: there the covering surface's
+   * wall runs on from the box's own and draws that fringe itself. An end
+   * with no wall (a joined end) passes -Infinity or Infinity. Returns
+   * { start, end }.
+   */
+  function strokeHoleAlong(start, end, boxStart, boxEnd) {
+    return {
+      "start": start <= boxStart ? Math.min(start, boxStart - 1) : start,
+      "end": end >= boxEnd ? Math.max(end, boxEnd + 1) : end
+    };
+  }
+
+  /**
    * Whether a surface's end joined to a pill bar curves into its far
    * stroke with a fillet (PillBarJoin.filleted) rather than running
    * straight into a stub squared at its wall. `pills` are that bar's own
@@ -316,15 +346,15 @@ QtObject {
   // may join the perpendicular edges at the bar's ends
   function _onPill(s, pills, own, isPill) {
     // Within reach: a pill bar's frame, or where islands may go
-    const reachFrom = isPill ? s.joinFrom : s.islandFrom, reachTo = isPill ? s.joinTo : s.islandTo;
+    const reachStart = isPill ? s.joinFrom : s.islandFrom, reachEnd = isPill ? s.joinTo : s.islandTo;
     const fm = root.filletMargin(s.stroke, s.radius);
     const need = fm + s.radius;
     // At a wall, the fillet inside it, and a full fillet and the pill's
     // corner inside the reach (the pill can't grow past the wall), so the
     // side never runs flush past the wall: short of room, the content
     // moves in rather than either rounding less
-    const lo = isFinite(s.wallFrom ?? NaN) ? Math.max(s.wallFrom + fm, reachFrom + need) : reachFrom;
-    const hi = isFinite(s.wallTo ?? NaN) ? Math.min(s.wallTo - fm, reachTo - need) : reachTo;
+    const lo = isFinite(s.wallFrom ?? NaN) ? Math.max(s.wallFrom + fm, reachStart + need) : reachStart;
+    const hi = isFinite(s.wallTo ?? NaN) ? Math.min(s.wallTo - fm, reachEnd - need) : reachEnd;
     const content = Math.round(Math.max(lo, Math.min(s.aligned, hi - s.length)));
     const placed = root._onPillAt(s, pills, own, isPill, content);
     // One side runs flush to the pill's end with empty box before it: try

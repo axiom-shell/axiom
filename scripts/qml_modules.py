@@ -197,7 +197,7 @@ def pure(path):
 # The layout harness (tests-layout/): the pure files and the pieces that import
 # only the Quickshell modules its stubs supply
 LAYOUT_STUBS = ROOT / "tests-layout" / "stubs"
-LAYOUT_CONFIG = {"Appearance", "Widget", "Theme", "Style", "StyleInk", "StyleTextRole"}
+LAYOUT_CONFIG = {"Appearance", "Widget", "Theme", "Style", "StyleInk", "StyleTextRole", "BarStyle", "PopoutsConfig"}
 STUBBED_IMPORTS = {"Quickshell", "Quickshell.Widgets"}
 
 
@@ -211,6 +211,18 @@ def layout(path):
     if not rel.startswith("components/"):
         return False
     return all(i in STUBBED_IMPORTS for i in re.findall(r"^import (Quickshell\S*)", path.read_text(), re.M))
+
+
+# Files other than QML a layout piece loads by URL, relative to qml/: the composite's compiled shader
+LAYOUT_ASSETS = ["components/hosts/popout/shaders/chrome-composite.frag.qsb"]
+
+
+def add_assets(out):
+    """Copy the layout pieces' non-QML files (LAYOUT_ASSETS) into the tree."""
+    for rel in LAYOUT_ASSETS:
+        target = Path(out) / "qs" / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(QML_ROOT / rel, target)
 
 
 def add_stubs(out, stubs):
@@ -263,6 +275,7 @@ def main():
     build_tree(args[0], only)
     if only is layout:
         add_stubs(args[0], LAYOUT_STUBS)
+        add_assets(args[0])
 
 
 if __name__ == "__main__":

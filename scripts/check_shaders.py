@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Check (or build) the compiled wallpaper shaders.
+"""Check (or build) the compiled shaders.
 
 Qt 6 loads a ShaderEffect's shader only precompiled (.qsb), and axiom has
-no build step, so each shader in qml/components/surfaces/wallpaper/shaders/
-is committed twice: its source (`<name>.frag`, the shared `common.glsl`
-prepended at build) and `<name>.frag.qsb`. `stamps.txt` there holds the
-hash of the source each .qsb was built from; this fails when a source
-changed since (or has no .qsb, or a .qsb has no source), without needing
-qsb itself.
+no build step, so each shader in SHADERS' folders (the wallpaper
+transitions', the chrome composite's) is committed twice: its source
+(`<name>.frag`, the folder's shared `common.glsl` prepended at build, where
+it has one) and `<name>.frag.qsb`. The folder's `stamps.txt` holds the hash
+of the source each .qsb was built from; this fails when a source changed
+since (or has no .qsb, or a .qsb has no source), without needing qsb
+itself.
 
 Prints `error    <file>: <message>` per problem, as check_structure does.
 
@@ -24,16 +25,17 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SHADERS = ROOT / "qml/components/surfaces/wallpaper/shaders"
-COMMON = SHADERS / "common.glsl"
-STAMPS = SHADERS / "stamps.txt"
+SHADERS = [ROOT / "qml/components/surfaces/wallpaper/shaders", ROOT / "qml/components/hosts/popout/shaders"]
 # The shading languages Qt Quick asks for (OpenGL (ES), Vulkan, Direct3D,
 # Metal), in a pack Qt 6.4 and later reads
 QSB_ARGS = ["--qt6", "--qsbversion", "64"]
 
 
 def source(frag):
-    return COMMON.read_text() + "\n#line 1\n" + frag.read_text()
+    common = frag.parent / "common.glsl"
+    if not common.exists():
+        return frag.read_text()
+    return common.read_text() + "\n#line 1\n" + frag.read_text()
 
 
 def digest(frag):
@@ -41,22 +43,24 @@ def digest(frag):
     return hashlib.sha256((" ".join(QSB_ARGS) + "\n" + source(frag)).encode()).hexdigest()
 
 
-def read_stamps():
+def read_stamps(folder):
     stamps = {}
-    if STAMPS.exists():
-        for line in STAMPS.read_text().splitlines():
+    stamp_file = folder / "stamps.txt"
+    if stamp_file.exists():
+        for line in stamp_file.read_text().splitlines():
             if line.strip() and not line.startswith("#"):
                 hash_, name = line.split(None, 1)
                 stamps[name.strip()] = hash_
     return stamps
 
 
-def write_stamps(stamps):
+def write_stamps(folder, stamps):
+    stamp_file = folder / "stamps.txt"
     lines = ["# The source hash each .qsb was built from (scripts/check_shaders.py --build)"]
     lines += [f"{stamps[name]}  {name}" for name in sorted(stamps)]
-    tmp = STAMPS.with_suffix(".tmp")
+    tmp = stamp_file.with_suffix(".tmp")
     tmp.write_text("\n".join(lines) + "\n")
-    tmp.replace(STAMPS)
+    tmp.replace(stamp_file)
 
 
 def qsb_tool():
@@ -66,17 +70,17 @@ def qsb_tool():
     return None
 
 
-def main():
-    build = "--build" in sys.argv[1:]
-    frags = sorted(SHADERS.glob("*.frag"))
-    stamps = read_stamps()
+def check_folder(folder, build):
+    """Check (or with `build`, rebuild the stale ones in) one shaders folder; the problems found."""
+    frags = sorted(folder.glob("*.frag"))
+    stamps = read_stamps(folder)
     stale = [f for f in frags if stamps.get(f.name) != digest(f) or not f.with_name(f.name + ".qsb").exists()]
     errors = []
     if build and stale:
         qsb = qsb_tool()
         if not qsb:
             print("error    qsb not found: install qt6-shadertools", file=sys.stderr)
-            return 1
+            return None
         with tempfile.TemporaryDirectory() as tmp:
             for frag in stale:
                 full = Path(tmp) / frag.name
@@ -88,19 +92,30 @@ def main():
                     continue
                 stamps[frag.name] = digest(frag)
                 print(f"built {out.relative_to(ROOT)}")
-        stamps = {name: h for name, h in stamps.items() if (SHADERS / name).exists()}
-        write_stamps(stamps)
+        stamps = {name: h for name, h in stamps.items() if (folder / name).exists()}
+        write_stamps(folder, stamps)
         stale = [f for f in frags if stamps.get(f.name) != digest(f)]
     for frag in stale:
         if not frag.with_name(frag.name + ".qsb").exists():
             errors.append(f"error    {frag.relative_to(ROOT)}: no {frag.name}.qsb (run scripts/check_shaders.py --build)")
         else:
             errors.append(f"error    {frag.relative_to(ROOT)}: changed since its .qsb was built (run scripts/check_shaders.py --build)")
-    for qsb in sorted(SHADERS.glob("*.qsb")):
+    for qsb in sorted(folder.glob("*.qsb")):
         if not qsb.with_suffix("").exists():
             errors.append(f"error    {qsb.relative_to(ROOT)}: no source {qsb.with_suffix('').name}")
     for name in sorted(set(stamps) - {f.name for f in frags}):
-        errors.append(f"error    {STAMPS.relative_to(ROOT)}: a stamp for {name}, which doesn't exist")
+        errors.append(f"error    {(folder / 'stamps.txt').relative_to(ROOT)}: a stamp for {name}, which doesn't exist")
+    return errors
+
+
+def main():
+    build = "--build" in sys.argv[1:]
+    errors = []
+    for folder in SHADERS:
+        found = check_folder(folder, build)
+        if found is None:
+            return 1
+        errors += found
     for line in errors:
         print(line)
     if errors:

@@ -91,7 +91,7 @@ jobs:
     steps:
       - name: Install tools
         run: |
-          pacman -Syu --noconfirm --needed git diffutils qt6-declarative quickshell python go ttf-dejavu
+          pacman -Syu --noconfirm --needed git diffutils qt6-declarative quickshell python go ttf-dejavu xorg-server-xvfb mesa
           /usr/lib/qt6/bin/qmllint --version
 
       - name: Checkout

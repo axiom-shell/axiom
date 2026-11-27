@@ -40,6 +40,59 @@ TestCase {
     };
   }
 
+  // The band a stroke hole cuts: the stroke's width and a pixel of fringe each side
+  function test_strokeHoleAcross_data() {
+    return [
+      {
+        "tag": "stroke 1",
+        "from": 9,
+        "width": 1
+      },
+      {
+        "tag": "stroke 2",
+        "from": 8,
+        "width": 2
+      }
+    ];
+  }
+  function test_strokeHoleAcross(data) {
+    const band = EdgeAttach.strokeHoleAcross(data.from, data.width);
+    compare(band.start, data.from - 1);
+    compare(band.size, data.width + 2);
+    // centred on the stroke's rows
+    compare(band.start + band.size / 2, data.from + data.width / 2);
+  }
+
+  function test_strokeHoleAlong_data() {
+    return [
+      {
+        "tag": "inside the box",
+        "args": [10, 40, 5, 60],
+        "want": [10, 40]
+      },
+      {
+        "tag": "both walls",
+        "args": [5, 60, 5, 60],
+        "want": [4, 61]
+      },
+      {
+        "tag": "past the box already",
+        "args": [0, 66, 5, 60],
+        "want": [0, 66]
+      },
+      {
+        "tag": "no wall at the start",
+        "args": [5, 60, -Infinity, 60],
+        "want": [5, 61]
+      }
+    ];
+  }
+  function test_strokeHoleAlong(data) {
+    const run = EdgeAttach.strokeHoleAlong(...data.args);
+    compare(run.start, data.want[0]);
+    compare(run.end, data.want[1]);
+  }
+
   function test_filletMargin() {
     compare(EdgeAttach.filletMargin(2, 28), 27);
     // Too tight a radius for a fillet
@@ -73,6 +126,22 @@ TestCase {
     compare(p.surfaceLength, 152);
     compare(p.stretch.start, 158);
     compare(p.stretch.end, 362);
+  }
+
+  // A fractional `aligned` with an odd `length`: the content start is
+  // rounded and the length taken as is, so the end fillet's tip (the surface's
+  // end) is whole whenever `length` is
+  function test_place_end_tip_whole_fractional_aligned() {
+    for (const aligned of [300, 300.4, 300.5, 300.9, 301.25]) {
+      const r = EdgeAttach.place(spec({
+        "stroke": 1,
+        "radius": 26,
+        "aligned": aligned,
+        "length": 101
+      }));
+      verify(Number.isInteger(r.surfaceStart + r.surfaceLength), `aligned ${aligned}: the end tip ${r.surfaceStart + r.surfaceLength} is whole`);
+      verify(Number.isInteger(r.surfaceStart), `aligned ${aligned}: the start tip is whole`);
+    }
   }
 
   function grow(extra) {

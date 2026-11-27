@@ -26,6 +26,34 @@ TestCase {
     }
   }
 
+  // A bar's request taker, keeping the last request it was sent
+  Component {
+    id: stubComp
+
+    QtObject {
+      property var last: null
+      // one pill at rest, which a stretch stands on
+      property var pillRects: [
+        {
+          "start": 20,
+          "length": 20
+        }
+      ]
+      function setRequest(owner, request) {
+        last = request;
+      }
+    }
+  }
+
+  Component {
+    id: stretchComp
+
+    PillStretch {
+      owner: "t"
+      open: true
+    }
+  }
+
   function initTestCase() {
     harness.configure({});
   }
@@ -109,6 +137,42 @@ TestCase {
     compare(s.slideY, 0);
   }
 
+  function test_sideOverflow_data() {
+    return [
+      {
+        "tag": "slides down, room beside it",
+        "props": {
+          "slideFromTop": true,
+          "overflow": 2,
+          "startOverflow": 3,
+          "endOverflow": 1
+        },
+        "want": [3, 0, 2, 2]
+      },
+      {
+        "tag": "slides sideways, room above and below",
+        "props": {
+          "slideFromLeft": true,
+          "startOverflow": 1,
+          "endOverflow": 1
+        },
+        "want": [0, 1, 0, 1]
+      },
+      {
+        "tag": "no side room",
+        "props": {
+          "slideFromBottom": true,
+          "overflow": 4
+        },
+        "want": [4, 4, 4, 0]
+      }
+    ];
+  }
+  function test_sideOverflow(data) {
+    const s = make(data.props);
+    compare([s._left, s._top, s._right, s._bottom], data.want);
+  }
+
   function test_firstOpenMatchesLater() {
     const s = make({
       "slideFromRight": true,
@@ -125,5 +189,46 @@ TestCase {
     tryCompare(s, "slideX", 120, 1000);
     s.active = true;
     compare(s.slideX, first);
+  }
+
+  // A pill's end reach and opening are sent in the pass they change in, so
+  // the bar draws them in the frame their surface moves in
+  function test_pillRequestSentInItsPass() {
+    const stub = createTemporaryObject(stubComp, root);
+    const stretch = createTemporaryObject(stretchComp, root, {
+      "container": stub
+    });
+    stretch.endReach = {
+      "atStart": true,
+      "to": 40
+    };
+    compare(stub.last?.endReach?.to, 40);
+    stretch.endReach = {
+      "atStart": true,
+      "to": 55
+    };
+    compare(stub.last?.endReach?.to, 55);
+    stretch.opening = {
+      "start": 0,
+      "end": 30
+    };
+    compare(stub.last?.opening?.end, 30);
+  }
+
+  // A stretch that tracks its surface is sent in the pass it changes in too
+  function test_trackingStretchSentInItsPass() {
+    const stub = createTemporaryObject(stubComp, root);
+    const stretch = createTemporaryObject(stretchComp, root, {
+      "container": stub,
+      "tracks": true
+    });
+    stretch.stretch = {
+      "index": 0,
+      "start": 10,
+      "end": 50
+    };
+    verify(stub.last?.stretch);
+    compare(stub.last.stretch.start, 10);
+    compare(stub.last.stretch.end, 50);
   }
 }

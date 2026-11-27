@@ -18,7 +18,7 @@ type Tables struct {
 	Layers                                       []*jsonx.Object
 	BarLayers                                    []string
 	BlurSurfaces, BlurBackdrops, BlurOverOverlay []string
-	BlurChrome, BlurBacked                       []string
+	BlurChrome                                   []string
 
 	// The bind actions' tables (actions.JSON)
 	IPCActions, CompositorActions, Calls, Needs, ActionFlags, SwitcherSteps, ArgumentKinds *jsonx.Object
@@ -78,7 +78,7 @@ func ParseTables(read func(path string) (string, error)) (*Tables, error) {
 		to   *[]string
 	}{
 		{"blurSurfaces", &t.BlurSurfaces}, {"blurBackdrops", &t.BlurBackdrops}, {"blurOverOverlay", &t.BlurOverOverlay},
-		{"blurChrome", &t.BlurChrome}, {"blurBacked", &t.BlurBacked},
+		{"blurChrome", &t.BlurChrome},
 	}
 	for _, l := range lists {
 		v, err := qmlValue(layerStack, l.name)

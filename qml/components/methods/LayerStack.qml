@@ -13,7 +13,7 @@ QtObject {
 
   // One entry per axiom namespace (without its "axiom-" prefix), highest
   // order first; `bar` marks a bar's (BarsConfig.layerNamespace), `noAnim` one
-  // Hyprland shouldn't animate, `why` says why it sits there. Kept as
+  // Hyprland shouldn't animate (the chrome slides itself, in every mode), `why` says why it sits there. Kept as
   // plain JSON: scripts/gen_docs.py reads it into
   // docs/dev/generated/layers.md.
   readonly property var layers: [
@@ -30,84 +30,99 @@ QtObject {
     {
       "namespace": "blur-backing",
       "order": 9,
+      "noAnim": true,
       "why": "The backing window (BlurManager, shell/BlurBacking), drawing the chrome's fills under it. Held (a pixel while nothing blurs) where layers stack by map order."
     },
     {
       "namespace": "shadows",
       "order": 8,
+      "noAnim": true,
       "why": "The chrome's shadows, apart from the blur window where its blur has no alpha threshold (SwayFX, no supports.blurThreshold), so they aren't blurred: over the fills (they never meet) and under the chrome. Held as the blur window is."
     },
     {
       "namespace": "edge-menu",
       "order": 7,
+      "noAnim": true,
       "why": "An integrated edge menu: arranged before the bars and border, so it sits at the screen edge and pushes them and the windows inwards."
     },
     {
       "namespace": "menu",
       "order": 7,
+      "noAnim": true,
       "why": "Free menus (FreeMenu): on Top over the windows, under every popout: those sliding out from under the bars and the dock on Top, and the Overlay layer's (popouts, the overlay). Their full-screen window reserves nothing and keeps clear of what's reserved, so it never meets an integrated menu of its order. Held (mapped from the start, drawing and taking nothing while closed) where layers stack by map order."
     },
     {
       "namespace": "popout-under",
       "order": 6,
+      "noAnim": true,
       "why": "Detached popouts and floating edge menus: drawn under the bars and border, so they slide out from beneath them. Only with layer rules (supports.layerOrder): elsewhere they open over the bar, as over the overlay."
     },
     {
       "namespace": "bar",
       "order": 5,
       "bar": true,
+      "noAnim": true,
       "why": "Solid bars, on the screen's shorter edge: arranged before the border, whose strip then lands on the bar's inner part. Of two bars at a corner the one arranged first takes it (BarEnds)."
     },
     {
       "namespace": "bar-long",
       "order": 4,
       "bar": true,
+      "noAnim": true,
       "why": "Solid bars on the screen's longer edge: after the shorter edge's, so they make way at a shared corner."
     },
     {
       "namespace": "border",
       "order": 0,
+      "noAnim": true,
       "why": "The screen border (Hyprland's default order, written for the record)."
     },
     {
       "namespace": "bar-pill",
       "order": -1,
       "bar": true,
+      "noAnim": true,
       "why": "Pill bars: after the border (inside it, drawn over its stroke), before every other kind of bar."
     },
     {
       "namespace": "bar-pill-long",
       "order": -2,
       "bar": true,
+      "noAnim": true,
       "why": "Pill bars on the longer edge."
     },
     {
       "namespace": "bar-floating",
       "order": -3,
       "bar": true,
+      "noAnim": true,
       "why": "Floating bars and floating pills: make way for solid and pill bars."
     },
     {
       "namespace": "bar-floating-long",
       "order": -4,
       "bar": true,
+      "noAnim": true,
       "why": "Floating bars on the longer edge."
     },
     {
       "namespace": "bar-transparent",
       "order": -5,
       "bar": true,
+      "noAnim": true,
       "why": "Transparent bars: make way for every other bar, so one is laid inside them all (and its edge popouts open past them)."
     },
     {
       "namespace": "bar-transparent-long",
       "order": -6,
       "bar": true,
+      "noAnim": true,
       "why": "Transparent bars on the longer edge: the last bar."
     },
     {
       "namespace": "dock",
       "order": -7,
+      "noAnim": true,
       "why": "Docks: after every bar and the border on their edge, so they sit inside them."
     },
     {
@@ -135,6 +150,7 @@ QtObject {
     {
       "namespace": "osd",
       "order": -10,
+      "noAnim": true,
       "why": "The OSD: after the overlay, so a volume or brightness change shows over it."
     },
     {
@@ -145,11 +161,13 @@ QtObject {
     {
       "namespace": "edge-popout",
       "order": -11,
+      "noAnim": true,
       "why": "Edge popouts (floating edge menus, the launcher, the window switcher): after the dock and the OSD, so a menu opened over the overlay draws over both."
     },
     {
       "namespace": "popout",
       "order": -11,
+      "noAnim": true,
       "why": "Bar popouts: over the bars they open from."
     },
     {
@@ -180,6 +198,11 @@ QtObject {
       "why": "The shared prompt (polkit, Bluetooth pairing, VPN, Wi-Fi, drives; named for the polkit prompt it began as): after everything, so nothing of axiom's draws over a password prompt."
     },
     {
+      "namespace": "notifications",
+      "noAnim": true,
+      "why": "The toast stack (ToastStack): no fade in or out, the cards slide themselves. No order: Hyprland's default."
+    },
+    {
       "namespace": "desktop",
       "noAnim": true,
       "why": "Desktop widgets: no fade in or out."
@@ -205,11 +228,6 @@ QtObject {
   // The chrome's own windows, for their popups alone (tooltips, the dock's
   // menu): the chrome doesn't blur itself, its popups do
   readonly property var blurChrome: root.barLayers.concat(["popout", "popout-under", "edge-popout", "edge-menu", "menu", "dock"])
-  // The windows whose fill, blur and shadow the backing window draws: not
-  // animated by the compositor while it does (they slide themselves), or
-  // their stroke and content fade or pop in and out while what the backing
-  // window draws for them doesn't
-  readonly property var blurBacked: root.barLayers.concat(["border", "popout", "popout-under", "edge-popout", "osd", "edge-menu", "menu", "dock", "notifications"])
 
   // A namespace's order (with or without its "axiom-" prefix); 0 (where
   // Hyprland puts a surface without a rule) for one not listed or without

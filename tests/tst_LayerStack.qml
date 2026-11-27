@@ -18,7 +18,14 @@ TestCase {
   }
 
   function test_blur_lists() {
-    verify(LayerStack.blurChrome.includes("bar-floating-long") && LayerStack.blurBacked.includes("bar-pill"), "blur lists take every bar");
+    verify(LayerStack.blurChrome.includes("bar-floating-long"), "blur lists take every bar");
+  }
+
+  // The chrome slides itself, in every mode: no compositor animation
+  function test_chrome_never_animated() {
+    const chrome = LayerStack.barLayers.concat(["border", "popout", "popout-under", "edge-popout", "osd", "edge-menu", "menu", "dock", "notifications", "blur-backing", "shadows"]);
+    for (const ns of chrome)
+      verify(LayerStack.layers.find(l => l.namespace === ns)?.noAnim === true, ns + " has noAnim");
   }
 
   function test_one_entry_per_namespace() {
@@ -48,7 +55,7 @@ TestCase {
   // The overlay's unblurred twin: stacked as the overlay, in no blur list
   function test_overlay_reduced() {
     compare(order("overlay-reduced"), order("overlay"));
-    for (const list of [LayerStack.blurSurfaces, LayerStack.blurBackdrops, LayerStack.blurOverOverlay, LayerStack.blurChrome, LayerStack.blurBacked])
+    for (const list of [LayerStack.blurSurfaces, LayerStack.blurBackdrops, LayerStack.blurOverOverlay, LayerStack.blurChrome])
       verify(!list.includes("overlay-reduced"));
   }
 
@@ -79,7 +86,7 @@ TestCase {
     // slides away, the popout is on top)
     for (const ns of ["popout-under", "dock", "popout", "edge-popout", "dock-preview", "osd"])
       verify(menu > order(ns), "under " + ns);
-    verify(LayerStack.blurBacked.includes("menu") && LayerStack.blurChrome.includes("menu"));
+    verify(LayerStack.blurChrome.includes("menu"));
     verify(![].concat(LayerStack.blurSurfaces, LayerStack.blurBackdrops).includes("menu"), "never blurred whole");
   }
 

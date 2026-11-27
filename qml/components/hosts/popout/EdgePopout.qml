@@ -117,6 +117,8 @@ PopoutWrapperBase {
   // No box of its own drawn, only its content (AttachedSurface.hollow: a
   // tiled edge menu, whose cards draw their own tiles)
   property bool hollow: false
+  // The rank its surface's BlurShape paints at (BlurShape.paintRank)
+  property int paintRank: PaintOrder.rankOf("surface")
   // Off leaves the focus grab to another window (see SurfaceGroup)
   property bool grabEnabled: true
   // Other windows the grab lets input through to
@@ -356,7 +358,7 @@ PopoutWrapperBase {
     contentLength: root._contentAlong + root._stretchAlongTop + root._stretchAlongBottom
     submenu: slot
     coverStart: surface.coverStart
-    coverLength: surface.coverLength
+    coverEnd: surface.coverEnd
     owner: "edgePopout:" + root
     showing: root.occupied && root.contentItem !== null && root.claimed
     open: root.isOpen && root.claimed
@@ -554,6 +556,7 @@ PopoutWrapperBase {
       submenu: slot
       screenName: surfaceWindow.screenName
       windowShown: surfaceWindow.visible
+      blurClip: placeOnScreen.screenRect
       animateShape: root.settled
 
       // At the attach edge of a window that may be deeper than it
@@ -573,6 +576,7 @@ PopoutWrapperBase {
       fillColor: root.fillColor
       strokeColor: root.strokeColor
       hollow: root.hollow
+      paintRank: root.paintRank
 
       Loader {
         id: loader

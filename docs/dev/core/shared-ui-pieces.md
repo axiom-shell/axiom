@@ -237,7 +237,9 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
 ### Blur and joins
 - `reusable/CornerPiece`: a concave "inverted corner" filled up to a quarter circle, with its two edges stroked.
 - `reusable/HoledItem`: its children with rects cut out (a stroke left open where something joined to it carries on).
+- `reusable/HoledCopy`: the same for a backing-window copy, with no layer: its `fillOnly` whole, once, and its `strokeOnly` in clipped pieces outside `holes`, every stroke pixel drawn once, the pieces built once and kept (spare slots hidden, never rebuilt as the hole count changes) (a pixel centred on a hole's edge is the stroke's: the holes are drawn in by a 64th of a px, `Utils.subtractHoles`).
 - `hosts/popout/BlurShape` + `LayerOrigin`: a chrome surface's shape for the backing window, and where its layer window is on screen (worked out by `LayerManager`, on every compositor). `LayerSlot`: a window with a fixed place in the stack maps through it, in `LayerStack` order.
+- `hosts/popout/ChromeComposite`: the backing window's chrome from its two captures (colour and alpha) as one premultiplied image: fills and strokes in painter's order (`methods/PaintOrder`), so a joined surface hides a bar's stroke under its fill.
 - `reusable/BlurRegion` / `reusable/BoxBlurRegion`: a window's blur region where the compositor blurs only what a window asks (`supports.blurRegion`, niri): from region pieces (`SurfaceOutline.blurRegion`/`placeRegion`), or one box mapped into its window, following a `moving` value (a slide), a scale and a fade (`opacity`; nothing while its fill's `alpha` × `opacity` is under `threshold`, as Hyprland's `ignore_alpha`).
 - See [Translucency and blur](../theming/translucency-blur.md).
 
@@ -250,6 +252,7 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
 - `hosts/popout/StrokeOpening`: a stroke a surface covers, left open by whatever draws it.
 - `hosts/popout/SubmenuSide`: what a submenu meets on its parent's side.
 - `methods/SurfaceOutline`: the shape of anything growing out of an edge (metrics, fill and stroke paths, footprint); `AttachedSurface` draws from it. Its far corners are capped at the room the box has, as a Rectangle's radius is: the radius never changes a surface's size.
+- `methods/FrameOutline`: the screen border's frame as geometry (the stroke's inner path, the frame path, the corner pieces' boxes, which corners an opening covers, the strip strokes `stripStroke`, `strokePixels`, `windowPixels` and `screenStrokePieces`, the blur region), from `RoundedBorders`' own settings (`_spec`); `RoundedBorders` draws from it. See [Layering and corners](../bar/layering-and-corners.md).
 - `hosts/popout/PopoutClaim`: a host's place among the popouts; what it overlaps closes, what's above refuses it. See [Popout registry](../popouts/registry.md).
 - `hosts/popout/SubPopout`: a popout's submenu.
 - `PopoutAnchor`: opens one from anything in a bar or popout; `openOnHover: false` leaves opening to its owner's click.
@@ -286,6 +289,7 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
 - `methods/TextRender`: `zoomAt(start)` (the product of the `contentZoom`s above an item, up to the nearest `drawnZoom` publisher) and `typeFor(zoom, symbol, fill)` (native at rest, distance field under a zoom) ([style](style.md) › Crisp text).
 - `methods/FieldFit`: where a form field's control goes (`place(kind, width, labelLine, control, tokens)`: `inline`, `controlWidth`, `fill`, `align`), its least width (`least`) and whether a pair fits (`pairFits`); tokens `Widget.fieldTokens`. Used by `FieldLine` (`place`, `least`) and `SchemaPropertiesForm` (`pairFits`); a host reads `FieldLine.fit` (`fit.fill` for a control that takes the width stacked), never re-derives it.
 - `methods/FlowColumns`: newspaper columns for the settings page: how many a width holds (`count`), which rows stay together (`blocks`, `lines`) and where each goes (`place`, over `ColumnSplit.placeN`) ([Settings page](settings-page.md) › Columns).
+- `methods/PaintOrder`: the painter's order of the backing window's shapes by name (`rankOf("surface")`, `ranks`, `eraserOffset`): every `BlurShape.paintRank` reads it, so a surface drawn over a bar hides the bar's stroke under its fill.
 - `methods/Sizing`: a surface's `sizing` as the factors its host draws at (`factors`), what shrinks it to fit (`fitInto`, `popoutLayout`, `tightest`), what an edit of it carries (`edited`, `editedIn`) and the numbers of its line (`breakdown`, `moduleBreakdown`): [Sizing](../overlay/pages-and-grid.md#sizing).
 - `methods/StyleTokens`: every colour role of a theme (`derive`), a theme tile's `preview`, the shape rules (`concentric`, `textPx`, `roleSize`) ([style](style.md)).
 - **Search** (`methods/Search`): shared by LauncherManager and EmojiManager.

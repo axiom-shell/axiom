@@ -20,7 +20,7 @@ import qs.components.methods
 // It follows the surface along its slide (`hidden`): the pill runs out
 // with the surface's far wall as it slides out along it, and back with
 // it as it slides away, so the two never part; its far stroke opens
-// only where the surface has come. Whether it fillets is decided from
+// only where the surface (a boxed one's) has come. Whether it fillets is decided from
 // where the wall rests.
 PillStretch {
   id: root
@@ -32,8 +32,11 @@ PillStretch {
   // Whether the surface's end joins it, and is out (not loading or gone)
   property bool joined: false
   property bool showing: false
+  // Its surface draws no box (AttachedSurface.hollow): the pill still runs
+  // out with it, its far stroke left whole
+  property bool hollow: false
   // How far in from the surface's screen edge its joined end reaches the
-  // pill bar's far stroke at its far wall (AttachedSurface.joinWall from
+  // pill bar's far stroke at its far wall (AttachedSurface.joinSide from
   // that edge), at rest; and how much of the surface is still behind its
   // edge, sliding, less the lead it keeps (EdgePlacement._slideLead)
   property real joinReach: 0
@@ -77,17 +80,23 @@ PillStretch {
     "to": root._atStart ? root._reach + Appearance.borderWidth / 2 : root._reach - Appearance.borderWidth / 2,
     "square": true
   }
+  // Where its surface's joined end is drawn from across this bar, in screen
+  // px (EdgePlacement), or null
+  property var drawnStart: null
   // Its far stroke left open under the surface (and its fillet, which the
   // bar's shadow then follows round, BarContainer._shadowHoles; or inside
   // the wall, whose stroke carries on into the pill's there): opaque or
   // not, as the two are separate windows whose stacking isn't the bar's to
   // choose. Whole pixels (SurfaceContext.opening), as every opening.
   opening: {
-    if (root._reach === null)
+    if (root._reach === null || root.hollow)
       return null;
     if (!root.filleted)
-      return Object.assign(SurfaceContext.opening(root._atStart ? 0 : root._reach + Appearance.borderWidth / 2, root._atStart ? root._reach - Appearance.borderWidth / 2 : root._panel.container.length), {
+      return Object.assign(SurfaceContext.opening(root._atStart ? 0 : root._reach + Appearance.borderWidth / 2, root._atStart ? root._reach - Appearance.borderWidth / 2 : root._panel.container.length), root.drawnStart === null ? {
         "keepFill": true
+      } : {
+        "keepFill": true,
+        "coverStart": root.drawnStart - (root._vertical ? root._panel.container.blurOrigin.y : root._panel.container.blurOrigin.x)
       });
     return Object.assign(SurfaceContext.opening(root._atStart ? 0 : root._reach, root._atStart ? root._reach : root._panel.container.length, root._atStart ? 0 : root._radius, root._atStart ? root._radius : 0), {
       "keepFill": true
