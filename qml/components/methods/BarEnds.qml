@@ -570,12 +570,17 @@ QtObject {
    * (what the reserving solid bars reserve, before the border's strip),
    * insideTaken (what the bars inside the border take, which the
    * border's corner pieces are pulled back out past), inner (the
-   * innermost bar, or null), facing (the innermost reserving bar, which
-   * `reserved` ends at, else inner)
+   * innermost bar in place, or null), facing (the innermost reserving
+   * bar, which `reserved` ends at, else the innermost). `opts.away`: the
+   * ids of the auto-hiding bars out of place (hidden, or sliding): the
+   * edge is measured as if they were absent (inner, frame), `reserved`
+   * and the rest from the whole stack, a hidden bar reserving nothing
+   * already.
    */
   function edgeOf(placed, opts) {
     const margin = opts.border ? opts.margin : 0;
-    const inner = placed.length > 0 ? placed[placed.length - 1] : null;
+    const inPlace = placed.filter(bar => !(opts.away ?? []).includes(bar.id));
+    const inner = inPlace.length > 0 ? inPlace[inPlace.length - 1] : null;
     const reserving = placed.filter(bar => root.reserves(bar));
     const sum = (bars, key) => bars.reduce((total, bar) => total + bar[key], 0);
     const solids = placed.filter(bar => bar.solid && bar.reserveSpace);
@@ -588,7 +593,7 @@ QtObject {
       "solidZone": solidZone,
       "insideTaken": sum(placed.filter(bar => bar.insideBorder), "taken"),
       "inner": inner,
-      "facing": reserving.length > 0 ? reserving[reserving.length - 1] : inner
+      "facing": reserving.length > 0 ? reserving[reserving.length - 1] : placed.length > 0 ? placed[placed.length - 1] : null
     };
   }
 

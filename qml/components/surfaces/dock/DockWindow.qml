@@ -53,13 +53,11 @@ Scope {
   // popout would.
   readonly property string _edgeName: ScreenEdge.name(root.edge)
   readonly property int connectorGap: placement.connectorGap
-  // Held off the edge, and its gaps from the frame lines across its edge
-  // and at its ends (what places it, so a change of `held` never reads
-  // them before they follow)
-  readonly property bool held: root.dock.detached
+  // Held off the edge: detached, or its edge's bars all away
+  // (EdgePlacement.holds)
+  readonly property bool held: placement.holds
   // Held off the edge, it fades in and out where it sits instead of sliding
   readonly property bool fades: root.held && root.dock.animation === "fade"
-  readonly property var gaps: placement.gaps
   // Where the window starts across the edge (what's reserved there; not
   // docks, its own included)
   readonly property real reservedHere: ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge)
@@ -70,14 +68,18 @@ Scope {
   readonly property real attachAt: placement.attachAt
   // On a pill's far stroke the surface covers that stroke's inner fringe
   readonly property real backfill: placement.backfill
+  // Detached, it slides in from off the screen as an edge popout does
+  // (EdgePopout.slideDistance), latched while nothing of it is out
+  property ClosedLatch _fromEdge: ClosedLatch {
+    source: placement.slidesFromEdge && !root.fades
+    closed: !root._out
+  }
+  readonly property real slideDistance: (root._fromEdge.value ?? false) ? placement.slideFrom : 0
   // An attached window's edge sits on its attach edge (reaching back onto
-  // the stroke it joins, as EdgePopout's)
-  // A preview reserves nothing, so the docks' zones on its edge push it in:
-  // it reaches back past them to where a dock sits
-  readonly property real edgeMargin: (root.attached ? root.attachAt - root.reservedHere - root.backfill : 0) - (root.preview ? DockManager.zoneOn(root.screen?.name ?? "", root._edgeName) : 0)
-  // Detached, where its box goes from the window's edge: held, its gap
-  // past the frame line; else a connector gap past where it attaches
-  readonly property real _detachedBox: root.gaps ? placement.heldInset(root.edge, root.gaps.across) : Math.max(0, root.attachAt + root.connectorGap / 2 - root.reservedHere)
+  // the stroke it joins, as EdgePopout's); a detached one's on the screen
+  // edge (slideDistance). A preview reserves nothing, so the docks' zones on
+  // its edge push it in: it reaches back past them to where a dock sits
+  readonly property real edgeMargin: root.attachAt - root.reservedHere - root.backfill - root.slideDistance - (root.preview ? DockManager.zoneOn(root.screen?.name ?? "", root._edgeName) : 0)
   // From the window's edge to the box of icons
   readonly property real boxOffset: root.backfill + surface.boxStart + (root.attached ? placement.attachClearance : 0)
   // The window: the gap to the edge, the box, and room for icons to grow
@@ -123,7 +125,7 @@ Scope {
     id: placement
     screen: root.screen
     edge: root.edge
-    held: root.held
+    held: root.dock.detached
     distance: root.dock.distance / 100
     heldDepth: root.thickness
     centre: root.centre
@@ -142,6 +144,7 @@ Scope {
     // A preview is on the Overlay layer (its row), but fills itself (no origin)
     onOverlayLayer: dockSlot.onOverlayLayer
     origin: root.preview ? null : root._origin
+    claim: root.claim
     attachedSurface: surface
     opens: root._origin !== null && !root.preview && panelWindow.visible && root.attached
   }
@@ -576,7 +579,7 @@ Scope {
         windowShown: panelWindow.visible && dockContent.visible
         blurClip: placeOnScreen.screenRect
         active: true
-        detachedOffset: Math.max(0, root._detachedBox - root.connectorGap / 2)
+        detachedOffset: root.slideDistance
         boxWidth: root.vertical ? root.thickness + (root.attached ? placement.attachClearance : 0) : root.surfaceBoxLength
         boxHeight: root.vertical ? root.surfaceBoxLength : root.thickness + (root.attached ? placement.attachClearance : 0)
         fillColor: DockConfig.colorsOf(root.dock).fill

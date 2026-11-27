@@ -108,10 +108,13 @@ PanelWindow {
   }
   // How far it has slid out: its window's whole depth, shadow included
   readonly property real slide: (1 - root._shown) * root.thickness
-  // Mapped and not hiding: what surfaces on its edge stand on (a dock's
-  // or a popout's attach point) and what a bar beside it merges into.
-  // Hidden, they take it as absent: the frame, or the bar outside it.
+  // Mapped and not hiding: what a bar beside it merges into
   readonly property bool present: root.visible && root.revealed
+  // Shown and slid fully in: what surfaces on its edge stand on and
+  // measure from. Hiding, it is out of place at once, so they leave it as
+  // it starts to go and meet it only once it has arrived; out of place
+  // they take it as absent: the frame, or the bar outside it.
+  readonly property bool inPlace: root.present && root._shown === 1
   // Mapped with any of it still in view (sliding in or out): the border's
   // stroke stays open under it until it has gone
   readonly property bool inView: root.visible && root._shown > 0

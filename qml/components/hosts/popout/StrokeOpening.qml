@@ -42,7 +42,7 @@ QtObject {
     }
   }
   readonly property var _solid: PillStretch {
-    readonly property var panel: root.sink === "solidBar" && root.span ? ScreenEdgeManager.barOn(root.screen?.name ?? "", ScreenEdge.fromName(root.span.edge), root.barId) : null
+    readonly property var panel: root.sink === "solidBar" && root.span ? ScreenEdgeManager.barOn(root.screen, ScreenEdge.fromName(root.span.edge), root.barId) : null
     owner: root.owner
     container: panel?.visible && (panel.barConfig?.innerStroke ?? false) ? panel.container : null
     opening: {

@@ -294,7 +294,7 @@ Rectangle {
     const end = atStart ? root.ends.start : root.ends.end;
     if (end.kind !== kind)
       return null;
-    const panel = ScreenEdgeManager.barOn(root.blurScreen, root.isVertical ? (atStart ? ScreenEdge.Top : ScreenEdge.Bottom) : (atStart ? ScreenEdge.Left : ScreenEdge.Right), end.barId);
+    const panel = ScreenEdgeManager.barOn(root.panel?.screen, root.isVertical ? (atStart ? ScreenEdge.Top : ScreenEdge.Bottom) : (atStart ? ScreenEdge.Left : ScreenEdge.Right), end.barId);
     return panel?.present ? panel.container : null;
   }
   readonly property var solidStart: root.barAt(true, "solidBar")

@@ -300,14 +300,42 @@ Item {
     id: background
     anchors.fill: parent
     visible: root.card
-    color: root.backed ? "transparent" : Style.edgeFill(Style.surfacePage, BlurManager.opaqueOn(root.screenName))
+    color: root.backed ? "transparent" : root._ownFill
     border.color: root.backed ? "transparent" : root.strokeColor
     border.width: Appearance.borderWidth
     radius: Appearance.borderRadius + 2
   }
   // Set by the stack: the blur window draws its fill, and on which screen
   property bool backed: false
+  // While backed (null: none): the part of the card over the bars as it
+  // slides in from off the screen, in its coordinates, which it fills itself
+  // (the backing window, under the bars, leaves it to it)
+  property var ownFillRect: null
+  // Its own fill: at the surface opacity, solid over a fullscreen window
+  readonly property color _ownFill: BlurManager.fillOn(Style.surfacePage, root.screenName)
   property string screenName: ""
+
+  // The card over the bars, fixed on the screen while it slides through
+  // (its slide undone over the bars, the card's put back inside)
+  Item {
+    visible: root.backed && root.card && root.ownFillRect !== null
+    x: (root.ownFillRect?.x ?? 0) - root.shiftX
+    y: (root.ownFillRect?.y ?? 0) - root.shiftY
+    width: root.ownFillRect?.width ?? 0
+    height: root.ownFillRect?.height ?? 0
+    clip: true
+
+    Rectangle {
+      x: -parent.x
+      y: -parent.y
+      width: root.width
+      height: root.height
+      color: root._ownFill
+      border.color: root.strokeColor
+      border.width: Appearance.borderWidth
+      radius: background.radius
+    }
+  }
 
   // Critical urgency
   Rectangle {

@@ -47,6 +47,7 @@
   - Examples: another bar on the perpendicular edge that is transparent or floating, or an integrated menu's strip.
   - A pill bar is joined, not walled; see [Bar popouts on pill bars](pill-and-floating-bars.md#bar-popouts-and-pill-bars).
   - This is `SurfaceContext.end`'s `wall`.
+- **Hidden auto-hiding bars:** an edge's `inner` bar and frame line are of the bars in place (`BarEnds.edgeOf` `away`), so a box follows or joins what lies outside a hidden bar ([held off an edge](held-off-edge.md)).
 - **Where the box sits:** a box at a wall (a bar popout's, an edge popout's or a dock's) sits in line with the windows there.
   - **That line** is `SurfaceContext.wallLine`: the further of that edge's frame line and its reserved space plus gaps_out, with the border on or off.
   - **Its fillet** curves past that line, beside the stroke it stands on.
@@ -100,7 +101,7 @@ How the context a surface needs (a pill to stand on, a pill reaching along a joi
   - `strokeInsetStart`/`End`
   - `lo`/`hi` and `insetStart`/`End`. These come from held gaps, a wall, a floating bar's island reach, or `endRoom` from the frame line.
   - `straightJoinStart`/`End`
-- **Placement outputs:** `place`, `detached`, `straight`, `attachAt`/`attachBase`/`attachFromBar`, `backfill`, `slidesFromEdge` and `slideFrom` (from `SurfaceContext.layout`: a detached box slides in from behind its edge; the host latches `slidesFromEdge` while open, `EdgePopout._fromEdge`; [Sliding in from off the screen](held-off-edge.md#sliding-in-from-off-the-screen)). Given `bare` (over a fullscreen window) it places the surface from the screen's edges. Its output carries `frameLine` (the one it used) and `SurfaceContext.slideFrom(layout)` gives how far back a detached box's window edge lies: on the frame line, signed (negative where the attach edge lies on the screen-edge side of it).
+- **Placement outputs:** `place`, `detached`, `straight`, `attachAt`/`attachBase`/`attachFromBar`, `backfill`, `slidesFromEdge` and `slideFrom` (from `SurfaceContext.layout`: a detached box slides in from off the screen; the host latches `slidesFromEdge` while open, `EdgePopout._fromEdge`; [Sliding in from off the screen](held-off-edge.md#sliding-in-from-off-the-screen)). Given `bare` (over a fullscreen window) it places the surface from the screen's edges. Its output carries `frameLine` (the one it used: where a box sliding in stops drawing itself and the backing window takes over, `SurfaceContext.overBars`) and `SurfaceContext.slideFrom(layout)` gives how far back a detached box's window edge lies: on the screen edge (`attachAt`).
 - **Look outputs:** `shadow`/`shadowLook`, `backed`/`opaque`, its openings and its `PillStretch`es.
 - **Following the bar:** it follows its bar unless held (`followsBar`), on pills and islands alike.
   - Past a transparent bar, a detached box goes past it and any bars inside it (`BarsConfig.detachedPush`).

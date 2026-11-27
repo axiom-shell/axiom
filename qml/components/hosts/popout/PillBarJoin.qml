@@ -42,7 +42,7 @@ PillStretch {
   property real joinReach: 0
   property real hidden: 0
 
-  readonly property var _panel: ScreenEdgeManager.barOn(root.screen?.name ?? "", root.side)
+  readonly property var _panel: ScreenEdgeManager.barOn(root.screen, root.side)
 
   // Along that bar, this edge is its start (left, top) or its end
   readonly property bool _atStart: root.edge === ScreenEdge.Left || root.edge === ScreenEdge.Top

@@ -32,8 +32,8 @@ PopoutWrapperBase {
 
   // The window showing the popout, a layer surface along the bar's edge,
   // on the Overlay layer, over the bar: a detached box (a transparent
-  // bar's, a floating bar's showing no islands) comes out of the bars'
-  // inner side (the frame line, EdgePlacement.slideFrom)
+  // bar's, a floating bar's showing no islands) slides in from off the
+  // screen, over the bars (EdgePlacement.slideFrom)
   // Over the overlay and fullscreen windows (BlurManager.backsOn), the box
   // and a submenu in its window
   readonly property bool onOverlayLayer: layerSlot.onOverlayLayer
@@ -233,6 +233,7 @@ PopoutWrapperBase {
   EdgePlacement {
     id: placement
     screen: root.screen
+    claim: root.claim
     edge: root.barConfig.location
     followPanel: root.panel
     alongStart: root.barConfig.vertical ? mainPopup.barOrigin.y : mainPopup.barOrigin.x
@@ -266,10 +267,11 @@ PopoutWrapperBase {
   // The bar window's thickness (more than the bar's extent with pills)
   readonly property real panelThickness: root.panel?.thickness ?? root.barConfig.extent
   // How far back from its attach edge a detached box's window edge lies:
-  // the frame line, signed (EdgePlacement.slideFrom)
+  // the screen edge (EdgePlacement.slideFrom)
   readonly property real slideDistance: surface.detached ? placement.slideFrom : 0
   // Where the surface starts, from the bar's outer edge: a detached box's
-  // reaches back to the frame line, to slide in from there
+  // reaches back to the screen edge (attachAt less slideDistance is 0), to
+  // slide in from there
   readonly property real surfaceFrom: root.attachAt - root.slideDistance
 
   // Resizing a window while it shows is a round trip to the compositor
@@ -566,7 +568,8 @@ PopoutWrapperBase {
     // A submenu's stretch: along the bar on a vertical one, away from it
     // on a horizontal one
     boxHeight: root.shownBoxHeight + slot.shownStretchTop + slot.shownStretchBottom
-    // A detached box slides out of the frame line, its window edge (slideDistance, signed)
+    // A detached box slides in from off the screen, over the bars, its
+    // window edge on the screen edge (slideDistance)
     detachedOffset: root.slideDistance
 
     // The content keeps its target size while the box animates to it,

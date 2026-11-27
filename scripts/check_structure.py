@@ -690,11 +690,11 @@ def main():
 
     # JS the QML engine lacks (qml-pitfalls.md › The JS engine) throws only
     # when the line runs, so no load or test catches it
-    missing_js = re.compile(r"\bObject\.fromEntries\b|\.flatMap\s*\(")
+    missing_js = re.compile(r"\bObject\.fromEntries\b|\.flatMap\s*\(|\.flat\s*\(\s*(Infinity)?\s*\)")
     for path, text in sources.items():
         for n, line in enumerate(text.split("\n"), 1):
             if missing_js.search(line.split("//", 1)[0]):
-                errors.append(f"{path}:{n}: Object.fromEntries or flatMap, which Qt's JS engine lacks: use reduce or [].concat(...arr.map(...)) (docs/dev/core/qml-pitfalls.md)")
+                errors.append(f"{path}:{n}: Object.fromEntries, flat or flatMap, which Qt's JS engine lacks: use reduce or [].concat(...arr.map(...)) (docs/dev/core/qml-pitfalls.md)")
 
     # Every library type joins one of the root's `x-libraryGroups` (the
     # editors' libraries group by them); required modules aren't offered

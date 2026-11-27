@@ -83,7 +83,7 @@ PopoutWrapperBase {
   property real edgeOffset: root.attachAt - root.attachBase
   // A detached box (held, over a fullscreen window, or past a bar it
   // doesn't grow out of) slides in from off the screen
-  // (EdgePlacement.slidesFromEdge), out of the frame line, its window on
+  // (EdgePlacement.slidesFromEdge), over the bars, its window on
   // the Overlay layer. Whether it slides from the edge follows only while
   // closed, and as it jumps over a fullscreen window or back (`_snapping`).
   // One that fades (`fade`, a detached box only) fades in where it sits.
@@ -91,8 +91,8 @@ PopoutWrapperBase {
     source: placement.slidesFromEdge && !root.fades
     closed: !root.occupied || root._snapping
   }
-  // How far back from its attach edge its window edge lies: the frame line
-  // (the screen edge over a fullscreen window), signed
+  // How far back from its attach edge its window edge lies
+  // (EdgePlacement.slideFrom)
   readonly property real slideDistance: (root._fromEdge.value ?? false) ? placement.slideFrom : 0
   // Over the overlay and fullscreen windows (BlurManager.backsOn), it and
   // a submenu in its window
@@ -209,7 +209,14 @@ PopoutWrapperBase {
   }
   readonly property bool _overFullscreen: root._fullscreenLatch.value ?? false
   property bool _snapping: false
-  onFullscreenChanged: {
+  onFullscreenChanged: root._jump()
+  // The auto-hiding bars on its screen out of place, as a string so it
+  // changes only when the set does: its edges' frame lines move with it
+  readonly property string _away: ScreenEdgeManager.awayOn(root.screen).join(" ")
+  on_AwayChanged: root._jump()
+  // Re-placed at once, with no animation (a slide would need each host to
+  // read the bar's Glide progress)
+  function _jump() {
     // Closed, it follows anyway; closing, it's on its way out
     if (!root.occupied || root.isClosing)
       return;
@@ -324,6 +331,7 @@ PopoutWrapperBase {
   EdgePlacement {
     id: placement
     screen: root.screen
+    claim: root.claim
     // Its box eases its own size (its content's): the pill follows it as
     // sent, not chasing it with an ease of its own
     stretchGlides: false
