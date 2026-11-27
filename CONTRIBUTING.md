@@ -140,7 +140,7 @@ The Claude Code setup:
 - Every change starts with `/orchestrate <what you want>`. It sizes the change (T0 Fix, T1 Improvement, T2 Feature, T3 Cross-system), has the plan written and checked, builds it in a worktree in groups with alignment gates, reviews it, then stops with a report of what changed and what to try live (`.plans/<slug>/report.md`). You push and open the pull request; if CI fails, run `/orchestrate resume <slug>` and say so. A stack stops after each part: once it has merged, run `/orchestrate resume <slug>` for the next.
 - `.claude/agents/` defines four roles: `architect` (Opus) writes specs and judges findings, `implementer` (Sonnet) builds from a spec or recipe, `reviewer` (Sonnet) reviews a small slice, `checker` (Haiku) runs the checks. `.claude/templates/`: how each skill starts an agent and what it returns.
 - Notes go in `.plans/<slug>/` (gitignored) and worktrees in `.claude/worktrees/`. Your `CLAUDE.local.md` can name other folders (`Plans folder:`, `Worktrees folder:`, and `Follow-ups file:` for review items outside the branch). A folder outside your clone must be a working directory (`permissions.additionalDirectories` in `.claude/settings.local.json`).
-- The skills: each recipe has one (`/bar-widget`, `/setting`, …) that runs it on `implementer`; `/keep-order`, `/align`, `/review-branch` check alignment and review; `/verify` runs the checks.
+- The skills: each recipe has one (`/bar-widget`, `/setting`, …) that runs it on `implementer`; `/keep-order`, `/align` and `/review-branch` check alignment and review; `/verify` runs the checks.
 - Other agent tools: `AGENTS.md` points to the same files.
 
 You're still responsible for what you submit: read it, run it, and check the log.
