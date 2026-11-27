@@ -221,13 +221,6 @@ PanelWindow {
   Item {
     anchors.fill: parent
     z: 1
-    // The pointer on the bar, or on its edge strip while it's hidden (the
-    // mask): what hovering shows an auto-hiding bar by
-    HoverHandler {
-      id: hover
-      enabled: root.barConfig.autoHiding
-      onHoveredChanged: BarRevealManager.setHover(root.barConfig.id, hover.hovered)
-    }
     PointHandler {
       id: barPress
       enabled: BackdropManager.catching
@@ -253,22 +246,33 @@ PanelWindow {
     screen: root.screen
   }
 
-  // The bar's own extent, at its outer edge. Placed by plain geometry, not
-  // conditional anchors: when a bar changes orientation, a `width:
-  // undefined` binding resets width to the implicit one after the anchors
-  // have sized it, and the anchors don't reapply until the window resizes,
-  // leaving a short bar that hides most of its widgets as overflow.
-  // Slid out by geometry (not a Translate) while hidden, so its blur
-  // shapes and shadow follow, cut to the window (blurClip)
-  BarContainer {
-    id: bar
-    x: root.barConfig.vertical ? (root.barConfig.right ? parent.width - width + root.slide : -root.slide) : 0
-    y: root.barConfig.vertical ? 0 : (root.barConfig.bottom ? parent.height - height + root.slide : -root.slide)
-    width: root.barConfig.vertical ? root.barConfig.extent : parent.width
-    height: root.barConfig.vertical ? parent.height : root.barConfig.extent
-    barConfig: root.barConfig
-    panel: root
-    screen: root.screen
-    blurClip: root.barConfig.autoHiding && root.screenOrigin ? Qt.rect(root.screenOrigin.x, root.screenOrigin.y, root.width, root.height) : null
+  // Around the bar: an ancestor of the widgets, so their own hover still takes
+  Item {
+    anchors.fill: parent
+    // The pointer on the bar, or on its edge strip while it's hidden (the
+    // mask): what hovering shows an auto-hiding bar by
+    HoverHandler {
+      id: hover
+      enabled: root.barConfig.autoHiding
+      onHoveredChanged: BarRevealManager.setHover(root.barConfig.id, hover.hovered)
+    }
+    // The bar's own extent, at its outer edge. Placed by plain geometry, not
+    // conditional anchors: when a bar changes orientation, a `width:
+    // undefined` binding resets width to the implicit one after the anchors
+    // have sized it, and the anchors don't reapply until the window resizes,
+    // leaving a short bar that hides most of its widgets as overflow.
+    // Slid out by geometry (not a Translate) while hidden, so its blur
+    // shapes and shadow follow, cut to the window (blurClip)
+    BarContainer {
+      id: bar
+      x: root.barConfig.vertical ? (root.barConfig.right ? parent.width - width + root.slide : -root.slide) : 0
+      y: root.barConfig.vertical ? 0 : (root.barConfig.bottom ? parent.height - height + root.slide : -root.slide)
+      width: root.barConfig.vertical ? root.barConfig.extent : parent.width
+      height: root.barConfig.vertical ? parent.height : root.barConfig.extent
+      barConfig: root.barConfig
+      panel: root
+      screen: root.screen
+      blurClip: root.barConfig.autoHiding && root.screenOrigin ? Qt.rect(root.screenOrigin.x, root.screenOrigin.y, root.width, root.height) : null
+    }
   }
 }
