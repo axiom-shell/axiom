@@ -988,10 +988,8 @@ TestCase {
     }, floating)).attachFill, 0, "detached past a transparent bar");
   }
 
-  // A detached box slides in from off the screen: under what's on its
-  // edge, only where layer rules order windows and the overlay isn't open
-  // over it; with nothing in the way (over a fullscreen window, a bare
-  // edge) anywhere; else within its own window
+  // A detached box slides in from behind its edge, out of the frame line,
+  // signed: negative where it attaches on the screen-edge side of it
   function test_layout_slides_from_edge() {
     const base = params();
     const f = SurfaceContext.frame(base);
@@ -1003,39 +1001,31 @@ TestCase {
         "joinEnd": false,
         "frameLine": 40,
         "reserved": 40,
-        "layerOrder": true,
         "bar": Object.assign(bar("transparent"), {
           "extent": 40
         })
       }, extra));
-    verify(at({}).slidesUnder, "past a transparent bar");
     verify(at({}).slidesFromEdge);
-    // From the screen edge to its attach edge, a bar inside the border too
-    compare(SurfaceContext.slideFrom(at({})), at({}).attachAt);
-    compare(SurfaceContext.slideFrom(at({})), 40);
+    // From the frame line to its attach edge, signed: the window's edge is
+    // the frame line, where the box attaches to it
+    compare(SurfaceContext.slideFrom(at({})), 0);
     compare(SurfaceContext.slideFrom(at({
       "bar": Object.assign(bar("transparent"), {
         "extent": 40,
         "insideBorder": true
       })
-    })), 40);
-    // Over the bars (stacked by map order): from the frame line, coming
-    // out of the bar
-    compare(SurfaceContext.slideFrom(at({
-      "layerOrder": false
     })), 0);
-    // As its window is (`under`, which the host keeps while open), not as
-    // it would open now: opened over a fullscreen window and still over
-    // the bars once that's gone, from the frame line; opened under them,
-    // from the screen edge
-    compare(SurfaceContext.slideFrom(at({}), false), 0);
-    compare(SurfaceContext.slideFrom(at({}), true), 40);
+    // A transparent bar's box moved in to line up with the windows: its
+    // attach edge lies on the screen-edge side of the frame line
+    compare(SurfaceContext.slideFrom(at({
+      "detachedPush": -base.gap / 2
+    })), -base.gap / 2);
     // A box not detached doesn't slide back at all
     compare(SurfaceContext.slideFrom({
       "detached": false,
       "attachAt": 40,
       "frameLine": 40
-    }, true), 0);
+    }), 0);
     // Held off its edge (a detached OSD or edge menu), under a solid bar,
     // a pill bar or the border alike: a connector gap short of its box
     const held = at({
@@ -1043,9 +1033,16 @@ TestCase {
       "bar": null,
       "across": 10
     });
-    verify(held.slidesUnder, "held: under whatever is on its edge");
     verify(held.slidesFromEdge);
-    compare(SurfaceContext.slideFrom(held), 40 + 10 - base.gap / 2);
+    compare(SurfaceContext.slideFrom(held), 10 - base.gap / 2);
+    const close = at({
+      "held": true,
+      "bar": null,
+      "across": 20
+    });
+    verify(close.slidesFromEdge);
+    compare(SurfaceContext.slideFrom(close), close.attachAt - 40);
+    compare(SurfaceContext.slideFrom(close), 20 - base.gap / 2);
     // Past a floating bar showing no islands
     const plainIsland = Object.assign(bar("floating"), {
       "extent": 40,
@@ -1054,7 +1051,7 @@ TestCase {
     verify(at({
       "bar": plainIsland,
       "ownBar": plainIsland
-    }).slidesUnder, "a floating bar showing no islands");
+    }).slidesFromEdge, "a floating bar showing no islands");
     // Not a box of its own: it grows out of what's there
     const solid = Object.assign(bar("solid"), {
       "extent": 40,
@@ -1062,42 +1059,19 @@ TestCase {
     });
     verify(!at({
       "bar": solid
-    }).slidesUnder);
-    verify(!at({
-      "bar": solid
     }).slidesFromEdge);
     compare(SurfaceContext.slideFrom(at({
       "bar": solid
     })), 0);
-    // Stacked by map order: from the screen edge still, over the bars
-    verify(!at({
-      "layerOrder": false
-    }).slidesUnder);
-    verify(at({
-      "layerOrder": false
-    }).slidesFromEdge);
-    // Held on sway or niri: from the frame line, cut there
-    const close = at({
-      "held": true,
-      "bar": null,
-      "across": 30,
-      "layerOrder": false
-    });
-    verify(close.slidesFromEdge);
-    compare(SurfaceContext.slideFrom(close), close.attachAt - 40);
-    compare(SurfaceContext.slideFrom(close), 30 - base.gap / 2);
-    // Over a fullscreen window: nothing to go under (and no Top window
-    // maps over one), from the screen edge everywhere
+    // Over a fullscreen window: from the screen edge, the frame line there
     const bare = at({
       "held": true,
       "bare": true,
       "bar": null,
       "frameLine": 0,
       "reserved": 0,
-      "across": 30,
-      "layerOrder": false
+      "across": 30
     });
-    verify(!bare.slidesUnder, "over a fullscreen window");
     verify(bare.slidesFromEdge);
     compare(SurfaceContext.slideFrom(bare), 30 - base.gap / 2);
     // A held box on a bare edge: nothing in the way
@@ -1106,10 +1080,8 @@ TestCase {
       "bar": null,
       "frameLine": 0,
       "reserved": 0,
-      "across": 10,
-      "layerOrder": false
+      "across": 10
     });
-    verify(!open.slidesUnder, "a bare edge: nothing to go under");
     verify(open.slidesFromEdge);
   }
 

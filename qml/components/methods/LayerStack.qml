@@ -5,9 +5,9 @@ import QtQuick
 // every compositor (pure). Within a layer, a compositor arranges and draws
 // its surfaces in the order they mapped: the first reserves its space
 // nearest the screen edge, takes a shared corner and is drawn underneath
-// (docs/dev/compositor/layer-arrangement.md). Hyprland sorts them by a
-// layer rule's `order` first (render.LayerRulesLua), higher first; on
-// the others axiom maps them in this order.
+// (docs/dev/compositor/layer-arrangement.md). `order` is axiom's map
+// sequence: LayerManager maps the windows in it on every compositor, and
+// the daemon writes no order.
 QtObject {
   id: root
 
@@ -20,18 +20,18 @@ QtObject {
     {
       "namespace": "backdrop",
       "order": 11,
-      "why": "Each screen's backdrop window (ScreenBackdrop: full-screen surfaces' dim background): on Top, under the bars and border. Without layer rules it stays mapped (held), so it keeps its place before them."
+      "why": "Each screen's backdrop window (ScreenBackdrop: full-screen surfaces' dim background): on Top, under the bars and border. Held, so it keeps its place before them."
     },
     {
       "namespace": "overlay",
       "order": 10,
-      "why": "The overlay's page: on Top, after the backdrop and before the backing window, so the backing window draws every chrome fill over it and every chrome window is over it; on Overlay while a fullscreen window is on its screen (still before the backing window). Held while closed (a pixel drawing nothing), so it keeps that place where layers stack by map order. One namespace in every state: its reduced blur is a rule turned off (blurReduced), never a namespace change, which would remake it and map every window after it again."
+      "why": "The overlay's page: on Top, after the backdrop and before the backing window, so the backing window draws every chrome fill over it and every chrome window is over it; on Overlay while a fullscreen window is on its screen (still before the backing window). Held while closed (a pixel drawing nothing), so it keeps that place. One namespace in every state: its reduced blur is a rule turned off (blurReduced), never a namespace change, which would remake it and map every window after it again."
     },
     {
       "namespace": "blur-backing",
       "order": 9,
       "noAnim": true,
-      "why": "The backing window (BlurManager, shell/BlurBacking), drawing the chrome's fills under it. Held (a pixel while nothing blurs) where layers stack by map order."
+      "why": "The backing window (BlurManager, shell/BlurBacking), drawing the chrome's fills under it. Held (a pixel while nothing blurs)."
     },
     {
       "namespace": "shadows",
@@ -49,13 +49,7 @@ QtObject {
       "namespace": "menu",
       "order": 7,
       "noAnim": true,
-      "why": "Free menus (FreeMenu): on Top over the windows, under every popout: those sliding out from under the bars and the dock on Top, and the Overlay layer's. Their full-screen window reserves nothing and keeps clear of what's reserved, so it never meets an integrated menu of its order. Held (mapped from the start, drawing and taking nothing while closed) where layers stack by map order."
-    },
-    {
-      "namespace": "popout-under",
-      "order": 6,
-      "noAnim": true,
-      "why": "Detached popouts and floating edge menus: drawn under the bars and border, so they slide out from beneath them. Only with layer rules (supports.layerOrder): elsewhere they open over the bar, as over the overlay."
+      "why": "Free menus (FreeMenu): on Top over the windows, under every popout: the dock on Top, and the Overlay layer's. Their full-screen window reserves nothing and keeps clear of what's reserved, so it never meets an integrated menu of its order. Held (mapped from the start, drawing and taking nothing while closed)."
     },
     {
       "namespace": "bar",
@@ -75,7 +69,7 @@ QtObject {
       "namespace": "border",
       "order": 0,
       "noAnim": true,
-      "why": "The screen border (Hyprland's default order, written for the record)."
+      "why": "The screen border after the solid bars, before the pill bars."
     },
     {
       "namespace": "bar-pill",
@@ -178,7 +172,7 @@ QtObject {
     {
       "namespace": "notifications",
       "noAnim": true,
-      "why": "The toast stack (ToastStack): no fade in or out, the cards slide themselves. No order: Hyprland's default."
+      "why": "The toast stack (ToastStack): no fade in or out, the cards slide themselves. No order."
     },
     {
       "namespace": "desktop",
@@ -206,11 +200,10 @@ QtObject {
   readonly property var blurBackdrops: ["backdrop", "polkit", "screenshare"]
   // The chrome's own windows, for their popups alone (tooltips, the dock's
   // menu): the chrome doesn't blur itself, its popups do
-  readonly property var blurChrome: root.barLayers.concat(["popout", "popout-under", "edge-popout", "edge-menu", "menu", "dock"])
+  readonly property var blurChrome: root.barLayers.concat(["popout", "edge-popout", "edge-menu", "menu", "dock"])
 
-  // A namespace's order (with or without its "axiom-" prefix); 0 (where
-  // Hyprland puts a surface without a rule) for one not listed or without
-  // an order
+  // A namespace's order (with or without its "axiom-" prefix); 0 for one
+  // not listed or without an order
   function orderOf(namespace) {
     const name = String(namespace).replace(/^axiom-/, "");
     return root.layers.find(l => l.namespace === name)?.order ?? 0;
@@ -220,8 +213,7 @@ QtObject {
    * Which of the windows axiom maps in order may show now, and which
    * have to map again. `entries`: { id, output, layer, order, rank (among
    * windows of one order, lower first: optional, 0), wanted (its
-   * owner wants it shown), held (kept mapped even when not wanted, where
-   * the compositor stacks by map order alone), showing (visible now),
+   * owner wants it shown), held (kept mapped even when not wanted), showing (visible now),
    * mapped (shown long enough for the compositor to have mapped it), seq
    * (when it mapped) }.
    * On each output and layer a window shows once every window ordered
@@ -229,21 +221,19 @@ QtObject {
    * first. One already showing stays (a window ordered before it starting
    * to show, a backdrop, doesn't take it down). A mapped window that one
    * ordered before it mapped after is out of place: it maps again
-   * (`remap`), and so lands after it. Where the compositor sorts by order
-   * itself (`ordered`), only between windows of one order, whose tie it
-   * breaks by map order (two bars of a kind stacked on an edge), and a
-   * window waits only for peers of its own order.
+   * (`remap`), and so lands after it: axiom maps them in this order on
+   * every compositor.
    * Returns { show: [ids], remap: [ids] }.
    */
-  function sequence(entries, ordered) {
-    const wants = e => e.wanted || (!ordered && e.held);
+  function sequence(entries) {
+    const wants = e => e.wanted || e.held;
     const peers = e => entries.filter(o => o !== e && o.output === e.output && o.layer === e.layer);
     // `o` belongs before `e`: a higher order, or a lower rank of the same
     // in its rank group (the border's corners after its strips, drawn over
     // their ends; bars stacked on one edge)
     const before = (o, e) => o.order > e.order || (o.order === e.order && (o.rankGroup ?? "") === (e.rankGroup ?? "") && (o.rank ?? 0) < (e.rank ?? 0));
-    const remap = entries.filter(e => e.mapped && peers(e).some(o => o.mapped && before(o, e) && o.seq > e.seq && (!ordered || o.order === e.order))).map(e => e.id);
-    const show = entries.filter(e => wants(e) && !remap.includes(e.id) && (e.showing || peers(e).every(o => !wants(o) || !before(o, e) || o.mapped || (ordered && o.order !== e.order)))).map(e => e.id);
+    const remap = entries.filter(e => e.mapped && peers(e).some(o => o.mapped && before(o, e) && o.seq > e.seq)).map(e => e.id);
+    const show = entries.filter(e => wants(e) && !remap.includes(e.id) && (e.showing || peers(e).every(o => !wants(o) || !before(o, e) || o.mapped))).map(e => e.id);
     return {
       "show": show,
       "remap": remap

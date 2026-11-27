@@ -304,21 +304,16 @@ func boolText(b bool) string {
 	return "false"
 }
 
-// LayerRulesLua is a named layer rule per LayerStack.layers entry (adding
-// one again replaces it): its order, which Hyprland reads as a surface
-// maps, and its animation.
+// LayerRulesLua is a named layer rule per LayerStack.layers entry with an
+// effect (adding one again replaces it): its animation.
 func (t *Tables) LayerRulesLua() []string {
-	out := make([]string, len(t.Layers))
-	for i, l := range t.Layers {
+	out := []string{}
+	for _, l := range t.Layers {
+		if !truthy(l.Value("noAnim")) {
+			continue
+		}
 		ns := str(l.Value("namespace"))
-		effects := ""
-		if truthy(l.Value("noAnim")) {
-			effects += ", no_anim = true"
-		}
-		if order, ok := l.Get("order"); ok {
-			effects += ", order = " + str(order)
-		}
-		out[i] = "hl.layer_rule({ name = " + LuaString("axiom-"+ns) + ", match = { namespace = " + LuaString("^axiom-"+ns+"$") + " }" + effects + " })"
+		out = append(out, "hl.layer_rule({ name = "+LuaString("axiom-"+ns)+", match = { namespace = "+LuaString("^axiom-"+ns+"$")+" }, no_anim = true })")
 	}
 	return out
 }

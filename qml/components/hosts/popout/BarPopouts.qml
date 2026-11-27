@@ -29,25 +29,13 @@ PopoutWrapperBase {
   required property var barConfig
   required property QtObject panel
 
-  // The window showing the popout, a layer surface along the bar's edge.
-  // A detached box (a transparent bar's, a floating bar's showing no
-  // islands) slides in from off the screen, its window on the bars' layer
-  // ordered under them, so it comes out from beneath every bar rather than
-  // out of thin air past them; else on the Overlay layer, over the bar,
-  // coming out of the bars' inner side (the frame line,
-  // EdgePlacement.slideFrom), as it does where the compositor stacks by
-  // map order alone (no supports.layerOrder: a window mapped as it opens
-  // lands over the bar).
-  // Followed only while closed, since it changes the window's layer. (EdgePlacement.slidesUnder; a bar popout never opens over a
-  // fullscreen window, which covers its bar)
-  property ClosedLatch _under: ClosedLatch {
-    source: placement.slidesUnder
-    closed: !root.occupied
-  }
-  readonly property bool underBar: root._under.value ?? false
+  // The window showing the popout, a layer surface along the bar's edge,
+  // on the Overlay layer, over the bar: a detached box (a transparent
+  // bar's, a floating bar's showing no islands) comes out of the bars'
+  // inner side (the frame line, EdgePlacement.slideFrom)
   // Over the overlay and fullscreen windows (BlurManager.backsOn), the box
-  // and a submenu in its window: on the Overlay layer unless under the bar
-  readonly property bool onOverlayLayer: !root.underBar
+  // and a submenu in its window
+  readonly property bool onOverlayLayer: true
   window: mainPopup
   // Content box in its window's coordinates (see AttachedSurface.boxRect)
   readonly property rect boxRect: Qt.rect(surface.x + surface.boxRect.x, surface.y + surface.boxRect.y, surface.boxRect.width, surface.boxRect.height)
@@ -260,9 +248,6 @@ PopoutWrapperBase {
     showing: root.occupied && root.claimed
     open: still.showing && !root.isClosing && root.claimed
     onOverlayLayer: root.onOverlayLayer
-    // Its window under the bars as latched, so slideFrom (and the surface
-    // reaching back to it) doesn't change while it is open
-    under: root.underBar
     origin: slot.popupScreenOrigin
     attachedSurface: surface
     opens: root._out
@@ -279,11 +264,11 @@ PopoutWrapperBase {
   readonly property var _panel: root.panel
   // The bar window's thickness (more than the bar's extent with pills)
   readonly property real panelThickness: root.panel?.thickness ?? root.barConfig.extent
-  // How far back from its attach edge a detached box starts, sliding
-  // under the bars or over them: the screen edge (EdgePlacement.slideFrom)
+  // How far back from its attach edge a detached box's window edge lies:
+  // the frame line, signed (EdgePlacement.slideFrom)
   readonly property real slideDistance: surface.detached ? placement.slideFrom : 0
   // Where the surface starts, from the bar's outer edge: a detached box's
-  // reaches back to the screen edge, to slide in from there
+  // reaches back to the frame line, to slide in from there
   readonly property real surfaceFrom: root.attachAt - root.slideDistance
 
   // Resizing a window while it shows is a round trip to the compositor
@@ -391,8 +376,8 @@ PopoutWrapperBase {
     visible: still.showing
     color: "transparent"
 
-    WlrLayershell.layer: root.onOverlayLayer ? WlrLayer.Overlay : WlrLayer.Top
-    WlrLayershell.namespace: root.underBar ? "axiom-popout-under" : "axiom-popout"
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.namespace: "axiom-popout"
     WlrLayershell.keyboardFocus: root.wantsKeyboardFocus ? (focusGrab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand) : WlrKeyboardFocus.None
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: 0
@@ -574,7 +559,7 @@ PopoutWrapperBase {
     // A submenu's stretch: along the bar on a vertical one, away from it
     // on a horizontal one
     boxHeight: root.shownBoxHeight + slot.shownStretchTop + slot.shownStretchBottom
-    // A detached box slides out from under the bars, from the screen edge
+    // A detached box slides out of the frame line, its window edge (slideDistance, signed)
     detachedOffset: root.slideDistance
 
     // The content keeps its target size while the box animates to it,

@@ -3,8 +3,9 @@ pragma Singleton
 import QtQuick
 
 // What each end of a bar meets, where bars on perpendicular edges share a
-// corner (pure). Hyprland hands a corner to the bar it arranges first,
-// which the bars' layer rules decide (render.LayerRulesLua):
+// corner (pure). The compositor hands a corner to the bar it arranges first,
+// the one mapped first, which LayerStack's order decides (LayerManager maps
+// the bars in it):
 // solid bars, then the border, then pill bars, then floating ones, then
 // transparent ones; between two of a kind the bar on the screen's shorter
 // edge first (`shortEdge`: the side bars on a landscape monitor), so the
@@ -363,7 +364,7 @@ QtObject {
 
   // Where a kind of bar is arranged on its edge: solid bars (then the
   // border), pill bars, floating bars, floating pills, transparent bars.
-  // Floating bars and floating pills share a layer rule, so their order
+  // Floating bars and floating pills share a namespace, so their order
   // is LayerSlot's rank (layerRank).
   function kindIndex(bar) {
     return ["solid", "pills", "floating", "floatingPills", "transparent"].indexOf(bar.kind);
@@ -591,7 +592,7 @@ QtObject {
     };
   }
 
-  // Among the enabled bars on its screen edge sharing its layer rule (its
+  // Among the enabled bars on its screen edge sharing its namespace (its
   // kind, floating bars and floating pills alike: the namespace
   // BarsConfig.layerNamespace names), where a bar maps: floating bars
   // before floating pills, then in config order, so bars of a kind on one

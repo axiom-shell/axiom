@@ -252,7 +252,7 @@ function M.blur()
 ` + part("blur") + `
 end
 
--- Stacking order of axiom's surfaces (bars, border, edge menus, backdrops)
+-- axiom's layer rules: no animation
 function M.layers()
 ` + part("layers") + `
 end

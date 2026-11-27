@@ -37,7 +37,7 @@ A session has one agent, and Quickshell never retries a failed registration. So:
 
 ### The prompt
 - Drawn by the shared prompt's window (`qml/shell/Prompt` → `surfaces/prompt/PromptWindow`, on every screen), which loads `surfaces/prompt/PolkitCard` as its card ([Prompts](prompts.md)).
-- **Layer:** Overlay, with the `axiom-polkit` layer rule (the shared prompt kept the name), which stacks it over every other axiom surface.
+- **Layer:** Overlay, with the `axiom-polkit` namespace (the shared prompt kept the name), whose `LayerStack` order maps it after every other axiom surface.
 - **Modal:** it dims everything, bars included; a click outside the card does nothing (`outsideCancels: false`), Escape cancels.
 - **`SurfaceManager.modalWindows`:** it is registered there while shown, so a prompt over the overlay clears no focus grab. One case is the greeter's install started from Settings. Without a native grab (sway, niri) the grabbing surface stops asking for exclusive keyboard meanwhile (`SurfaceManager.modalShown`), or it would keep the keyboard from the prompt.
 - **The card:** with exclusive keyboard, on the picked screen (`General.screensNamed`).

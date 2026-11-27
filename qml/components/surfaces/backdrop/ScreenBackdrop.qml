@@ -13,8 +13,7 @@ import qs.components.hosts.popout
 // workspace overview, launcher, power menu, onboarding; BackdropRequest):
 // the whole monitor, under the bars and the border, which stay drawn over
 // it. Its place in the stack (LayerStack: before the bars and border) is
-// kept by mapping before them: Hyprland's layer rule orders it there
-// whenever it maps; elsewhere it stays mapped, a pixel in the corner while
+// kept by mapping before them: it stays mapped, a pixel in the corner while
 // nothing asks for it (LayerSlot.held). It takes no input: clicks go to
 // the surface above it, or to the bars and border (which clears the
 // surface's focus grab, unless the surface lets its screen's bars

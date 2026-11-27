@@ -49,8 +49,13 @@ PopoutWrapperBase {
   property var cursorAt: null
   readonly property string menuId: root.menu.id
   // A popped-out edge menu's spot as it popped out ({ screen, x, y }),
-  // else null (a free menu)
-  readonly property var poppedOut: MenuManager.poppedOut[root.menuId] ?? null
+  // else null (a free menu); kept while its box closes, so a docked menu
+  // goes at once where it was (its free host stays loaded)
+  property ClosedLatch _poppedOut: ClosedLatch {
+    source: MenuManager.poppedOut[root.menuId] ?? null
+    closed: !root.occupied
+  }
+  readonly property var poppedOut: root._poppedOut.value ?? null
   readonly property bool popped: root.poppedOut !== null && !MenusConfig.isFree(root.menu)
   // Laid out as on its edge while popped out (a top or bottom menu's
   // modules along a row), else down a column

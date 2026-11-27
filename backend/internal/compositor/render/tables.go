@@ -13,7 +13,7 @@ import (
 // scripts/gen_docs.py reads LayerStack.layers, never copied by hand), and
 // the bind actions (actions.JSON).
 type Tables struct {
-	// LayerStack's layers ({ namespace, order, bar, noAnim, why }), and what
+	// LayerStack's layers ({ namespace, bar, noAnim }, as far as Go reads them), and what
 	// blurs behind axiom's surfaces, by namespace
 	Layers                                   []*jsonx.Object
 	BarLayers                                []string

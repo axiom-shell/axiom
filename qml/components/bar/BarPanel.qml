@@ -25,10 +25,10 @@ PanelWindow {
   // (arranged after it) overlaps its inner part, drawing the bar's inner
   // stroke. Any other bar (transparent, pills or floating, with the border
   // on) sits inside the border instead (`insideBorder`): its
-  // axiom-bar-pill, -transparent or -floating layer rule orders it after
-  // the border (arranged inside it, drawn over it), with its outer edge on
+  // axiom-bar-pill, -transparent or -floating namespace maps it after
+  // the border (LayerStack; arranged inside it, drawn over it), with its outer edge on
   // the border's stroke so pills can cover it. Bars along the screen's
-  // longer edge have rules of their own (-long), arranged after the shorter
+  // longer edge have namespaces of their own (-long), arranged after the shorter
   // edge's bars of their kind, so which bar takes a shared corner never
   // depends on which mapped first (BarEnds). All are on the Top layer, so a fullscreen window covers
   // them. Bars sharing an edge stack, each laid out past what the ones

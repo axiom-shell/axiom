@@ -52,7 +52,7 @@ Singleton {
       "dynamicWorkspaces": root.dynamicByLayout,
       "focusGrab": true,
       "blurThreshold": true,
-      "layerOrder": true,
+      "layerRestack": true,
       "blur": true,
       "cursorPos": true,
       "cursorWarp": true,
@@ -705,18 +705,15 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
   // animations are off, so there's nothing to slide with
   property var _workspaceAnim: null
 
-  // Whether the layer rules stacking axiom's surfaces are in Hyprland
-  // (LayerStack.layers, which says why each sits where it does;
-  // docs/dev/generated/layers.md). axiom adds them (compositor.layerRules),
-  // and again on every configreloaded, since a reload drops rules added at
-  // runtime; its config layer also writes them into its Lua files. Hyprland
-  // reads a rule's `order` as a surface maps, so a bar or border mapped
-  // before the rules (the detached mode, where hyprland.lua doesn't hold
-  // them) keeps its mapping order: the border's strip, quicker to draw,
-  // lands outside the bar, with its corners on the bar's outer side. The
-  // surfaces with an `order` that start with the shell (bars, border, docks,
-  // edge menus) wait for this. It stays set across QML reloads, as the rules
-  // do.
+  // Whether axiom's layer rules (`no_anim`, LayerStack.layers;
+  // docs/dev/generated/layers.md) are in Hyprland. axiom adds them
+  // (compositor.layerRules), and again on every configreloaded, since a
+  // reload drops rules added at runtime; its config layer also writes them
+  // into its Lua files. Hyprland reads a rule only as a surface maps, so the
+  // surfaces that start with the shell (bars, border, docks, edge menus)
+  // wait for this, or they would play the compositor's animation (the
+  // detached mode, where hyprland.lua doesn't hold them). It stays set
+  // across QML reloads, as the rules do.
   readonly property bool surfacesReady: _layerRules.ready
 
   PersistentProperties {
