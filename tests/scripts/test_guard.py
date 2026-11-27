@@ -803,7 +803,7 @@ class GroupModeText(unittest.TestCase):
 
     def test_rulings_line(self):
         line = next(
-            line for line in (REPO / ".claude/templates/pr-body.md").read_text().splitlines()
+            line for line in (REPO / ".claude/templates/report.md").read_text().splitlines()
             if line.startswith("## Rulings")
         )
         self.assertIsNone(re.search(r"\bR(<n>|\d+\b)", line), line)

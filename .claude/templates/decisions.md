@@ -14,4 +14,4 @@ Filled by: the lead, as `decisions.md` in the state folder, from the user's own 
 - Quote the user; never paraphrase a request or an answer.
 - Product choices are D ids (the user's answer); technical scope calls with no product stake are R ids.
 - A later answer or ruling replaces the entry it supersedes, in place (same id, new date); nothing is kept for history.
-- Plan rows never become R rows and never reach a commit, a PR title or a PR body.
+- Plan rows never become R rows and never reach a commit or the report.

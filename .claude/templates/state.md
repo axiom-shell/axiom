@@ -4,13 +4,13 @@ Filled by: the lead, as `state.md` in the state folder, after every step. `/orch
 
 ```
 # <slug>: state
-Tier: T<n> (history) · Phase: plan | check <r> | group <g> | review <r> | verify | pr | ci | ready
+Tier: T<n> (history) · Phase: plan | check <r> | group <g> | review <r> | verify | ready | ci
 Tree: · Branch: · Base: (origin/main sha at creation) · Head: (last commit) · PR (#, base; a stack: per part in Parts:)
 Plan check: round, verdict
 Groups: G<n> | status | commit | gate (clean / fix file) | NOT RUN or weak ids
 Last reviewed: <sha>
 Open questions (asked <date>)
-LIVE: lines · What users notice · Changed pieces → users checked
+LIVE: lines · What and why · Changed pieces → users checked
 Next: <one step>
 Spec: <spec file of the active part; default spec.md>
 Stack: <k> of <plan file> · <tree> · <open | paused (<what>) | done>
