@@ -24,4 +24,4 @@ Run in the brief's Tree: every Bash call starts `cd <Tree> &&`. A brief with no 
 Say what blocked you and what you'd need. Don't work around it.
 
 ## Report
-`.claude/templates/implementer-report.md`. **Names added** is `python3 scripts/dev/new_names.py --base <Base> --files <the files you changed>`, with the brief's Base. **Removed** ends with `git -C <tree> add -A -N && git -C <tree> diff --shortstat HEAD` and, when it adds more lines than it deletes, why.
+Reply in the template your brief's Report names (`.claude/templates/implementer-report.md`), its block with every field filled, however small the change. **Names added** is `python3 scripts/dev/new_names.py --base <Base> --files <the files you changed>`, with the brief's Base. **Removed** ends with `git -C <tree> add -A -N && git -C <tree> diff --shortstat HEAD` and, when it adds more lines than it deletes, why. Run both commands. **Outside the task** names the file each problem went to.

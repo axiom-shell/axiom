@@ -13,7 +13,7 @@ Reused: job → piece (path:line)
 Removed: each symbol deleted or merged (path → where); `git -C <tree> add -A -N && git -C <tree> diff --shortstat HEAD` (a generated file's lines named, not counted); more lines added than deleted: why
 Changed pieces: each existing file or function edited, its users outside the change (grep count and paths), whether the ledger has a row
 Decided or skipped:
-Outside the task: each problem seen that the change didn't cause: filed to <file> | reported; or none
+Outside the task: each problem seen that the change didn't cause: filed to <file> | not filed: why; or none
 Stopped: why, and what is needed
 ```
 
