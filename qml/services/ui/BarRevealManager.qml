@@ -13,7 +13,7 @@ import qs.services.compositor
  * also makes it reserve its space), hovered (its edge strip or the bar,
  * after timing.openDelay, until timing.closeDelay after the pointer
  * leaves), held (its open popouts, an edge menu opened from it, the bar
- * editor with it selected), revealed for a moment (revealFor: a workspace
+ * editor with it selected, an instant action surface up), revealed for a moment (revealFor: a workspace
  * change, a widget's news, the IPC reveal), or for whenCovered, while no
  * window covers its slot. One one-shot Timer runs to the earliest
  * deadline. A bar a window rule hides (`hiddenByRule`) is hidden at
@@ -105,7 +105,7 @@ QtObject {
   }
 
   // Something keeps the bar shown while on (`key`: "popout", "menu",
-  // "editor"); let go, it stays closeDelay longer, as the pointer leaving
+  // "editor", "modal"); let go, it stays closeDelay longer, as the pointer leaving
   // it would
   function hold(id, key, on) {
     const keys = Object.assign({}, root._holds[id] ?? {});
@@ -171,7 +171,16 @@ QtObject {
     root._timer.restart();
   }
 
+  // While an instant action surface is up (SurfaceManager.modalShown),
+  // every auto-hiding bar that is out is held there ("modal"); let go as
+  // it goes, it stays closeDelay longer
+  function _holdUnderModal() {
+    if (SurfaceManager.modalShown)
+      ScreenEdgeManager.bars.filter(bar => bar.autoHiding && root.shownOf(bar)).forEach(bar => root.hold(bar.id, "modal", true));
+  }
+
   function _due() {
+    root._holdUnderModal();
     const now = Date.now();
     Object.keys(root._until).forEach(id => {
       if (root._until[id] <= now) {
@@ -221,6 +230,16 @@ QtObject {
     target: CompositorManager
     function onOutputsChanged() {
       root._checkWorkspaces();
+    }
+  }
+
+  property Connections _modal: Connections {
+    target: SurfaceManager
+    function onModalShownChanged() {
+      if (SurfaceManager.modalShown)
+        root._holdUnderModal();
+      else
+        ScreenEdgeManager.bars.forEach(bar => root.hold(bar.id, "modal", false));
     }
   }
 

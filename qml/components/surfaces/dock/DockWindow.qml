@@ -340,7 +340,7 @@ Scope {
   Timer {
     id: closeTimer
     interval: root._touched ? root.dock.timing.closeDelay : Math.max(root.dock.timing.closeDelay, 1500)
-    running: root.latched && !root.pointerIn
+    running: root.latched && !root.pointerIn && !SurfaceManager.modalShown
     onTriggered: root.latched = false
   }
 

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 import qs.services.compositor
+import qs.services.ui
 
 /**
  * Shared state machine for any "popout wrapper": open/close/reopen
@@ -89,7 +90,10 @@ Item {
   property int dismissDelay: currentItem?.dismissDelay ?? PopoutsConfig.dismissDelay
   property bool autoDismiss: currentItem?.autoDismiss ?? true
 
-  onContentHoveredChanged: updateDismissTimer()
+  // Kept up: hovered, or an instant action surface is up (SurfaceManager.modalShown: the pointer is on it, not gone)
+  readonly property bool _holdsOpen: root.contentHovered || SurfaceManager.modalShown
+
+  on_HoldsOpenChanged: updateDismissTimer()
 
   // A popup that maps over its anchor takes the pointer before its input
   // mask applies. Once it does, the pointer is back over
@@ -122,7 +126,7 @@ Item {
   }
 
   function _tryDismiss() {
-    if (!occupied || isClosing || contentHovered)
+    if (!occupied || isClosing || _holdsOpen)
       return;
     const lost = _lostCursor;
     if (lost === null) {
@@ -132,7 +136,7 @@ Item {
     const data = currentData;
     CompositorManager.withCursorPos(pos => {
       // Reopened, closed or hovered again meanwhile
-      if (root.currentData !== data || !root.occupied || root.isClosing || root.contentHovered)
+      if (root.currentData !== data || !root.occupied || root.isClosing || root._holdsOpen)
         return;
       if (pos !== null && pos.x === lost.x && pos.y === lost.y)
         parkTimer.restart();
@@ -150,9 +154,12 @@ Item {
       return;
     }
     parkTimer.stop();
-    if (contentHovered) {
+    if (_holdsOpen) {
       dismissTimer.stop();
-      _lostCursor = null;
+      // Hovering forgets the parked cursor; an instant action surface up
+      // doesn't (the pointer hasn't moved)
+      if (contentHovered)
+        _lostCursor = null;
     } else {
       dismissTimer.restart();
     }

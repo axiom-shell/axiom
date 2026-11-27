@@ -407,14 +407,20 @@ QtObject {
 
   // The sequence pass: each slot's layer now (LayerStack.layerOf), which
   // slots may show, and which map again. A slot that keeps its layer while a
-  // modal shows on its output (`underModal`, from its previous answer) goes
+  // modal holds its output (`underModal`, from its previous answer) goes
   // on keeping it.
   function _sequence() {
     const all = root._keptSlots.items;
     const pass = all.find(i => i.id === "pass");
     const items = all.filter(i => typeof i.id === "number");
     const owners = root._slots.entries.map(e => e.owner);
-    const modalOutputs = new Set(items.filter(i => i.showing && LayerStack.isModal(i.namespace)).map(i => i.outputName));
+    // Outputs where a modal holds (LayerArrange.modalHolds: showing, or wanted this pass)
+    const modalOutputs = new Set(items.filter(i => LayerArrange.modalHolds({
+        "modal": LayerStack.isModal(i.namespace),
+        "showing": i.showing,
+        "wanted": i.wanted,
+        "held": i.held
+      })).map(i => i.outputName));
     const moves = new Set();
     const entries = items.map(i => {
       const before = root._answers.slots.get(owners[i.id])?.layer;

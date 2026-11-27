@@ -266,7 +266,7 @@ Item {
 
   Timer {
     interval: root.duration
-    running: !root.neverExpires && !root.hovered && !root.replying && !root.leaving && !root.covered && !dragger.active
+    running: !root.neverExpires && !root.hovered && !root.replying && !root.leaving && !root.covered && !dragger.active && !SurfaceManager.modalShown
     onTriggered: root.timedOut()
   }
 

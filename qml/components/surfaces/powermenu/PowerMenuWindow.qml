@@ -12,7 +12,9 @@ import qs.services.session
 import qs.services.ui
 
 // The power menu on one screen: a card with a greeting and the uptime, a
-// row of session actions and a controls hint, over the dim backdrop.
+// row of session actions and a controls hint, over the dim backdrop. An
+// instant action surface: on top of everything, nothing under it
+// changes; it closes with Escape, a tile or a click on its own dimmed screen.
 // Destructive actions ask for a second press (PowerMenu.confirm).
 PanelWindow {
   id: root
@@ -118,13 +120,6 @@ PanelWindow {
     onSyncRequested: shown => root.shown = shown
   }
 
-  FocusGrab {
-    id: grab
-    active: root.shown && root.visible && group.ownsGrab
-    windows: group.windows.concat(SurfaceManager.modalWindows)
-    onCleared: root.shown = false
-  }
-
   // The dim background, under the bars and border
   BackdropRequest {
     screen: root.screen
@@ -141,11 +136,11 @@ PanelWindow {
   }
   exclusionMode: ExclusionMode.Ignore
   color: "transparent"
-  focusable: true
+  focusable: group.ownsGrab
   // Stays mapped while the card fades out
   visible: slot.shown
 
-  WlrLayershell.keyboardFocus: grab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
+  WlrLayershell.keyboardFocus: root.shown && group.ownsGrab ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
   WlrLayershell.layer: slot.layer
   readonly property string layerNamespace: "axiom-powermenu"
   WlrLayershell.namespace: root.layerNamespace
@@ -196,6 +191,7 @@ PanelWindow {
 
     ModalCard {
       id: card
+      window: root
       shown: root.shown
 
       anchors.centerIn: parent

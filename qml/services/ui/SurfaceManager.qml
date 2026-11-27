@@ -105,10 +105,11 @@ QtObject {
   // The screenshot pickers while one is open: every focus grab lets input
   // through to them, so taking a screenshot closes nothing
   property var captureWindows: []
-  // Every picker's frame is frozen: popup windows (bar popouts, tooltips,
-  // menus, toasts) hide until it closes, since Hyprland draws popups over
-  // every layer. The frame already holds them, so nothing seems to change.
-  readonly property bool captureFrozen: captureWindows.length > 0 && captureWindows.every(w => w.frozen)
+  // An instant action surface is up (and a screenshot picker's frame, if one
+  // is open, is in): popup windows (tooltips, submenus, the dock's menu) hide
+  // until it goes, since Hyprland draws popups over every layer; before a
+  // picker's frame is in they stay, so it holds them
+  readonly property bool popupsHidden: modalShown && captureWindows.every(w => w.frozen)
 
   // --- Screen layouts' required fields ---
 

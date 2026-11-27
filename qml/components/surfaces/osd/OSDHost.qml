@@ -18,8 +18,9 @@ import qs.components.surfaces.osd.design
 // an OSDSystemHost (its definition and watcher, loaded by URL); their
 // changes come through OSDEngine's arbitration (OSDEngine.arbitrate:
 // against the card out, then the ring) and open the OSD as
-// OSDSystemHost.opens says (paused on its screen by a window rule: only
-// an alert opens it). No system is named here
+// OSDSystemHost.opens says (paused on its screen by a window rule, and
+// everywhere while an instant action surface is up: only an alert opens
+// it). No system is named here
 // (docs/dev/features/osd.md › Engine). The parts stack out from the edge
 // in one box, the bars nearest it, then the icons (`iconsPlace` inside:
 // the other way round), the card last (OSDParts.partOrder; with
@@ -43,7 +44,7 @@ Item {
   required property var osd
   // The screen it's on (a ShellScreen), for its systems
   property var screen: null
-  // A window rule pauses OSDs on its screen: only an alert opens it
+  // Paused by a window rule on its screen or an instant action surface up: only an alert opens it
   property bool paused: false
   // The edge it slides out of runs vertically
   property bool edgeVertical: false
@@ -373,6 +374,8 @@ Item {
   // the rest). Held open by the settings page, the bars and the icons
   // wait the same way
   function _pointerHolds(part) {
+    if (SurfaceManager.modalShown)
+      return true;
     if (root.pinned && part !== "card")
       return true;
     return root.pointerIn && (part !== "card" || root.cardHovered);
@@ -432,6 +435,16 @@ Item {
     if (!root.pointerIn)
       root._renew(root.cardHovered ? OSDParts.parts : ["level", "status"]);
     root._schedule();
+  }
+  // An instant action surface up holds every part; it goes, they get their time anew
+  Connections {
+    target: SurfaceManager
+
+    function onModalShownChanged() {
+      if (!SurfaceManager.modalShown)
+        root._renew(OSDParts.parts);
+      root._schedule();
+    }
   }
   onCardHoveredChanged: {
     if (!root.cardHovered)

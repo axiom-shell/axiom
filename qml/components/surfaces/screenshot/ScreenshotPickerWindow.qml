@@ -47,7 +47,7 @@ PanelWindow {
   readonly property rect fullRect: Qt.rect(0, 0, root.width, root.height)
 
   property bool grabbing: false
-  // The frame is in (SurfaceManager.captureFrozen)
+  // The frame is in (SurfaceManager.popupsHidden)
   readonly property bool frozen: ScreenshotManager.grimFrames ? still.status === Image.Ready : frame.hasContent
   // What the frozen frame is drawn by, and its size in buffer pixels
   readonly property Item _frameItem: ScreenshotManager.grimFrames ? still : frame
