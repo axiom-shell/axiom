@@ -9,7 +9,7 @@ Base: <sha> (new_names.py --base <it>) · Branch <b>, head <sha>; earlier groups
 Read: <state folder>/<the spec file state.md's `Spec:` names (default `spec.md`)> › <sections>, ledger.md, decisions.md (absolute paths)
 Binding: <ledger rows and D/R decisions quoted verbatim>. Anything they don't cover is a stop.
 Do: <group n only / the fix list / the check>
-Rules: CLAUDE.md › Never and › Working here (nested shells); don't commit (except the `git rebase --continue` a rebase-conflict Do names); never run `shot.sh` or a bare `axiom` from a worktree; no sudo, pkexec, su; no memory or CLAUDE.local.md writes.
+Rules: CLAUDE.md › Never and › Working here (nested shells); don't commit (except the `git rebase --continue` a rebase-conflict Do names); never run `shot.sh` or a bare `axiom` from a worktree; no sudo, pkexec, su; no memory or CLAUDE.local.md writes; a problem the change didn't cause (a bug or drift, such as a doc verify marks "commits behind its files"; verify's other doc lines are the change's own): the implementer files it where CLAUDE.local.md says, every other role reports it.
 Done when: <acceptance ids, verbatim> + `verify.sh` → `verify ok` (`--all` → `all checks passed`)
 Report: <template path>; nothing it lists is dropped
 ```
