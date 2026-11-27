@@ -486,20 +486,20 @@ class CheckStructure(unittest.TestCase):
          "views/Local/Pushed.qml:8: restore-text"),
         ("qml/components/content/Local/Loose.qml", qml("RowLayout {\n      SegmentButton {}\n    }"), "content/Local/Loose.qml:7: SegmentButton"),
         ("qml/components/content/Local/InRow.qml", qml("SegmentRow {\n      SegmentButton {}\n    }"), None),
-        # The bar widget template (check_structure.bar_widget_template): T2 and T3 are
+        # The bar widget template (check_structure.bar_widget_template): resolved-color and opacity-fade are
         # planted in copies of real widgets
-        ("qml/components/bar/widgets/Tone/Tone.qml", qml(), "Tone/Tone.qml: T1"),
-        ("qml/components/bar/widgets/DevMode/DevMode.qml", DEV_MODE, f"DevMode/DevMode.qml:{DEV_MODE_AT}: T2"),
-        ("qml/components/bar/widgets/LockKeys/LockKeys.qml", LOCK_KEYS, f"LockKeys/LockKeys.qml:{LOCK_KEYS_AT}: T3"),
-        ("qml/components/bar/widgets/Tfive/Tfive.qml", widget("colors: ({})"), "Tfive/Tfive.qml:6: T5"),
-        ("qml/components/bar/widgets/Button/Helper.qml", qml(), "Button/: T6"),
-        ("qml/components/bar/widgets/Tseven/Tseven.qml", widget("id: root\n  text: root.box"), "Tseven/Tseven.qml:7: T7"),
-        ("qml/components/bar/widgets/Ttwoa/Ttwoa.qml", widget("property var c: '#fff'"), "Ttwoa/Ttwoa.qml:6: T2"),
-        ("qml/components/bar/widgets/Ttwob/Ttwob.qml", widget('property var c: "red"'), "Ttwob/Ttwob.qml:6: T2"),
-        ("qml/components/bar/widgets/Ttwoc/Ttwoc.qml", widget("property var c: Qt.rgba (1, 0, 0, 1)"), "Ttwoc/Ttwoc.qml:6: T2"),
-        ("qml/components/bar/widgets/Tfiveb/Tfiveb.qml", widget("onClicked: pulse = 1"), "Tfiveb/Tfiveb.qml:6: T5"),
-        ("qml/components/bar/widgets/Tsevenb/Tsevenb.qml", widget("text: box"), "Tsevenb/Tsevenb.qml:6: T7"),
-        ("qml/components/bar/widgets/Teight/Teight.qml", widget('stateColorName: "error"'), "Teight/Teight.qml:6: T8"),
+        ("qml/components/bar/widgets/WidgetRoot/WidgetRoot.qml", qml(), "WidgetRoot/WidgetRoot.qml: widget-root"),
+        ("qml/components/bar/widgets/DevMode/DevMode.qml", DEV_MODE, f"DevMode/DevMode.qml:{DEV_MODE_AT}: resolved-color"),
+        ("qml/components/bar/widgets/LockKeys/LockKeys.qml", LOCK_KEYS, f"LockKeys/LockKeys.qml:{LOCK_KEYS_AT}: opacity-fade"),
+        ("qml/components/bar/widgets/BaseOutput/BaseOutput.qml", widget("colors: ({})"), "BaseOutput/BaseOutput.qml:6: base-output"),
+        ("qml/components/bar/widgets/Button/Helper.qml", qml(), "Button/: folder-files"),
+        ("qml/components/bar/widgets/BoxRead/BoxRead.qml", widget("id: root\n  text: root.box"), "BoxRead/BoxRead.qml:7: box-read"),
+        ("qml/components/bar/widgets/ResolvedColor/ResolvedColor.qml", widget("property var c: '#fff'"), "ResolvedColor/ResolvedColor.qml:6: resolved-color"),
+        ("qml/components/bar/widgets/ResolvedColorB/ResolvedColorB.qml", widget('property var c: "red"'), "ResolvedColorB/ResolvedColorB.qml:6: resolved-color"),
+        ("qml/components/bar/widgets/ResolvedColorC/ResolvedColorC.qml", widget("property var c: Qt.rgba (1, 0, 0, 1)"), "ResolvedColorC/ResolvedColorC.qml:6: resolved-color"),
+        ("qml/components/bar/widgets/BaseOutputB/BaseOutputB.qml", widget("onClicked: pulse = 1"), "BaseOutputB/BaseOutputB.qml:6: base-output"),
+        ("qml/components/bar/widgets/BoxReadB/BoxReadB.qml", widget("text: box"), "BoxReadB/BoxReadB.qml:6: box-read"),
+        ("qml/components/bar/widgets/StateColorName/StateColorName.qml", widget('stateColorName: "error"'), "StateColorName/StateColorName.qml:6: state-color-name"),
     ]
     # The layer service's structure (check_structure.layer_service): a window with no row
     # and the ways to set a layer or namespace, read a layer fact or WlrLayer, or give backsOn a literal
@@ -542,12 +542,12 @@ class CheckStructure(unittest.TestCase):
         "ui-local-exceptions.json: qml/components/views/Unruled.qml names Ghost, not a rule",
         "qml/components/surfaces/osd/systems/Ghost/: an OSD system without GhostWatch.qml",
         "qml/components/surfaces/osd/systems/Ghost/: an OSD system without schema.yaml",
-        "DevMode/: T4 ghostColor is a colour field of DevMode that nothing uses",
+        "DevMode/: color-field ghostColor is a colour field of DevMode that nothing uses",
         "Updates/Updates.qml:",
-        "T4 names failedColor, not a colour field of Updates",
-        "Button lists T8, which it no longer breaks",
+        "color-field names failedColor, not a colour field of Updates",
+        "Button lists state-color-name, which it no longer breaks",
         "Spacer has no reason",
-        "Time names T9, not a rule",
+        "Time names ghost-rule, not a rule",
         "Weather lists fieldsReadIn, which supplies none of its otherwise-unused colour fields",
         # x-popoutModule: (a) names a popoutName the widget opens (Volume's is in its base file), (b) declared when the popout is a module
         "bar/widgets/Volume: x-popoutModule.type Caffeine is not a popoutName it opens (AudioMixer)",
@@ -587,9 +587,9 @@ class CheckStructure(unittest.TestCase):
                 "qml/components/views/NoReason.qml": {"rules": [], "reason": ""},
                 "qml/components/views/Unruled.qml": {"rules": ["Ghost"], "reason": "planted"}}))
             edit_json(root / "scripts/bar-widget-exceptions.json", lambda a: a["types"].update({
-                "Button": {"reason": "planted", "rules": ["T8"]},
-                "Spacer": {"reason": "", "rules": ["T5"]},
-                "Time": {"reason": "planted", "rules": ["T9"]},
+                "Button": {"reason": "planted", "rules": ["state-color-name"]},
+                "Spacer": {"reason": "", "rules": ["base-output"]},
+                "Time": {"reason": "planted", "rules": ["ghost-rule"]},
                 "Weather": {"reason": "planted", "rules": [], "fieldsReadIn": ["qml/config/BarsConfig.qml"]}}))
             code, out = run_check(root, "check_structure.py", files=[(p, text) for p, text, _ in self.FILES])
         self.assertEqual(code, 1)
@@ -712,10 +712,22 @@ class CheckStructure(unittest.TestCase):
 
     def test_live_tree_passes(self):
         # The real widgets break no template rule, so each plant above is what fails
+        sys.path.insert(0, str(SCRIPTS))
+        import check_structure
         with tempfile.TemporaryDirectory() as tmp:
             root = fixture_root(tmp, "qml", "docs/dev/compositor/contract.md")
             _, out = run_check(root, "check_structure.py")
-        self.assertEqual([line for line in out.splitlines() if ": T" in line or "bar-widget-exceptions" in line], [], out)
+        self.assertEqual([line for line in out.splitlines() if any(f": {rule}" in line for rule in check_structure.WIDGET_RULES) or "bar-widget-exceptions" in line], [], out)
+
+    def test_retired_widget_rule_ids_fail_as_unknown(self):
+        # The ids the template rules had before they were named; built here so none is written out
+        old = [f"T{n}" for n in range(1, 9)]
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "qml", "docs/dev/compositor/contract.md")
+            edit_json(root / "scripts/bar-widget-exceptions.json", lambda a: a["types"].update({"Button": {"reason": "planted", "rules": old}}))
+            code, out = run_check(root, "check_structure.py")
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, [f"bar-widget-exceptions.json: Button names {o}, not a rule" for o in old]), [], out)
 
 
 class CheckI18n(unittest.TestCase):

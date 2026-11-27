@@ -53,10 +53,8 @@ running anything:
   - no property is named on<X> beside a property, signal or function <x>
     (its file's, or a Qt type's it inherits: width, a window's screen, …): Qt never
     gives it its value
-  - every bar widget is data on BarWidget: rules T1-T8 of
-    bar_widget_template (the root, no colour resolved, no opacity fade, no
-    base output written, no unused or unknown colour field), its exceptions
-    in scripts/bar-widget-exceptions.json
+  - every bar widget is data on BarWidget: the WIDGET_RULES of
+    bar_widget_template, its exceptions in scripts/bar-widget-exceptions.json
   - a bar widget's `popoutModule` (x-popoutModule) is a popoutName it
     opens, and one whose popoutName is an overlay module declares it; its
     anchors hand its values by `fromWidget` (the keys popoutModule lists),
@@ -197,9 +195,18 @@ LOCAL_PIECE_SCOPES = ("qml/components/views/", "qml/components/surfaces/onboardi
 SEGMENT_ROW_SCOPES = ("qml/components/views/", "qml/components/content/", "qml/components/surfaces/")
 SEGMENT_HOSTS = ("SegmentRow", "SegmentTabs", "StyledToggle")
 WIDGETS_DIR = "qml/components/bar/widgets"
-WIDGET_RULES = {f"T{n}" for n in range(1, 9)}
+WIDGET_RULES = {
+    "widget-root": "has a root other than BarWidget or AudioLevelWidget",
+    "resolved-color": "resolves a colour: name a colour field, the base resolves it",
+    "opacity-fade": "fades by opacity or dims by a dim: a dim is a colour the base draws",
+    "color-field": "has a colour field nothing uses, or names a *Color that isn't one of its colour fields",
+    "base-output": "sets or writes what the base computes (WIDGET_OUTPUTS)",
+    "folder-files": "has a file in its folder besides <Type>.qml and schema.yaml",
+    "box-read": "reads .box (or a bare box in <Type>.qml): read shownItems",
+    "state-color-name": "names stateColorName: a state names its colour field (accentField)",
+}
 WIDGET_ROOTS = {"BarWidget", "AudioLevelWidget"}
-# What the base computes: a widget declares data, never these (T5)
+# What the base computes: a widget declares data, never these (base-output)
 WIDGET_OUTPUTS = ("colors drawnColors paint shownItems backgroundLevel backgroundLevelColor splits splitAt "
                   "splitPart innerSplits contentAcross leadLength minimumSize pulse box hitArea autoColors "
                   "barOffset barLength runPlace segmented pinStart fillsOnHover").split()
@@ -280,7 +287,7 @@ def qml_blocks(text, type_name):
 
 def bar_widget_template(schema, sources, errors):
     """Every bar widget is data on BarWidget (docs/dev/bar/widget-style.md ›
-    The widget template): rules T1-T8, but for the listed exceptions."""
+    The widget template): the WIDGET_RULES, but for the listed exceptions."""
     root = ROOT / WIDGETS_DIR
     exceptions, shape = qml_modules.load_exceptions(WIDGET_EXCEPTIONS, WIDGET_RULES, section="types")
     errors.extend(shape)
@@ -311,13 +318,13 @@ def bar_widget_template(schema, sources, errors):
             start = next((i for i, line in enumerate(lines) if re.match(r"[A-Z][\w.]*\s*\{", line)), None)
             name = re.match(r"[A-Z][\w.]*", lines[start]).group(0) if start is not None else None
             if name not in WIDGET_ROOTS:
-                add("T1", f"{rel(folder)}/{t}.qml: T1 its root is {name}, not BarWidget or AudioLevelWidget")
+                add("widget-root", f"{rel(folder)}/{t}.qml: widget-root its root is {name}, not BarWidget or AudioLevelWidget")
 
         for f in files:
             path = rel(f)
             short = f"{t}/{f.relative_to(folder).as_posix()}"
             for n, m in lines_of(code[f], WIDGET_COLOR_CALLS):
-                add("T2", f"{short}:{n}: T2 resolves a colour ({m.group(0).strip()}): name a colour field, the base resolves it")
+                add("resolved-color", f"{short}:{n}: resolved-color resolves a colour ({m.group(0).strip()}): name a colour field, the base resolves it")
             # opacity: only an Image fades; else a switch of 0 or 1
             stack = []
             for n, line in enumerate(plain[f].split("\n"), 1):
@@ -338,16 +345,16 @@ def bar_widget_template(schema, sources, errors):
                         offset = sum(len(x) + 1 for x in plain[f].split("\n")[:n - 1]) + arg
                         expr = binding(plain[f], offset)
                         if any(float(x) not in (0, 1) for x in re.findall(r"(?<![\w.])(?:\d+(?:\.\d*)?|\.\d+)", expr)):
-                            add("T3", f"{short}:{n}: T3 fades by opacity ({expr.strip()}): an opacity is 0 or 1, a dim is a colour")
+                            add("opacity-fade", f"{short}:{n}: opacity-fade fades by opacity ({expr.strip()}): an opacity is 0 or 1, a dim is a colour")
             for n, _ in lines_of(plain[f], r"\bdim\b"):
-                add("T3", f"{short}:{n}: T3 dims by a `dim`: a dim is a colour the base draws")
+                add("opacity-fade", f"{short}:{n}: opacity-fade dims by a `dim`: a dim is a colour the base draws")
             for n, _ in lines_of(plain[f], r"\.box\b"):
-                add("T7", f"{short}:{n}: T7 reads .box: read shownItems")
+                add("box-read", f"{short}:{n}: box-read reads .box: read shownItems")
             if f == main_file:
                 for n, _ in lines_of(plain[f], r"(?<![\w.$])(?<!let )(?<!const )(?<!var )(?<!id: )(?<!id:)box\b(?!\s*:)"):
-                    add("T7", f"{short}:{n}: T7 reads box: read shownItems")
+                    add("box-read", f"{short}:{n}: box-read reads box: read shownItems")
             for n, _ in lines_of(plain[f], r"\bstateColorName\b"):
-                add("T8", f"{short}:{n}: T8 names stateColorName: a state names its colour field (accentField)")
+                add("state-color-name", f"{short}:{n}: state-color-name names stateColorName: a state names its colour field (accentField)")
 
         if main_file in raw:
             body = plain[main_file]
@@ -356,16 +363,16 @@ def bar_widget_template(schema, sources, errors):
             binding_re = re.compile(r"^\s*(?:(?:readonly\s+|required\s+|default\s+)*property\s+[\w<>.]+\s+)?(" + names + r")\s*:")
             for n, line in enumerate(body.split("\n"), 1):
                 if depth == 1 and binding_re.match(line):
-                    add("T5", f"{t}/{t}.qml:{n}: T5 sets {binding_re.match(line).group(1)}: it is the base's output")
+                    add("base-output", f"{t}/{t}.qml:{n}: base-output sets {binding_re.match(line).group(1)}: it is the base's output")
                 depth += line.count("{") - line.count("}")
             for n, m in lines_of(body, r"(?<![\w.])(?<!let )(?<!var )(?<!const )(?:root\.)?(" + names + r")\s*=(?!=)"):
-                add("T5", f"{t}/{t}.qml:{n}: T5 writes {m.group(1)}: it is the base's output")
+                add("base-output", f"{t}/{t}.qml:{n}: base-output writes {m.group(1)}: it is the base's output")
 
         for f in sorted(folder.iterdir()):
             if f.name not in (f"{t}.qml", "schema.yaml"):
-                add("T6", f"{rel(folder)}/: T6 holds {f.name}: only {t}.qml and schema.yaml")
+                add("folder-files", f"{rel(folder)}/: folder-files holds {f.name}: only {t}.qml and schema.yaml")
 
-    # T4: a colour field nothing uses, a colour named that isn't one
+    # color-field: a colour field nothing uses, a colour named that isn't one
     unused_without = {}
     for t, fields in colour_fields.items():
         folder = root / t
@@ -386,7 +393,7 @@ def bar_widget_template(schema, sources, errors):
         for path in exceptions.get(t, {}).get("fieldsReadIn", []):
             extra |= set(re.findall(r"\bproperties\??\.(\w+)", sources.get(path, "")))
         for field in sorted(fields - used - extra):
-            out.append(("T4", f"{t}/: T4 {field} is a colour field of {t} that nothing uses"))
+            out.append(("color-field", f"{t}/: color-field {field} is a colour field of {t} that nothing uses"))
         for f, c in texts.items():
             asks = [(m.end(), binding(c, m.end())) for m in re.finditer(r"\b(?:accentField|iconField)\s*:", c)]
             asks += [(m.end(), binding(c, m.end())) for m in re.finditer(r'(?<![\w.])"?field"?\s*:', c)]
@@ -395,7 +402,7 @@ def bar_widget_template(schema, sources, errors):
                 for name in re.findall(r'"(color|\w+Color)"', expr):
                     if name not in fields:
                         n = c.count("\n", 0, at) + 1
-                        out.append(("T4", f"{t}/{f.name}:{n}: T4 names {name}, not a colour field of {t}"))
+                        out.append(("color-field", f"{t}/{f.name}:{n}: color-field names {name}, not a colour field of {t}"))
 
     name = rel(WIDGET_EXCEPTIONS)
     for t, entry in exceptions.items():

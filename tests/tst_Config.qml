@@ -126,7 +126,7 @@ TestCase {
     }
   }
 
-  // A colour field is `color` or ends in `Color`: check_structure's T4 tells
+  // A colour field is `color` or ends in `Color`: check_structure's color-field rule tells
   // a colour name from a state word by that
   function test_widget_color_fields_are_named_color() {
     for (const option of schema.definitions.BarWidget.oneOf) {
