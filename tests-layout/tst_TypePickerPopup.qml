@@ -10,7 +10,7 @@ import qs.components.reusable
 TestCase {
   id: root
 
-  name: "TypePicker"
+  name: "TypePickerPopup"
   when: windowShown
   visible: true
   width: 500

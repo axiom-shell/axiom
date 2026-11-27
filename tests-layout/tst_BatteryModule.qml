@@ -4,13 +4,13 @@ import QtTest
 import qs.config
 import qs.components.content.Battery
 
-// BatteryCard: with showPowerProfile off the profile row takes no height and
+// BatteryModule: with showPowerProfile off the profile row takes no height and
 // no gap (its top margin follows the row, not just the battery); on, it
 // takes both.
 TestCase {
   id: root
 
-  name: "BatteryCard"
+  name: "BatteryModule"
   when: windowShown
   visible: true
   width: 900

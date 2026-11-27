@@ -447,16 +447,6 @@
       "BlurBackingWindow:backing"
     ]
   },
-  "tests-layout/tst_BatteryCard.qml": {
-    "test-names": [
-      "file:tst_BatteryCard"
-    ]
-  },
-  "tests-layout/tst_CalendarCard.qml": {
-    "test-names": [
-      "file:tst_CalendarCard"
-    ]
-  },
   "tests-layout/tst_ChoiceTiles.qml": {
     "test-names": [
       "test_menus_emits_menuRequested"
@@ -642,9 +632,8 @@
       "test_trackingStretchSentInItsPass"
     ]
   },
-  "tests-layout/tst_TypePicker.qml": {
+  "tests-layout/tst_TypePickerPopup.qml": {
     "test-names": [
-      "file:tst_TypePicker",
       "test_listSpansTheRow"
     ]
   },

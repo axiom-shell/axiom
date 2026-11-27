@@ -4,13 +4,13 @@ import qs.config
 import qs.components.content.Calendar
 import qs.components.content.parts.calendar
 
-// CalendarCard: a Calendar card without events (`showEvents: false`) is the
+// CalendarModule: a Calendar card without events (`showEvents: false`) is the
 // plain month filling the card, never side by side or stacked and with no
 // day pane built; with events it keeps both layouts.
 TestCase {
   id: root
 
-  name: "CalendarCard"
+  name: "CalendarModule"
   when: windowShown
   visible: true
   width: 900
