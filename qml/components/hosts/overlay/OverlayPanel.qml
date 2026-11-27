@@ -21,7 +21,9 @@ import qs.components.views.Settings // qmllint disable unused-imports
 // The overlay's window on one screen (shell/Overlay): opens and closes the
 // sliding box that holds OverlayPages, and closes on Escape or a click outside.
 // After a close its pages stay built for `keptFor` (`kept`), so opening
-// again maps the window and slides, with no rebuild.
+// again slides, with no rebuild. On Top under the chrome (LayerStack: after
+// the backdrop, before the backing window), held while closed (a pixel
+// drawing nothing); on Overlay while a fullscreen window is on its screen.
 ReservedAreaWindow {
   id: root
 
@@ -32,6 +34,8 @@ ReservedAreaWindow {
   // fullscreen window shows on its screen
   property bool kept: false
   readonly property bool fullscreenNow: CompositorManager.hasFullscreen(root.screen?.name ?? "")
+  // Open or closing: its slot's `wanted`
+  readonly property bool _wanted: root.isOpen || hideTimer.running
   onFullscreenNowChanged: if (root.fullscreenNow && root.kept) {
     keptTimer.stop();
     root.kept = false;
@@ -40,12 +44,12 @@ ReservedAreaWindow {
   // its layer while open) closes as it opens
   onIsOpenChanged: if (isOpen)
     PopoutManager.closeOn(root.screen?.name ?? "")
-  // This opening draws reduced effects (Overlay.reduceFullscreen): decided as
-  // its window maps (a namespace's rules are read only then): a window going
-  // fullscreen while it's open, or kept, changes nothing until it maps again
+  // This opening draws reduced effects (Overlay.reduceFullscreen): the page's
+  // cheaper drawing is decided as it opens; its blur follows the screen live
+  // (BlurManager.reduced), and its layer follows `fullscreenNow`
   property ClosedLatch _reduced: ClosedLatch {
     source: OverlayConfig.reduceFullscreen && root.fullscreenNow
-    closed: !root.visible
+    closed: !root._wanted
   }
   readonly property bool reduced: root._reduced.value ?? false
   // Closed, it waits off the edge it slides in from (Overlay.animation),
@@ -58,21 +62,45 @@ ReservedAreaWindow {
   // The page switcher's on the top edge, not the bottom
   readonly property bool _navigatorTop: OverlayConfig.navigator === "top"
 
-  visible: false
-  // Its layer rule arranges it after docks and draws it over them
-  // (see render.LayerRulesLua); reduced, it's the unblurred twin
-  layerNamespace: root.reduced ? "axiom-overlay-reduced" : "axiom-overlay"
+  visible: slot.shown
+  // Held once the layer rules are in (CompositorManager.surfacesReady), with the
+  // chrome it keeps its place among; before that it maps only while open, as a
+  // window without a slot
+  LayerSlot {
+    id: slot
+    window: root
+    namespace: root.layerNamespace
+    layer: root.stackLayer
+    wanted: root._wanted
+    held: CompositorManager.surfacesReady
+  }
+  // On Top under the chrome (LayerStack: after the backdrop, before the
+  // backing window), held while closed; on Overlay while a fullscreen
+  // window is on its screen, down once it's gone
+  stackLayer: root.fullscreenNow ? WlrLayer.Overlay : WlrLayer.Top
+  // One namespace in every state: a held window whose namespace changed is
+  // remade and lands last on its layer (its reduced blur is BlurManager's)
+  layerNamespace: "axiom-overlay"
+  // Closed (held), a pixel in the corner drawing nothing, taking no input
+  // or keys (as ScreenBackdrop)
+  anchors {
+    right: !slot.idle
+    bottom: !slot.idle
+  }
+  implicitWidth: 1
+  implicitHeight: 1
+  focusable: !root.steppedAside && !slot.idle
+  mask: root.steppedAside || slot.idle ? root._noInput : null
   // The keyboard exclusively while its grab is one the compositor doesn't
   // have (FocusGrab.exclusive)
-  WlrLayershell.keyboardFocus: root.steppedAside ? WlrKeyboardFocus.None : grab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
+  WlrLayershell.keyboardFocus: slot.idle || root.steppedAside ? WlrKeyboardFocus.None : grab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
 
   function open() {
+    isOpen = true;
     hideTimer.stop();
     keptTimer.stop();
-    visible = true;
-    // After it's visible: `built` would drop between and unload the kept pages
+    // After it's wanted: `built` would drop between and unload the kept pages
     root.kept = false;
-    isOpen = true;
     slideContainer.forceActiveFocus();
   }
 
@@ -80,8 +108,8 @@ ReservedAreaWindow {
     // (closing a closed one, kept or not, changes nothing)
     if (!root.isOpen)
       return;
-    isOpen = false;
     hideTimer.start();
+    isOpen = false;
     // Not while a fullscreen window is up: the pages would keep polling over a game
     root.kept = !root.fullscreenNow;
     if (root.kept)
@@ -109,7 +137,6 @@ ReservedAreaWindow {
     id: hideTimer
     interval: Appearance.animSlow
     repeat: false
-    onTriggered: root.visible = false
   }
 
   Timer {
@@ -186,7 +213,7 @@ ReservedAreaWindow {
   // (attached only there: attached at all, it claims the window's blur, and
   // Hyprland's layer rules no longer blur it)
   Component.onCompleted: if (CompositorManager.supports.blurRegion === true)
-    BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(root.screen) && !root.reduced ? boxesBlur : null)
+    BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(root.screen) && !BlurManager.reducedOn(root.screen) ? boxesBlur : null)
   Region {
     id: boxesBlur
 
@@ -205,6 +232,8 @@ ReservedAreaWindow {
   Item {
     id: slideContainer
     anchors.fill: parent
+    // Held and idle it is a pixel: a kept page's changes draw no frames
+    visible: !slot.idle
     opacity: root.steppedAside || (root.fades && !root.isOpen) ? 0 : 1
     Glide on opacity {
       duration: Appearance.animNormal
@@ -253,22 +282,22 @@ ReservedAreaWindow {
       width: parent.width
       height: parent.height - OverlayConfig.navigatorRoom
 
-      // The window has no size while it's unmapped (closed, and before
-      // it's first mapped): keep the last mapped size, so a page built as
+      // The window has no size while it's idle (closed, and before
+      // it's first shown): keep the last full size, so a page built as
       // it opens is built to fit, not built once more at the real size;
       // until the first map, estimate from the screen less its margins
       property real roomWidth: root.screen.width - root.margins.left - root.margins.right
       property real roomHeight: root.screen.height - root.margins.top - root.margins.bottom - OverlayConfig.navigatorRoom
-      onWidthChanged: if (pageArea.width > 0)
+      onWidthChanged: if (!slot.idle && pageArea.width > 0)
         pageArea.roomWidth = pageArea.width
-      onHeightChanged: if (pageArea.height > 0)
+      onHeightChanged: if (!slot.idle && pageArea.height > 0)
         pageArea.roomHeight = pageArea.height
 
       OverlayPages {
         id: overlayPages
         anchors.centerIn: parent
         open: root.isOpen
-        built: root.visible || root.kept
+        built: root._wanted || root.kept
         reduced: root.reduced
         screen: root.screen
         maxWidth: pageArea.roomWidth - OverlayConfig.cardSpacing * 2

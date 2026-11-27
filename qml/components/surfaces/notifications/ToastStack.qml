@@ -297,7 +297,15 @@ Scope {
     id: area
     screen: root.screen
     // Always mapped: it lends NotificationManager its image host
-    visible: true
+    // (LayerSlot: maps again if a window ordered before it, the page over a
+    // fullscreen window, lands over it)
+    visible: slot.shown
+    LayerSlot {
+      id: slot
+      window: area
+      namespace: "axiom-notifications"
+      layer: WlrLayer.Overlay
+    }
     color: "transparent"
     anchors {
       top: true
@@ -404,7 +412,6 @@ Scope {
           strokeColor: toastCard.strokeColor
           paintRank: PaintOrder.rankOf("toast")
           fade: toastCard.opacity
-          overlayLayer: true
           // (out of sight, faded or slid, it blurs nothing: a covered
           // toast draws nothing)
           shown: toastCard.backed && toastCard.visible && !toastCard.gone && toastCard.opacity > 0

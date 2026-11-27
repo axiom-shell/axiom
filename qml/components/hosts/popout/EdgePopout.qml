@@ -85,9 +85,9 @@ PopoutWrapperBase {
   // (EdgePlacement.slidesFromEdge): under the bars where it can, its
   // window on their layer ordered under them (EdgePlacement.slidesUnder;
   // the daemon's layer rules, render.LayerRulesLua), else over them on the
-  // Overlay layer (no supports.layerOrder, or the overlay open on its
-  // screen). Both follow only while closed, as BarPopouts.underBar: they
-  // change the window's layer, namespace and size. Whether it slides from
+  // Overlay layer (no supports.layerOrder). Both follow only while closed,
+  // as BarPopouts.underBar: they change the window's layer, namespace and
+  // size. Whether it slides from
   // the edge also follows as it jumps over a fullscreen window or back
   // (`_snapping`); its namespace can't change while mapped, so `_under`
   // doesn't: over a fullscreen window its window goes to the Overlay layer
@@ -263,10 +263,8 @@ PopoutWrapperBase {
   // (EdgePlacement.attachAt)
   readonly property real attachAt: placement.attachAt
 
-  // While the overlay is open on its screen a box that would slide under
-  // a bar draws over the overlay instead (render.LayerRulesLua),
-  // since the layer it slides out from under is one the overlay covers
-  // (as BarPopouts.underBar; latched in _under)
+  // Whether the overlay is open on its screen (FloatingEdgeMenu gives its
+  // grab to the overlay's then)
   readonly property bool overlayOpen: SurfaceManager.surfaceOpenOn("overlay", root.screen)
 
   // Extra box depth at the attach edge that a merged box's content keeps
@@ -363,7 +361,6 @@ PopoutWrapperBase {
     showing: root.occupied && root.contentItem !== null && root.claimed
     open: root.isOpen && root.claimed
     onOverlayLayer: root.onOverlayLayer
-    overOverlay: root.overlayOpen
     under: root.windowLayer === WlrLayer.Top
     origin: placeOnScreen.origin
     attachedSurface: surface

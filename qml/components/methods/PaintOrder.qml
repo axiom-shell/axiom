@@ -49,11 +49,6 @@ QtObject {
     }
   ]
 
-  // An eraser (a shape another backing window draws over this one) sits this
-  // far under its rank, so it ties only with other erasers and never with a
-  // shape of this window
-  readonly property real eraserOffset: 0.5
-
   // The rank of `name`; NaN for a name not listed
   function rankOf(name) {
     return root.ranks.find(r => r.name === name)?.rank ?? NaN;

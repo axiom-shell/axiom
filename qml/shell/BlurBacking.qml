@@ -23,14 +23,9 @@ import qs.services.ui
 // them: a window beside each one, not blurred, casts them instead. Where
 // it blurs only what a window asks (niri: supports.blurRegion), the
 // window asks for its shapes alone, so its shadows stay in it unblurred.
-// While the overlay is open on a screen it covers that window, so a second
-// one, over the overlay and under the surfaces on the Overlay layer (bar
-// and edge popouts, submenus, the OSD), draws those surfaces' shapes
-// (BlurShape.overlayLayer, BlurManager.aboveOverlay), blurring the overlay
-// under them. Each window keeps a copy of every shape on its screen; while
-// the overlay is open the one over it draws the Overlay-layer shapes and the
-// one under it the others. Bars' fills can't move up with them: drawn over the Top
-// layer, they'd cover the bars' content.
+// One window per part and screen, under every chrome surface and over the
+// overlay's page (which sits under the backing window in LayerStack), so
+// every shape's blur is the page's content under it.
 Scope {
   id: root
 
@@ -45,71 +40,26 @@ Scope {
       required property ShellScreen modelData
       readonly property string screenName: perScreen.modelData?.name ?? ""
       readonly property var onScreen: BlurManager.shapes.filter(shape => shape.screen === perScreen.screenName)
-      // The overlay open here covers the backing window: the Overlay-layer
-      // surfaces' shapes go to the one over it
-      readonly property bool aboveOverlay: BlurManager.aboveOverlay(perScreen.screenName)
-      // The hand-off, so some window draws those surfaces' boxes in every
-      // frame: the window over the overlay has drawn them (its first frame
-      // after it was made while the overlay was open), and the main one
-      // hasn't yet drawn them back (its first frame after the overlay
-      // closed, which has them). The main window gives them up, and erases
-      // them, only while both this and the overlay are; on close it draws
-      // them at once, while the other still does, and the window over the
-      // overlay goes once this falls
-      property bool overlayTaken: false
-      readonly property bool overlayWindows: perScreen.aboveOverlay || perScreen.overlayTaken
-      readonly property bool overlayGivenUp: perScreen.aboveOverlay && perScreen.overlayTaken
-      readonly property var overlayShapes: perScreen.overlayWindows ? perScreen.onScreen.filter(shape => shape.overlayLayer) : []
       readonly property bool shadowsApart: BlurManager.shadowsApart
 
       // Its backing windows: the fills and the shadows apart (in that order,
-      // as SwayFX stacks by map order) or one drawing both. Below the
-      // overlay: on Top, under the chrome; on Overlay (under every surface
+      // as SwayFX stacks by map order) or one drawing both. On Top, under the
+      // chrome and over the overlay's page; on Overlay (under every surface
       // there, by its order) while a fullscreen window hides the Top
-      // layer, for the surfaces shown over it (BlurManager.overFullscreen).
-      // Over the overlay ("-overlay") and under the surfaces on the Overlay
-      // layer (by its order), drawing while the overlay is open here (and just
-      // after, until the hand-off is back: overlayWindows): their
-      // blur is the overlay's content, not what the overlay covers. Always
-      // in the model (unmapped while not wanted), so an overlay opening
-      // makes no window delegates
+      // layer, for the surfaces shown over it (BlurManager.overFullscreen)
       readonly property var parts: perScreen.shadowsApart ? ["fills", "shadows"] : ["all"]
 
       Variants {
-        model: perScreen.parts.concat(perScreen.parts.map(part => part + "-overlay"))
+        model: perScreen.parts
 
         delegate: BlurBackingWindow {
           id: blurWindow
           required property string modelData
           screen: perScreen.modelData
-          part: blurWindow.modelData.replace("-overlay", "")
-          over: blurWindow.modelData.endsWith("-overlay")
-          overlayWindows: perScreen.overlayWindows
-          overlayGivenUp: perScreen.overlayGivenUp
+          part: blurWindow.modelData
           shapes: perScreen.onScreen
-          // Only the window under the overlay gives way (to what the one over
-          // it draws): it holds the overlay's shapes as erasers while the
-          // windows over the overlay draw, and erases each only while it has
-          // given it up (`overlayGivenUp`: `draws`), so a hand-off changes
-          // one flag, never the copies; the one over it gives way to nothing
-          erasers: blurWindow.over ? [] : perScreen.overlayShapes
-          wanted: blurWindow.over ? perScreen.overlayWindows : true
-          held: !blurWindow.over
-          stackLayer: blurWindow.over || BlurManager.overFullscreen(perScreen.screenName) ? WlrLayer.Overlay : WlrLayer.Top
-          layerNamespace: (blurWindow.part === "shadows" ? "axiom-shadows" : "axiom-blur-backing") + (blurWindow.over ? "-overlay" : "")
-
-          // The hand-off's two edges, read from the windows that draw the shapes
-          Connections {
-            target: blurWindow.contentItem?.Window.window ?? null
-            function onFrameSwapped() {
-              if (blurWindow.part === "shadows")
-                return;
-              if (blurWindow.over && perScreen.aboveOverlay)
-                perScreen.overlayTaken = true;
-              else if (!blurWindow.over && !perScreen.aboveOverlay)
-                perScreen.overlayTaken = false;
-            }
-          }
+          stackLayer: BlurManager.overFullscreen(perScreen.screenName) ? WlrLayer.Overlay : WlrLayer.Top
+          layerNamespace: blurWindow.part === "shadows" ? "axiom-shadows" : "axiom-blur-backing"
         }
       }
     }

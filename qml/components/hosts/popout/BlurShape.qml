@@ -31,10 +31,6 @@ QtObject {
   property string screen: ""
   property real x: 0
   property real y: 0
-  // Its window is on the Overlay layer: while the overlay is open on its
-  // screen, it's drawn by the blur window over the overlay
-  // (BlurManager.aboveOverlay)
-  property bool overlayLayer: false
   // Placed (its window found on screen) and showing
   property bool shown: true
   // Its key in BlurManager, set as it registers

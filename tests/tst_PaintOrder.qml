@@ -23,14 +23,4 @@ TestCase {
   function test_unknown_name_is_nan() {
     verify(isNaN(PaintOrder.rankOf("nowhere")));
   }
-
-  // An eraser never sits on a shape's rank, so it ties only with erasers
-  function test_erasers_never_on_a_rank() {
-    const ranks = PaintOrder.ranks.map(r => r.rank);
-    for (const rank of ranks) {
-      const at = rank - PaintOrder.eraserOffset;
-      verify(!Number.isInteger(at), "eraser at " + at);
-      verify(!ranks.includes(at));
-    }
-  }
 }

@@ -161,7 +161,6 @@ EdgePopout {
       "screen": root.screen?.name ?? "",
       "origin": root._origin ? Qt.point(root._origin.x + root.contentInWindow.x + root.surfaceItem.slideX, root._origin.y + root.contentInWindow.y + root.surfaceItem.slideY) : null,
       "clip": root._origin ? Qt.rect(root._origin.x, root._origin.y, root.window.width, root.window.height) : null,
-      "overlayLayer": root.onOverlayLayer,
       "opacity": root.surfaceItem.shownOpacity,
       "look": root.surfaceItem.shadowLook
     }) : null

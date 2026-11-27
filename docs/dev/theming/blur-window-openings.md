@@ -13,25 +13,14 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
   - edge popouts: OSDs, floating edge menus, the attached launcher;
   - integrated edge menus' strips, docks.
 - A shape is a `hosts/popout/BlurShape`: an `AttachedSurface`, a `Rectangle` or the border's `frame`, with its top-left on screen and its fill color.
-- `qml/shell/BlurBacking`: one click-through `axiom-blur-backing` window per screen (a `qml/shell/BlurBackingWindow`), layer order 9 (under the chrome, over the backdrop).
+- `qml/shell/BlurBacking`: one click-through `axiom-blur-backing` window per screen (a `qml/shell/BlurBackingWindow`), layer order 9 (under the chrome, over the overlay's page and the backdrop).
   - It draws a copy of each shape (`AttachedSurfaceCopy`, an `AttachedSurface` `mirror`, its geometry bound to the source's, sliding with it; a strip that slides reads `SlideAnimation.slideX`/`slideY`).
   - It draws every shape's fill and its stroke, in painter's order and as one image: see Strokes in the backing window. A fading copy (a toast, a menu tile, a covered island) fades alone through `BlurShape.fade`.
 - It's the only one of these windows the compositor blurs, in one pass (on niri only where it sends its shapes as its blur region: [translucency](translucency-blur.md) › niri: blur regions). The overlay, the floating launcher and switcher and the other free-standing surfaces still blur themselves (notification toasts are backed by it: a card is a `BlurShape` rect, the attached box an EdgePopout).
 - The chrome draws its own outer fill and stroke transparent while backed (`AttachedSurface.backed`, `BarContainer.backed`, `RoundedBorders.backed`, `ToastItem`'s border, the integrated edge menu's border-off line): it draws its content only. The one exception is the integrated edge menu's framed box, which keeps its fill and stroke in the menu window in every mode.
 
-### Over the overlay
-- The overlay (Overlay layer) covers the blur window. So while it's open on a screen (`BlurManager.aboveOverlay`), a second `BlurBackingWindow` there, `axiom-blur-backing-overlay`, draws the shapes of the surfaces on the Overlay layer (`BlurShape.overlayLayer`: bar popouts and their submenus, edge popouts, the OSD; a dock's preview has no origin and fills and blurs itself), and the first window drops them.
-  - Its order (see `docs/dev/generated/layers.md`) puts it after the overlay and before every surface it draws for, and it maps without Hyprland's animation.
-  - Both over windows (`fills` and `shadows`, or `all`) are always in `BlurBacking`'s model, unmapped while the overlay's windows aren't wanted (`overlayWindows`: the overlay open there, or its hand-off not yet back), so an overlay opening makes no window delegates.
-  - Its blur rule never uses xray (`LayerStack.blurOverOverlay`): what it blurs is the overlay.
-- Only the Overlay-layer shapes move up. Drawn over the Top layer, a bar's fill would cover the bar's content.
-- The window under the overlay gives way to them: it holds their shapes as `erasers` while the windows over the overlay draw and erases each (its fill path erased, half a rank under the shape's, so a popout over the overlay hides the bar's fill and stroke under it, not drawn twice) once it has given the shape up (it no longer `draws` it). The window over the overlay gives way to nothing.
-- The hand-off keeps some window drawing the popout's box in every frame (`BlurBacking`'s `overlayTaken`): the main window gives the shapes up and erases them only once the overlay's window has drawn them, and draws them back at once when the overlay closes, while the other still does; that window goes after the main one's frame has them. Both draw it for at most a frame on each switch. The over windows stay in the model, unmapped until `overlayWindows`, so the hand-off flips only which window `draws` a shape, never builds a copy.
-- Each window casts only its own shapes' shadows, but cuts them by every shape on the screen (the copies of the shapes the other window draws, `BlurBackingWindow.draws(shape, !over)`), as the one window does. So a popout's shadow never falls on the bar it's joined to.
-- Every blur window on a screen keeps a copy of every shape there, drawing only its own (`BlurBackingWindow.draws`, `Copies.drawsOnly`): the overlay opening or closing, or a popout's layer flipping, toggles which copies show and builds none.
-
 ### Copies
-- `Copies.qml` is one copy of each of `shapes` (and `erasers`), one slot per shape; `BlurBackingWindow` makes its colour, alpha and outline copies of it, and `tests-layout/tst_ChromeComposite` draws through the same file.
+- `Copies.qml` is one copy of each of `shapes`, one slot per shape; `BlurBackingWindow` makes its colour, alpha and outline copies of it, and `tests-layout/tst_ChromeComposite` draws through the same file.
 - The copies are a keyed `ListModel` (`KeyedModel.qml`, by `BlurShape.uid` through `BlurManager.shapeOf`), so a shape coming or going adds or removes only its own.
 - Any copy moving, resizing, sliding or changing colour, or its holes changing, nudges the window (`FrameNudge`).
 
@@ -54,7 +43,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
   - a shadow runs unbroken round joined surfaces;
   - none falls on a surface joined to the one casting it (no holes needed).
 - Kept under the blur threshold, they aren't blurred.
-- Where the blur has no threshold (SwayFX's `blur_ignore_transparent` blurs every pixel that isn't clear; no `supports.blurThreshold`), it would frost the whole halo. So the backing windows draw only the fills (`BlurBackingWindow.part`), and a window beside each, in a namespace nothing blurs (`axiom-shadows`, `axiom-shadows-overlay`; `LayerStack.layers`), casts the shadows from its own copies (`BlurManager.shadowsApart`).
+- Where the blur has no threshold (SwayFX's `blur_ignore_transparent` blurs every pixel that isn't clear; no `supports.blurThreshold`), it would frost the whole halo. So the backing windows draw only the fills (`BlurBackingWindow.part`), and a window beside each, in a namespace nothing blurs (`axiom-shadows`; `LayerStack.layers`), casts the shadows from its own copies (`BlurManager.shadowsApart`).
 - No surface casts its own, and the border has no shadow window: the backing window draws every mode's chrome (opaque and blur off too), shadows included.
 
 ### Unbacked shadows

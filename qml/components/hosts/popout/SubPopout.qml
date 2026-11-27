@@ -320,7 +320,6 @@ Item {
           x: (surface.parentOrigin?.x ?? 0) + surface.inParentX
           y: (surface.parentOrigin?.y ?? 0) + surface.inParentY
           shown: surface.backed && submenuPopup.visible
-          overlayLayer: surface.onOverlayLayer
           paintRank: PaintOrder.rankOf("submenu")
         }
 

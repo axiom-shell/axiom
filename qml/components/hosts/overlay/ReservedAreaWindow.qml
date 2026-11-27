@@ -8,8 +8,8 @@ import qs.services.ui
 import qs.components.methods
 import qs.components.hosts.popout
 
-// A full-screen Overlay-layer window placed inside the border's and bars'
-// reserved area (the overlay, the onboarder). Normal exclusion with no zone
+// A full-screen window placed inside the border's and bars'
+// reserved area (the overlay on Top, the onboarder on Overlay). Normal exclusion with no zone
 // of its own puts it inside that area, wherever the bars are, so its content
 // centers in the free space and the bars stay reachable; the -borderWidth
 // margin lines it up with their inner stroke (as EdgePopout). A bare screen
@@ -25,6 +25,9 @@ PanelWindow {
 
   // Stepped aside: subclasses hide their content on it
   readonly property bool steppedAside: SurfaceManager.steppedAside
+  // Its layer: Overlay (the onboarder); the overlay sets Top, or Overlay
+  // over a fullscreen window
+  property int stackLayer: WlrLayer.Overlay
   // Its layer-shell namespace
   required property string layerNamespace
   // Its top-left on its screen, or null while unknown (a wallpaper
@@ -63,21 +66,19 @@ PanelWindow {
 
   color: "transparent"
   focusable: !root.steppedAside
-  mask: root.steppedAside ? stepAsideMask : null
+  mask: root.steppedAside ? root._noInput : null
   WlrLayershell.keyboardFocus: root.steppedAside ? WlrKeyboardFocus.None : WlrKeyboardFocus.OnDemand
-  WlrLayershell.layer: WlrLayer.Overlay
+  WlrLayershell.layer: root.stackLayer
   WlrLayershell.namespace: root.layerNamespace
   exclusionMode: ExclusionMode.Normal
   exclusiveZone: 0
 
-  Region {
-    id: stepAsideMask
-  }
+  property Region _noInput: Region {}
 
   LayerOrigin {
     id: placeOnScreen
     window: root
     namespace: root.layerNamespace
-    layer: WlrLayer.Overlay
+    layer: root.stackLayer
   }
 }

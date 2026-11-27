@@ -19,8 +19,13 @@ QtObject {
   readonly property var layers: [
     {
       "namespace": "backdrop",
-      "order": 10,
+      "order": 11,
       "why": "Each screen's backdrop window (ScreenBackdrop: full-screen surfaces' dim background): on Top, under the bars and border. Without layer rules it stays mapped (held), so it keeps its place before them."
+    },
+    {
+      "namespace": "overlay",
+      "order": 10,
+      "why": "The overlay's page: on Top, after the backdrop and before the backing window, so the backing window draws every chrome fill over it and every chrome window is over it; on Overlay while a fullscreen window is on its screen (still before the backing window). Held while closed (a pixel drawing nothing), so it keeps that place where layers stack by map order. One namespace in every state: its reduced blur is a rule turned off (blurReduced), never a namespace change, which would remake it and map every window after it again."
     },
     {
       "namespace": "blur-backing",
@@ -44,7 +49,7 @@ QtObject {
       "namespace": "menu",
       "order": 7,
       "noAnim": true,
-      "why": "Free menus (FreeMenu): on Top over the windows, under every popout: those sliding out from under the bars and the dock on Top, and the Overlay layer's (popouts, the overlay). Their full-screen window reserves nothing and keeps clear of what's reserved, so it never meets an integrated menu of its order. Held (mapped from the start, drawing and taking nothing while closed) where layers stack by map order."
+      "why": "Free menus (FreeMenu): on Top over the windows, under every popout: those sliding out from under the bars and the dock on Top, and the Overlay layer's. Their full-screen window reserves nothing and keeps clear of what's reserved, so it never meets an integrated menu of its order. Held (mapped from the start, drawing and taking nothing while closed) where layers stack by map order."
     },
     {
       "namespace": "popout-under",
@@ -121,43 +126,21 @@ QtObject {
       "why": "Docks: after every bar and the border on their edge, so they sit inside them."
     },
     {
-      "namespace": "overlay",
-      "order": -8,
-      "why": "The overlay's panel: after docks, inside an always-shown dock's zone and over a hover or intellihide one."
-    },
-    {
-      "namespace": "overlay-reduced",
-      "order": -8,
-      "why": "The overlay's panel while it draws reduced effects over a fullscreen window (Overlay.reduceFullscreen): stacked as overlay, in no blur list, so the compositor doesn't blur it."
-    },
-    {
-      "namespace": "blur-backing-overlay",
-      "order": -9,
-      "noAnim": true,
-      "why": "The blur window over the overlay (shell/BlurBacking, while the overlay is open on its screen), drawing the fills of the Overlay-layer surfaces above it: after the overlay, before them. Mapped at once, so the fills it draws under content already showing don't fade in."
-    },
-    {
-      "namespace": "shadows-overlay",
-      "order": -9,
-      "noAnim": true,
-      "why": "The shadows of the Overlay-layer surfaces over the overlay, apart from their blur window as `shadows` is: beside it (they never meet), before those surfaces."
-    },
-    {
       "namespace": "osd",
       "order": -10,
       "noAnim": true,
-      "why": "The OSD: after the overlay, so a volume or brightness change shows over it."
+      "why": "The OSD: on the Overlay layer, so a volume or brightness change shows over the overlay's page and the chrome."
     },
     {
       "namespace": "dock-preview",
       "order": -10,
-      "why": "A dock's preview (the settings card's Show): after the overlay, so it shows over the settings page."
+      "why": "A dock's preview (the settings card's Show): after the OSD's order, as the dock it previews."
     },
     {
       "namespace": "edge-popout",
       "order": -11,
       "noAnim": true,
-      "why": "Edge popouts (floating edge menus, the launcher, the window switcher): after the dock and the OSD, so a menu opened over the overlay draws over both."
+      "why": "Edge popouts (floating edge menus, the launcher, the window switcher): after the dock and the OSD, so a menu draws over both."
     },
     {
       "namespace": "popout",
@@ -212,14 +195,15 @@ QtObject {
   // Layers blurred whole, their transparent pixels left out: the blur
   // window (drawing the chrome's fills: the chrome doesn't blur itself)
   // and the big surfaces that blur themselves
-  readonly property var blurSurfaces: ["blur-backing", "dock-preview", "overlay", "powermenu", "workspaces", "monitor-prompt"]
+  readonly property var blurSurfaces: ["blur-backing", "dock-preview", "powermenu", "workspaces", "monitor-prompt"]
+  // Surfaces that blur themselves (as blurSurfaces) but not while
+  // Overlay.reduceFullscreen reduces them over a fullscreen window: their
+  // rule follows BlurManager.reduced
+  readonly property var blurReduced: ["overlay"]
   // Backdrops (and the shared prompt and screen-share picker, whose
   // windows hold their own dim),
   // only when asked: the whole screen, at every alpha
   readonly property var blurBackdrops: ["backdrop", "polkit", "screenshare"]
-  // The blur window over the overlay: what it blurs is the overlay, so
-  // never see-through (xray would blur the wallpaper in its place)
-  readonly property var blurOverOverlay: ["blur-backing-overlay"]
   // The chrome's own windows, for their popups alone (tooltips, the dock's
   // menu): the chrome doesn't blur itself, its popups do
   readonly property var blurChrome: root.barLayers.concat(["popout", "popout-under", "edge-popout", "edge-menu", "menu", "dock"])
@@ -247,7 +231,8 @@ QtObject {
    * ordered before it mapped after is out of place: it maps again
    * (`remap`), and so lands after it. Where the compositor sorts by order
    * itself (`ordered`), only between windows of one order, whose tie it
-   * breaks by map order (two bars of a kind stacked on an edge).
+   * breaks by map order (two bars of a kind stacked on an edge), and a
+   * window waits only for peers of its own order.
    * Returns { show: [ids], remap: [ids] }.
    */
   function sequence(entries, ordered) {
@@ -258,7 +243,7 @@ QtObject {
     // their ends; bars stacked on one edge)
     const before = (o, e) => o.order > e.order || (o.order === e.order && (o.rankGroup ?? "") === (e.rankGroup ?? "") && (o.rank ?? 0) < (e.rank ?? 0));
     const remap = entries.filter(e => e.mapped && peers(e).some(o => o.mapped && before(o, e) && o.seq > e.seq && (!ordered || o.order === e.order))).map(e => e.id);
-    const show = entries.filter(e => wants(e) && !remap.includes(e.id) && (e.showing || peers(e).every(o => !wants(o) || !before(o, e) || o.mapped))).map(e => e.id);
+    const show = entries.filter(e => wants(e) && !remap.includes(e.id) && (e.showing || peers(e).every(o => !wants(o) || !before(o, e) || o.mapped || (ordered && o.order !== e.order)))).map(e => e.id);
     return {
       "show": show,
       "remap": remap

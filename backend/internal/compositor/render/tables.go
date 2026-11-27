@@ -15,10 +15,10 @@ import (
 type Tables struct {
 	// LayerStack's layers ({ namespace, order, bar, noAnim, why }), and what
 	// blurs behind axiom's surfaces, by namespace
-	Layers                                       []*jsonx.Object
-	BarLayers                                    []string
-	BlurSurfaces, BlurBackdrops, BlurOverOverlay []string
-	BlurChrome                                   []string
+	Layers                                   []*jsonx.Object
+	BarLayers                                []string
+	BlurSurfaces, BlurReduced, BlurBackdrops []string
+	BlurChrome                               []string
 
 	// The bind actions' tables (actions.JSON)
 	IPCActions, CompositorActions, Calls, Needs, ActionFlags, SwitcherSteps, ArgumentKinds *jsonx.Object
@@ -77,7 +77,7 @@ func ParseTables(read func(path string) (string, error)) (*Tables, error) {
 		name string
 		to   *[]string
 	}{
-		{"blurSurfaces", &t.BlurSurfaces}, {"blurBackdrops", &t.BlurBackdrops}, {"blurOverOverlay", &t.BlurOverOverlay},
+		{"blurSurfaces", &t.BlurSurfaces}, {"blurReduced", &t.BlurReduced}, {"blurBackdrops", &t.BlurBackdrops},
 		{"blurChrome", &t.BlurChrome},
 	}
 	for _, l := range lists {

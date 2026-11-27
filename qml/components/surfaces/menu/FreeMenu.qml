@@ -366,7 +366,6 @@ PopoutWrapperBase {
         "screen": root.screen?.name ?? "",
         "origin": panel.origin ? Qt.point(panel.origin.x + panel.contentAt.x + surface.slideX, panel.origin.y + panel.contentAt.y + surface.slideY) : null,
         "clip": panel.origin ? Qt.rect(panel.origin.x, panel.origin.y, panel.width, panel.height) : null,
-        "overlayLayer": root.onOverlayLayer,
         "opacity": surface.shownOpacity,
         "look": shape.shadowLook
       })
