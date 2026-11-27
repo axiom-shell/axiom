@@ -1437,6 +1437,16 @@ class CheckNames(unittest.TestCase):
             self.assertEqual(lines.count(f"{rule}: {statement}"), 1, rule + "\n" + out)
         self.assertGreater(lines.index(f"retired: {check_names.RULES['retired']}"), max(i for i, l in enumerate(lines) if "/Name" in l), out)
 
+    def test_type_key_site_is_its_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, _ = fixture_repo(tmp)
+            code, out = run_check(root, "check_names.py", files=[
+                ("qml/components/StyledContainer.qml", self.named("")),
+                ("qml/components/UsesIt.qml", self.named("  StyledContainer {}"))])
+        self.assertEqual(code, 1)
+        self.assertIn("qml/components/StyledContainer.qml: retired StyledContainer:StyledContainer", out)
+        self.assertNotIn("UsesIt.qml: retired", out)
+
     def test_exceptions(self):
         with tempfile.TemporaryDirectory() as tmp:
             root, _ = fixture_repo(tmp)
@@ -2040,12 +2050,28 @@ class CheckDocs(unittest.TestCase):
         sys.path.insert(0, str(SCRIPTS))
         from check_docs import retired_name
         configs = {"Bar.background", "Bars.items"}
-        self.assertEqual(retired_name("PopoutConfig.openDelay", configs), "PopoutConfig")
-        self.assertIsNone(retired_name("Bar", configs))
-        self.assertIsNone(retired_name('Bar.background: "solid"', configs))
-        self.assertEqual(retired_name("Bar.enrichBarConfig", configs), "Bar")
-        self.assertEqual(retired_name("Bar.lookOf(bar)", configs), "Bar")
-        self.assertIsNone(retired_name("BarsConfig.lookOf", configs))
+        retired = {"PopoutConfig": {"new": "PopoutsConfig", "why": "x"}, "Bar": {"new": "BarsConfig", "why": "x"}}
+        self.assertEqual(retired_name("PopoutConfig.openDelay", configs, retired), "PopoutConfig")
+        self.assertIsNone(retired_name("Bar", configs, retired))
+        self.assertIsNone(retired_name('Bar.background: "solid"', configs, retired))
+        self.assertEqual(retired_name("Bar.enrichBarConfig", configs, retired), "Bar")
+        self.assertEqual(retired_name("Bar.lookOf(bar)", configs, retired), "Bar")
+        self.assertIsNone(retired_name("BarsConfig.lookOf", configs, retired))
+        self.assertIsNone(retired_name("PopoutConfig.openDelay", configs, {}))
+
+    def test_retired_list_and_sites(self):
+        """A key of names.json > retired fails with its `new`; one with an unwaived site under qml/ passes."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "docs", "qml", "CLAUDE.md", "AGENTS.md", "README.md", "CONTRIBUTING.md")
+            edit_json(root / "scripts/names.json", lambda d: d["retired"].update({
+                "ghostGone": {"new": "ghostNow", "why": "fixture"}, "ghostKept": {"new": "ghostNew", "why": "fixture"}}))
+            code, out = run_check(root, "check_docs.py", files=[
+                ("qml/components/reusable/GhostSite.qml", qml("property int ghostKept: 0")),
+                ("docs/dev/ghost.md", "`ghostGone.x`\n`ghostKept.x`\n"),
+                ("docs/dev/core/shared-ui-pieces.md", (root / "docs/dev/core/shared-ui-pieces.md").read_text() + "\nGhostSite\n")])
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, ["docs/dev/ghost.md:1: `ghostGone.x`: ghostGone was renamed to ghostNow"]), [], out)
+        self.assertNotIn("ghostKept", out)
 
     FILES = [
         ("docs/dev/ghost.md", "[a](nowhere.md)\n`services/core/GhostlyManager.qml`\n`AudioManager.noSuchMember`\n"
@@ -2545,6 +2571,20 @@ class NewNames(unittest.TestCase):
         self.assertTrue(any(r["also"] for r in rows if r["kind"] == "string" and r["file"] == "qml/B.qml"))
         self.assertEqual([r["name"] for r in rows if r["file"].endswith(".yaml")], ["newKey"])
         self.assertFalse([r for r in rows if r["file"].startswith("docs/dev/generated/")])
+
+    def test_retired_names(self):
+        write(self.repo, "scripts/names.json", json.dumps({"retired": {"joinGap": {"new": "mergeGap", "why": "one name"},
+                                                                       "SectionFolds.isOpen": {"new": "SectionFolds.isFoldOpen", "why": "x"}}}))
+        write(self.repo, "qml/A.qml", "Item {\n  property int joinGap: 1\n  property int other: 1\n}\n")
+        write(self.repo, "qml/SectionFolds.qml", "Item {\n  function isOpen() {}\n}\n")
+        rows = self.run_names()
+        self.assertEqual(self.find(rows, "function", "isOpen")["retired"], "SectionFolds.isFoldOpen")
+        self.assertTrue(all("retired" in r for r in rows), rows)
+        self.assertEqual(self.find(rows, "property", "joinGap")["retired"], "mergeGap")
+        self.assertIsNone(self.find(rows, "property", "other")["retired"])
+        out = subprocess.run([sys.executable, str(SCRIPTS / "dev" / "new_names.py")],
+                             cwd=self.repo, capture_output=True, text=True).stdout
+        self.assertIn("joinGap is retired: use mergeGap", out)
 
     def test_rename_is_moved(self):
         write(self.repo, "qml/A.qml", "Item {\n  property string oldName: \"\"\n}\n")

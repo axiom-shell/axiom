@@ -9,9 +9,10 @@ Docs drift silently; this catches the drift a reader would trip on:
 - every backticked `Singleton.member` names a member that file declares
   (Singleton = a file in qml/services/*/, qml/config/ or
   qml/components/methods/)
-- no backticked name is one a rename retired (RETIRED: add the old name
-  when renaming a singleton, so docs still citing it fail; an old name that
-  is also a schema definition fails only with a member that isn't a setting)
+- no backticked name is one a rename retired (scripts/names.json > retired: add the
+  old name when renaming a singleton, so docs still citing it fail once no
+  unwaived site of it is left in qml/; an old name that is also a schema
+  definition fails only with a member that isn't a setting)
 - every shared piece (a file in qml/components/reusable, forms or content/parts)
   is named in the shared-ui-pieces index or the docs it defers to, so the
   index agents check before building stays whole
@@ -31,6 +32,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import check_names
+import manifests
 from gen_docs import parse_qml
 from qml_modules import QML_ROOT, ROOT
 
@@ -41,11 +44,6 @@ SCHEMA = "qml/config/json/config.schema.json"
 PATH_ROOTS = ("qml/", "data/", "components/", "services/", "config/", "scripts/", "shell/", "tests/", "docs/",
               "examples/", "assets/", "backend/", "packaging/", ".github/", ".claude/", "shell.qml", "greeter.qml",
               "install.sh")
-# Names a rename retired: a doc still citing one is stale (old -> new)
-RETIRED = {"StyledContainer": "Surface", "IconConfig": "IconsConfig", "PopoutConfig": "PopoutsConfig", "Bar": "BarsConfig",
-           "EdgeMenusConfig": "MenusConfig", "EdgeMenuManager": "MenuManager", "EdgeMenuEditor": "MenuEditor",
-           "EdgeMenuBody": "MenuBody", "EdgeMenuSync": "MenuSync",
-           "StyledRectButton": "StyledIconButton"}
 # Backticked text that looks like a member access but isn't one of ours
 NOT_MEMBERS = {"Quickshell", "Qt", "Math", "JSON", "Object", "Array", "String", "Date", "Number",
                "console", "Hyprland", "Text", "Item", "Layout", "Keys", "Image"}
@@ -97,12 +95,12 @@ def config_names():
     return names
 
 
-def retired_name(span, configs):
+def retired_name(span, configs, retired):
     """The retired name a span starts with, or None. One that is also a
     schema definition is stale only with a member that isn't a config path:
     `Bar` and `Bar.background` are the setting, `Bar.lookOf` the old reader."""
     old = re.match(r"(\w+)(?:\.(\w+))?", span)
-    if not old or old.group(1) not in RETIRED:
+    if not old or old.group(1) not in retired:
         return None
     name, member = old.groups()
     if any(c.startswith(name + ".") for c in configs) and (not member or f"{name}.{member}" in configs):
@@ -165,9 +163,11 @@ def check_annotations():
 
 
 def main():
-    errors = []
     members = singletons()
     configs = config_names()
+    retired, errors = manifests.retired()
+    sites = check_names.retired_sites()
+    retired = {old: entry for old, entry in retired.items() if old not in sites}
     for doc in docs():
         rel = doc.relative_to(ROOT)
         text = strip_fences(doc.read_text())
@@ -180,9 +180,9 @@ def main():
                     errors.append(f"{where}: link to missing {target}")
             for span in re.findall(r"`([^`\n]+)`", line):
                 span = span.strip()
-                old = retired_name(span, configs)
+                old = retired_name(span, configs, retired)
                 if old:
-                    errors.append(f"{where}: `{span}`: {old} was renamed to {RETIRED[old]}")
+                    errors.append(f"{where}: `{span}`: {old} was renamed to {retired[old]['new']}")
                     continue
                 if span.startswith(PATH_ROOTS) and not re.search(r"[<>*{}|$ ]|\.\.\.|…", span):
                     path = span.split(":")[0].rstrip("/").rstrip(".,")

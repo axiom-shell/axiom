@@ -164,8 +164,8 @@ def _spelling(src, facts):
 
 
 def _retired(src, facts):
-    """A retired plain name declared or read as a member (`.name`, a lowercase key: a type key's site is its file
-    stem); a dotted one as `Owner.member`, or the `function member` of `Owner.qml`."""
+    """A retired plain name declared (the file stem included: a type key's site is its `.qml` file) or read as a
+    lowercase `.key`; a dotted one as `Owner.member`, or the `function member` of `Owner.qml`."""
     plain = [k for k in facts["retired"] if "." not in k]
     found = [(at, name) for name, at in src.declared() if name in plain]
     found += [(src.at(m.start()), m.group(1)) for m in re.finditer(r"\.(\w+)\b", src.code) if m.group(1) in plain and m.group(1)[0].islower()]

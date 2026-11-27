@@ -57,7 +57,7 @@ All run in CI; `scripts/dev/verify.sh --all` (= `scripts/check_all.sh`) runs eve
 - To wait for a reload: `timeout 8 bash -c 'until scripts/log.sh | grep -q "Configuration Loaded"; do :; done'`.
 - Raw logs: `axiom log --debug -f` (or `axiom log -- -t 50`: `qs log` of the QML folder the daemon's shell runs from); each instance also writes `/run/user/$UID/quickshell/by-id/<instance>/log.log` (plain text; `pgrep -af "qs -p .*/qml"` finds the instance). stdout and journalctl show nothing.
 - If config.json was lost (it falls back to defaults), restore it from a snapshot in `~/.config/axiom/saved/`.
-- **Renaming or deleting a singleton** can leave a reload failing with `Type <Old> unavailable … File not found`: one fired between the edits and kept the old file in its module listing. Force one more reload (above); it rescans and loads. Add the old name to `RETIRED` in `scripts/check_docs.py` so docs still citing it fail.
+- **Renaming or deleting a singleton** can leave a reload failing with `Type <Old> unavailable … File not found`: one fired between the edits and kept the old file in its module listing. Force one more reload (above); it rescans and loads. Add the old name to `scripts/names.json` › `retired` so docs still citing it fail.
 
 ### Seeing a page or surface
 - Overlay pages: `scripts/dev/shot.sh page <ViewType>` does all of this. By hand: `axiom ipc overlay page <ViewType>`, then `grim -o <monitor>` (or `grim -g "X,Y WxH"`), crop with `magick`, read the PNG, then `axiom ipc overlay close`.

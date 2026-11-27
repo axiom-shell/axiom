@@ -138,9 +138,9 @@ for f in "${changed[@]}"; do
   scripts/check_structure.py | scripts/quickshell-io-allowlist.json | scripts/chrome-drawing-allowlist.json | scripts/bar-widget-exceptions.json) script_tests+=(CheckStructure CheckStyle) ;;
   scripts/qml_modules.py) script_tests+=(CheckStructure CheckStyle Ratchet CheckQmllint CheckEngines CheckNames CheckDocs) ;;
   scripts/check_engines.py) script_tests+=(CheckEngines GenDocsEngines) ;;
-  scripts/check_names.py | scripts/names.json | scripts/names-exceptions.json) script_tests+=(CheckNames) ;;
+  scripts/check_names.py | scripts/names.json | scripts/names-exceptions.json) script_tests+=(CheckNames CheckDocs NewNames) ;;
   docs/dev/core/engines.md | scripts/engines.json | scripts/engines-baseline.json | scripts/engines-exceptions.json) script_tests+=(CheckEngines) ;;
-  scripts/manifests.py) script_tests+=(Manifests CheckEngines CheckNames GenDocsEngines) ;;
+  scripts/manifests.py) script_tests+=(Manifests CheckEngines CheckNames CheckDocs NewNames GenDocsEngines) ;;
   scripts/check_style.py | scripts/style-exceptions.json) script_tests+=(CheckStyle) ;;
   scripts/check_docs.py) script_tests+=(CheckDocs) ;;
   scripts/check_i18n.py) script_tests+=(CheckI18n) ;;
