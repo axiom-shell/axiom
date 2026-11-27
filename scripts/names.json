@@ -1,0 +1,76 @@
+{
+  "retired": {
+    "StyledContainer": {
+      "new": "Surface",
+      "why": "the tonal box is `Surface`"
+    },
+    "IconConfig": {
+      "new": "IconsConfig",
+      "why": "readers are named for their section, `Icons`"
+    },
+    "PopoutConfig": {
+      "new": "PopoutsConfig",
+      "why": "readers are named for their section, `Popouts`"
+    },
+    "Bar": {
+      "new": "BarsConfig",
+      "why": "the bars reader is named for its section, `Bars`"
+    },
+    "EdgeMenusConfig": {
+      "new": "MenusConfig",
+      "why": "the section is `Menus`"
+    },
+    "EdgeMenuManager": {
+      "new": "MenuManager",
+      "why": "menus are one service"
+    },
+    "EdgeMenuEditor": {
+      "new": "MenuEditor",
+      "why": "menus are one editor"
+    },
+    "EdgeMenuBody": {
+      "new": "MenuBody",
+      "why": "one menu body"
+    },
+    "EdgeMenuSync": {
+      "new": "MenuSync",
+      "why": "one menu sync"
+    },
+    "StyledRectButton": {
+      "new": "StyledIconButton",
+      "why": "the icon button is one piece"
+    },
+    "SectionFolds.isOpen": {
+      "new": "SectionFolds.isFoldOpen",
+      "why": "the fold accessor is named for the fold; `isOpen` is the retired surface word"
+    },
+    "opts": {
+      "new": "options",
+      "why": "the bag a caller passes is `options`"
+    },
+    "ctx": {
+      "new": "env",
+      "why": "the shell-values bag is `env`"
+    },
+    "isDirty": {
+      "new": "dirty",
+      "why": "a bool is the bare state word"
+    },
+    "floatGaps": {
+      "new": "islandGaps",
+      "why": "\"float\" is a third spelling of island"
+    },
+    "joinGap": {
+      "new": "mergeGap",
+      "why": "groups merge; sides join"
+    },
+    "insetStart": {
+      "new": "startInset",
+      "why": "a side's attribute puts the side first"
+    },
+    "strokeInsetStart": {
+      "new": "startStrokeInset",
+      "why": "a side's attribute puts the side first"
+    }
+  }
+}

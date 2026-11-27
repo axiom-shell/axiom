@@ -1370,6 +1370,103 @@ class CheckEngines(unittest.TestCase):
         data["sink"]["tables"] = []
 
 
+class CheckNames(unittest.TestCase):
+    """scripts/check_names.py on a git copy of the tree: each identifier rule fails on its fixture file with its
+    statement printed once, a names-exceptions.json entry silences what it names, and a stale one fails."""
+
+    @staticmethod
+    def named(body):
+        return f"import QtQuick\n// A fixture.\nItem {{\n{body}\n}}\n"
+
+    def test_each_rule_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, _ = fixture_repo(tmp)
+            c = "qml/components"
+            files = [
+                (f"{c}/NameBool.qml", self.named("  property bool isVisibleNow: true\n  property bool isColor: true")),
+                (f"{c}/NameSide.qml", self.named('  property bool joinStart: true\n  property bool atStart: true\n  property bool canStart: true\n  readonly property var fillet: ({"filletStart": true, "filletOpen": true})')),
+                (f"{c}/NameGetter.qml", self.named("  function iconFor(name) { return 1; }\n  function iconOf(name) { return 2; }\n  function shapeOf(name) { return 3; }\n"
+                                                    "  function _screenAt(i) { return 4; }\n  function screenOf(i) { return 5; }")),
+                (f"{c}/NameSignal.qml", self.named("  property int selection: 0\n  signal togglePowerMenu()\n  signal showRequested()\n"
+                                                   "  signal closed()\n  signal saveRefused()\n  signal selectionChanged(var value)\n  signal stateChanged(var value)")),
+                (f"{c}/NameHandler.qml", self.named('  property string onAdd: "card"')),
+                (f"{c}/NameCallback.qml", self.named("  function fetch(url, callback) { return url; }")),
+                (f"{c}/NameUnit.qml", self.named("  property int delayMs: 5\n  property real part: width / 100\n  property real kilo: width / 1000\n  property real r: Math.round(width * 100) / 100")),
+                (f"{c}/NameCollection.qml", self.named("  property var idList: []\n  property int itemLength: 0\n  property bool showList: false\n  property var items: []")),
+                (f"{c}/NameShort.qml", self.named("  function outline(o, w, h) { return o; }\n  function px(n) { return n; }\n  function find(id) { return id; }\n  function _inner(o) { return o; }\n  function at(i, j) { return i; }")),
+                (f"{c}/NameAcronym.qml", self.named("  property string authURL: \"\"\n  property real OSDTile: 0\n  property string authUrl: \"\"")),
+                (f"{c}/NameSpelling.qml", self.named("  property real centreX: 0\n  property real accentRest: 0\n  signal picked(colourName: string)")),
+                (f"{c}/NameRetired.qml", self.named("  property var opts: null\n  property var other: thing.ctx\n  property var folded: SectionFolds.isOpen(a, b)\n  property var okay: ctx\n  property var d: schema.definitions.Bar")),
+            ]
+            code, out = run_check(root, "check_names.py", files=files)
+        self.assertEqual(code, 1)
+        n = f"{c}/Name"
+        self.assertEqual(missed(out, [
+            f"{n}Bool.qml: bool-is-prefix isVisibleNow:isVisibleNow",
+            f"{n}Side.qml: side-order joinStart:joinStart",
+            f"{n}Side.qml: side-order fillet:filletStart",
+            f"{n}Getter.qml: getter-pairs iconFor:iconFor",
+            f"{n}Getter.qml: getter-pairs iconOf:iconOf",
+            f"{n}Getter.qml: getter-pairs _screenAt:_screenAt",
+            f"{n}Signal.qml: signal-shape togglePowerMenu:togglePowerMenu",
+            f"{n}Signal.qml: signal-shape stateChanged:stateChanged",
+            f"{n}Handler.qml: handler-shaped-property onAdd:onAdd",
+            f"{n}Callback.qml: callback-param fetch:callback",
+            f"{n}Unit.qml: unit-suffix delayMs:delayMs",
+            f"{n}Unit.qml: unit-suffix part:/ 100",
+            f"{n}Collection.qml: collection-suffix idList:idList",
+            f"{n}Short.qml: short-params outline:o",
+            f"{n}Short.qml: short-params outline:w",
+            f"{n}Short.qml: short-params outline:h",
+            f"{n}Acronym.qml: acronym-case authURL:URL",
+            f"{n}Spelling.qml: spelling centreX:centreX",
+            f"{n}Spelling.qml: spelling picked:colourName",
+            f"{n}Retired.qml: retired opts:opts",
+            f"{n}Retired.qml: retired other:ctx",
+            f"{n}Retired.qml: retired folded:SectionFolds.isOpen",
+        ]), [], out)
+        lines = out.splitlines()
+        for quiet in ("isColor", "filletOpen", "shapeOf", "showRequested", "closed", "selectionChanged", "kilo", "items",
+                      "px", "at:", "OSDTile", "authUrl", "okay", "atStart", "canStart", "saveRefused", "r:/ 100", "itemLength",
+                      "showList", "find:", "_inner:", "accentRest", "d:Bar"):
+            self.assertEqual([l for l in lines if f"/Name" in l and quiet in l], [], quiet + "\n" + out)
+        sys.path.insert(0, str(SCRIPTS))
+        import check_names
+        self.assertEqual(list(check_names.DETECTIONS), list(check_names.RULES))
+        for rule, statement in check_names.RULES.items():
+            self.assertEqual(lines.count(f"{rule}: {statement}"), 1, rule + "\n" + out)
+        self.assertGreater(lines.index(f"retired: {check_names.RULES['retired']}"), max(i for i, l in enumerate(lines) if "/Name" in l), out)
+
+    def test_exceptions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, _ = fixture_repo(tmp)
+            edit_json(root / "scripts/names-exceptions.json", lambda data: data.update({
+                "centreX": {"rules": ["spelling"], "reason": "fixture"},
+                "Foo.outline": {"rules": ["short-params"], "reason": "fixture"},
+                "neverUsed": {"rules": ["spelling"], "reason": "fixture"},
+                "qml/nowhere/*.qml": {"rules": ["retired"], "reason": "fixture"}}))
+            c = "qml/components"
+            code, out = run_check(root, "check_names.py", files=[
+                (f"{c}/NameSpelling.qml", CheckNames.named("  property real centreX: 0\n  property real colourY: 0")),
+                (f"{c}/Foo.qml", CheckNames.named("  function outline(o, w, h) { return o; }\n  function other(o) { return o; }"))])
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, [
+            f"{c}/NameSpelling.qml: spelling colourY:colourY",
+            f"{c}/Foo.qml: short-params other:o",
+            "scripts/names-exceptions.json: neverUsed lists spelling, which no site of it hits",
+            "scripts/names-exceptions.json: qml/nowhere/*.qml lists retired, which no file under it hits"]), [], out)
+        self.assertEqual([l for l in out.splitlines() if "centreX" in l or "Foo.qml: short-params outline" in l or ": acronym-case OSD" in l
+                          or "shell/Bar.qml: retired" in l], [], out)
+
+    def test_moved_names_have_no_site(self):
+        sys.path.insert(0, str(SCRIPTS))
+        import check_names
+        moved = {"StyledContainer", "IconConfig", "PopoutConfig", "EdgeMenusConfig", "EdgeMenuManager", "EdgeMenuEditor",
+                 "EdgeMenuBody", "EdgeMenuSync", "StyledRectButton"}
+        self.assertEqual(check_names.retired_sites() & moved, set())
+        self.assertNotIn("Bar", check_names.retired_sites())
+
+
 class GenDocsEngines(unittest.TestCase):
     """scripts/gen_docs.py renders the engine pages from the manifest: the fixture engines' manifest, API and
     rules pages, and an empty manifest's one page."""

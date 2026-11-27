@@ -1,0 +1,11 @@
+{
+  "_comment": "Names allowed to break a naming rule, each with its reason. scripts/check_names.py fails on an entry that waives nothing.",
+  "OSD": {
+    "rules": ["acronym-case"],
+    "reason": "the stem and section `OSD`: the one acronym the shell keeps in capitals"
+  },
+  "qml/shell/Bar.qml": {
+    "rules": ["retired"],
+    "reason": "the bars' wiring file took the name after the old bars reader became `BarsConfig`"
+  }
+}

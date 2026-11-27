@@ -18,7 +18,8 @@ declared as such, which qs's own VFS leaves out). Point a tool at it with
 
 As a library it also holds the checks' shared pieces: `baseline_diff` for counted
 baselines, `ratchet` and `add_to_baseline` for symbol baselines that only shrink,
-`Hits` (with `MEMBER`, `blank_comments`, `blank_strings`) for a run's hits,
+`Hits` (with `MEMBER`, a root declaration, `DECLARATION`, one at any depth, `blank_comments`,
+`blank_strings`) for a run's hits,
 `rules_at`, `waive` and `rule_statements` for a check's `RULES` and exceptions.
 """
 import ast
@@ -74,10 +75,11 @@ def load_exceptions(path, rules, section=None):
 
 
 
-MEMBER = re.compile(
-    r"^  (?:(readonly|required|default)\s+)*property\s+(\S+)\s+(\w+)\s*(?::\s*(.*))?$"
-    r"|^  signal\s+(\w+)\s*(\([^)]*\))?"
-    r"|^  function\s+(\w+)\s*(\([^)]*\))\s*(?::\s*([\w.<>]+))?")
+_DECLARATION = (r"(?:(?:(readonly|required|default)\s+)*property\s+(\S+)\s+(\w+)[ \t]*(?::[ \t]*(.*))?$"
+                r"|signal\s+(\w+)[ \t]*(\([^)]*\))?"
+                r"|function\s+(\w+)[ \t]*(\([^)]*\))[ \t]*(?::[ \t]*([\w.<>]+))?)")
+MEMBER = re.compile("^  " + _DECLARATION)
+DECLARATION = re.compile("^[ \t]*" + _DECLARATION, re.M)
 
 
 def blank_comments(text):
