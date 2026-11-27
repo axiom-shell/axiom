@@ -230,11 +230,6 @@ def binding(code, start):
     return code[start:i]
 
 
-def blank_strings(code):
-    """`code` with each string literal emptied (same lines)."""
-    return re.sub(r'"(?:[^"\\\n]|\\.)*"', '""', code)
-
-
 def qml_blocks(text, type_name):
     """Each `<type_name> { … }` in a QML file: (where its body starts, its body)."""
     blocks = []
@@ -272,7 +267,7 @@ def bar_widget_template(schema, sources, errors):
         files = sorted(folder.rglob("*.qml"))
         raw = {f: f.read_text() for f in files}
         code = {f: re.sub(r"//[^\n]*", "", text) for f, text in raw.items()}
-        plain = {f: blank_strings(c) for f, c in code.items()}
+        plain = {f: qml_modules.blank_strings(c) for f, c in code.items()}
         main_file = folder / f"{t}.qml"
 
         if main_file in raw:

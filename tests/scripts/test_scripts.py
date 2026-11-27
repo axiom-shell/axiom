@@ -793,6 +793,102 @@ class Ratchet(unittest.TestCase):
         self.qm.add_to_baseline({}, self.PATH, set(), root=self.root)
         self.assertEqual(json.loads((self.root / self.PATH).read_text()), {})
 
+    def test_files(self):
+        known = {"a.qml": {"purity": ["f:Date.now"]}, "b.qml": {"purity": ["g:console"]}}
+        write(self.root, self.PATH, json.dumps(known))
+        git(self.root, self.tmp.name, "commit", "-q", "-am", "two files")
+        base = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        found = {"a.qml": {"purity": ["f:Date.now"]}}
+        self.assertEqual(self.ratchet(found, base=base), ["b.qml: purity g:console: fixed, still baselined (delete the entry)"])
+        self.assertEqual(self.qm.ratchet(found, self.PATH, base, set(), root=self.root, files={"a.qml"}), [])
+        self.assertEqual(self.qm.ratchet({}, self.PATH, base, set(), root=self.root, files={"a.qml"}),
+                         ["a.qml: purity f:Date.now: fixed, still baselined (delete the entry)"])
+
+    def test_moves(self):
+        moved = {"b.qml": {"purity": ["f:Date.now"]}}
+        write(self.root, self.PATH, json.dumps(moved))
+        self.assertEqual(self.ratchet(moved), [])
+        both = {"a.qml": {"purity": ["f:Date.now"]}, "b.qml": {"purity": ["f:Date.now"]}}
+        write(self.root, self.PATH, json.dumps(both))
+        self.assertEqual(self.ratchet(both),
+                         [f"b.qml: purity f:Date.now: added to the baseline since {self.base} (a baseline only shrinks)"])
+        write(self.root, self.PATH, json.dumps({"b.qml": {"purity": ["g:console"]}}))
+        self.assertEqual(self.ratchet({"b.qml": {"purity": ["g:console"]}}),
+                         [f"b.qml: purity g:console: added to the baseline since {self.base} (a baseline only shrinks)"])
+
+    def test_moves_into_a_file_that_has_it(self):
+        two = {"a.qml": {"purity": ["f:Date.now"]}, "b.qml": {"purity": ["f:Date.now"]}}
+        write(self.root, self.PATH, json.dumps(two))
+        git(self.root, self.tmp.name, "commit", "-q", "-am", "two sites")
+        base = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        moved = {"b.qml": {"purity": ["f:Date.now", "f:Date.now#2"]}}
+        write(self.root, self.PATH, json.dumps(moved))
+        self.assertEqual(self.ratchet(moved, base=base), [])
+
+    def test_add_to_baseline_moves(self):
+        found = {"b.qml": {"purity": ["f:Date.now"]}}
+        self.qm.add_to_baseline(found, self.PATH, set(), root=self.root)
+        self.assertEqual(json.loads((self.root / self.PATH).read_text()), {})
+        self.qm.add_to_baseline(found, self.PATH, set(), root=self.root, base=self.base)
+        self.assertEqual(json.loads((self.root / self.PATH).read_text()), found)
+        write(self.root, self.PATH, "{}")
+        self.assertEqual(self.qm.add_to_baseline(found, self.PATH, set(), root=self.root, base=self.base), 1)
+        self.assertEqual(json.loads((self.root / self.PATH).read_text()), found)
+        write(self.root, self.PATH, json.dumps(self.KNOWN))
+        both = {"a.qml": {"purity": ["f:Date.now"]}, "b.qml": {"purity": ["f:Date.now"]}}
+        self.qm.add_to_baseline(both, self.PATH, set(), root=self.root, base=self.base)
+        self.assertEqual(json.loads((self.root / self.PATH).read_text()), {"a.qml": {"purity": ["f:Date.now"]}})
+        with self.assertRaises(ValueError):
+            self.qm.add_to_baseline(found, self.PATH, set(), root=self.root, base="nosuchref")
+
+    def test_rules_at(self):
+        path = "scripts/check_demo.py"
+        write(self.root, path, 'RULES = ["a", "b"]\n')
+        git(self.root, self.tmp.name, "add", "-A")
+        git(self.root, self.tmp.name, "commit", "-q", "-m", "list")
+        listed = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        write(self.root, path, 'RULES = {"c": "the c rule", "d": "the d rule"}\n')
+        git(self.root, self.tmp.name, "commit", "-q", "-am", "dict")
+        dicted = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        write(self.root, path, 'X = 1\n')
+        git(self.root, self.tmp.name, "commit", "-q", "-am", "none")
+        none = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        write(self.root, path, 'RULES = ["a"]\nRULES = ["b"]\n')
+        git(self.root, self.tmp.name, "commit", "-q", "-am", "twice")
+        twice = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        write(self.root, path, 'RULES = [x for x in "ab"]\n')
+        git(self.root, self.tmp.name, "commit", "-q", "-am", "computed")
+        computed = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        self.assertEqual(self.qm.rules_at(listed, path, root=self.root), ["a", "b"])
+        self.assertEqual(self.qm.rules_at(dicted, path, root=self.root), ["c", "d"])
+        self.assertEqual(self.qm.rules_at(none, path, root=self.root), [])
+        self.assertEqual(self.qm.rules_at(self.base, path, root=self.root), [])
+        for base in (twice, computed, "nosuchref"):
+            with self.assertRaises(ValueError):
+                self.qm.rules_at(base, path, root=self.root)
+
+    def test_waive(self):
+        def found():
+            return {"qml/Foo.qml": {"short-params": ["outline:o", "other:o"], "spelling": ["x:centre"]},
+                    "qml/Bar.qml": {"short-params": ["outline:o", "m:Foo.outline"]}}
+        entries = {"Foo.outline": {"rules": ["short-params"]}, "qml/*.qml": {"rules": ["spelling"]},
+                   "qml/nowhere/*": {"rules": ["spelling"]}, "gone": {"rules": ["spelling"]}}
+        got = found()
+        self.assertEqual(self.qm.waive(got, entries, "scripts/x-exceptions.json"), [
+            "scripts/x-exceptions.json: gone lists spelling, which no site of it hits",
+            "scripts/x-exceptions.json: qml/nowhere/* lists spelling, which no file under it hits"])
+        self.assertEqual(got, {"qml/Foo.qml": {"short-params": ["other:o"]}, "qml/Bar.qml": {"short-params": ["outline:o"]}})
+        got = found()
+        self.assertEqual(self.qm.waive(got, {"o": {"rules": ["short-params"]}}, "x"), [])
+        self.assertEqual(got, {"qml/Foo.qml": {"spelling": ["x:centre"]}, "qml/Bar.qml": {"short-params": ["m:Foo.outline"]}})
+
+    def test_rule_statements(self):
+        rules = {"purity": "no clocks", "dag": "no cycles", "doc": "headings"}
+        errors = ["a.qml: doc x: not in the baseline", "b.qml: purity y: not in the baseline", "c.qml: purity z: again",
+                  "scripts/x.json: can't read the base"]
+        self.assertEqual(self.qm.rule_statements(errors, rules), ["purity: no clocks", "doc: headings"])
+        self.assertEqual(self.qm.rule_statements([], rules), [])
+
     def test_default_base(self):
         with mock.patch.dict(os.environ, {"GITHUB_ACTIONS": "true"}):
             self.assertEqual(self.qm.default_base(root=self.root), "HEAD^1")
@@ -911,15 +1007,21 @@ def demo_engine(root):
     doc.write_text("\n".join(lines))
 
 
-def demo_repo(tmp, *paths):
-    """The fixture engines (demo_engine) in a git copy of the tree: `qml`, engines.md and `paths`,
-    committed; (root, the commit)."""
-    root = fixture_root(tmp, "qml", "docs/dev/core/engines.md", *paths)
-    demo_engine(root)
+def fixture_repo(tmp, *paths, plant=None):
+    """A git copy of the tree: `qml` and `paths`, `plant(root)` applied when given, committed; (root, the commit)."""
+    root = fixture_root(tmp, "qml", *paths)
+    if plant:
+        plant(root)
     git(root, tmp, "init", "-q", "-b", "main")
     git(root, tmp, "add", "-A")
     git(root, tmp, "commit", "-q", "-m", "base")
     return root, git(root, tmp, "rev-parse", "HEAD")
+
+
+def demo_repo(tmp, *paths):
+    """The fixture engines (demo_engine) in a git copy of the tree: `qml`, engines.md and `paths`,
+    committed; (root, the commit)."""
+    return fixture_repo(tmp, "docs/dev/core/engines.md", *paths, plant=demo_engine)
 
 
 class Manifests(unittest.TestCase):
@@ -930,6 +1032,21 @@ class Manifests(unittest.TestCase):
         sys.path.insert(0, str(SCRIPTS))
         import manifests
         self.m = manifests
+
+    def test_retired(self):
+        good = {"retired": {"OldName": {"new": "NewName", "why": "one name"}, "Owner.old": {"new": "Owner.new", "why": "one"}}}
+        self.assertEqual(self.m.retired(json.dumps(good)),
+                         ({"OldName": {"new": "NewName", "why": "one name"}, "Owner.old": {"new": "Owner.new", "why": "one"}}, []))
+        for text, bad in (("{", "not JSON"), ("{}", "no `retired` object"), (json.dumps({"retired": []}), "no `retired` object"),
+                          (json.dumps({"retired": {"a-b": {"new": "x", "why": "y"}}}), "a-b is not an identifier"),
+                          (json.dumps({"retired": {"A.b.c": {"new": "x", "why": "y"}}}), "A.b.c is not an identifier"),
+                          (json.dumps({"retired": {"A": {"new": "x", "why": " "}}}), "A needs an object"),
+                          (json.dumps({"retired": {"A": {"new": 1, "why": "y"}}}), "A needs an object"),
+                          (json.dumps({"retired": {"A": "B"}}), "A needs an object")):
+            out, errors = self.m.retired(text)
+            self.assertEqual(out, {}, text)
+            self.assertEqual(len(errors), 1, errors)
+            self.assertIn(bad, errors[0])
 
     def test_tests_for(self):
         text = manifest_text(demo_entry())
@@ -1116,6 +1233,13 @@ class CheckEngines(unittest.TestCase):
         self.assertEqual([l for l in lines if "PurityRandom.qml: purity" in l], [], out)
         self.assertEqual([l for l in lines if "settled" in l], [], out)
         self.assertEqual([l for l in lines if "h:new Date" in l], [], out)
+        sys.path.insert(0, str(SCRIPTS))
+        import check_engines
+        statement = f"purity: {check_engines.RULES['purity']}"
+        self.assertEqual(lines.count(statement), 1, out)
+        self.assertGreater(lines.index(statement), max(i for i, l in enumerate(lines) if ": not in the baseline" in l), out)
+        for text in check_engines.RULES.values():
+            self.assertFalse("lone" in text and "contract" in text or "settled" in text, text)
 
     @staticmethod
     def break_manifest(data):

@@ -33,7 +33,7 @@ import re
 import sys
 from pathlib import Path
 
-from qml_modules import QML_ROOT, ROOT, qml_files
+from qml_modules import MEMBER, QML_ROOT, ROOT, qml_files
 
 import check_engines
 import manifests
@@ -101,10 +101,6 @@ def first_sentence(text, limit=220):
 
 # ---------------------------------------------------------------- QML parsing
 
-MEMBER = re.compile(
-    r"^  (?:(readonly|required|default)\s+)*property\s+(\S+)\s+(\w+)\s*(?::\s*(.*))?$"
-    r"|^  signal\s+(\w+)\s*(\([^)]*\))?"
-    r"|^  function\s+(\w+)\s*(\([^)]*\))\s*(?::\s*([\w.<>]+))?")
 ROOT_OBJECT = re.compile(r"^[A-Z][\w.]*\s*\{")
 
 

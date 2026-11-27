@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""The one reader of the engine manifest, scripts/engines.json.
+"""The one reader of the manifests: scripts/engines.json and scripts/names.json.
 
-Every check and tool reads the manifest through these functions, each taking
+Every check and tool reads a manifest through these functions, each taking
 `text` (a manifest's JSON text; None = the tree's file) so a test or a base
 revision's copy goes through the same parse and validation.
 
@@ -11,11 +11,13 @@ revision's copy goes through the same parse and validation.
 import copy
 import json
 import posixpath
+import re
 import sys
 
 from qml_modules import ROOT
 
 ENGINES = ROOT / "scripts" / "engines.json"
+NAMES = ROOT / "scripts" / "names.json"
 
 REQUIRED_KEYS = {"prefix": "", "facade": "", "files": [], "owners": [], "adapters": [], "tests": {}, "doc": "",
                  "editPoints": {}}
@@ -28,21 +30,29 @@ ENGINE_DOC_HEADINGS = ["Role", "Inputs", "Stages", "Outputs", "Rules", "Owners, 
                        "Checks", "Edit points", "Known gaps"]
 
 
+def _load(text, file):
+    """`file`'s JSON (read when `text` is None) -> (data, errors): `({}, [error])` when it can't be read or parsed."""
+    rel = file.relative_to(ROOT).as_posix()
+    if text is None:
+        try:
+            text = file.read_text()
+        except OSError as e:
+            return {}, [f"{rel}: can't read: {e}"]
+    try:
+        return json.loads(text), []
+    except ValueError as e:
+        return {}, [f"{rel}: not JSON: {e}"]
+
+
 def _parsed(text):
     """A manifest's text -> (data, errors): the parsed object (engines, `$flat`, `$domains`) and
     every error found in it (bad JSON, an unknown or missing key, a prefix used twice, a `fedBy` or `intakes`
     that isn't `{stage: [object]}` with string `from`, `seam` and `rule`, a string key that isn't a string or a list key that
     isn't a list of strings)."""
     name = "scripts/engines.json"
-    if text is None:
-        try:
-            text = ENGINES.read_text()
-        except OSError as e:
-            return {}, [f"{name}: can't read: {e}"]
-    try:
-        data = json.loads(text)
-    except ValueError as e:
-        return {}, [f"{name}: not JSON: {e}"]
+    data, errors = _load(text, ENGINES)
+    if errors:
+        return data, errors
     if not isinstance(data, dict):
         return {}, [f"{name}: not an object"]
     errors, owners = [], {}
@@ -126,6 +136,28 @@ def flat(text=None):
 def domains(text=None):
     """`$domains`: {folder: {uses, tables, prefix?}}."""
     return _parsed(text)[0].get("$domains", {})
+
+
+def retired(text=None):
+    """`names.json`'s `retired`: ({old: {"new", "why"}}, errors). Errors: bad JSON, a top level without
+    `retired`, an entry that isn't an object with a string `new` and a non-empty `why`, a key that isn't
+    an identifier or `Owner.member`."""
+    name = "scripts/names.json"
+    data, errors = _load(text, NAMES)
+    if errors:
+        return data, errors
+    if not isinstance(data, dict) or not isinstance(data.get("retired"), dict):
+        return {}, [f"{name}: no `retired` object"]
+    out, errors = {}, []
+    for old, entry in data["retired"].items():
+        if not re.fullmatch(r"[A-Za-z_]\w*(\.[A-Za-z_]\w*)?", old):
+            errors.append(f"{name}: {old} is not an identifier or Owner.member")
+        elif not (isinstance(entry, dict) and isinstance(entry.get("new"), str)
+                  and isinstance(entry.get("why"), str) and entry["why"].strip()):
+            errors.append(f"{name}: {old} needs an object with a string `new` and a `why`")
+        else:
+            out[old] = {"new": entry["new"], "why": entry["why"]}
+    return out, errors
 
 
 def within(path, held):
