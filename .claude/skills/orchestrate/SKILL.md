@@ -22,7 +22,8 @@ Layouts: one file per hand-off in `.claude/templates/`; fill them, never restate
 - **Skills and agents.** Run skills with the Skill tool, each with `--tree <tree>` (a recipe skill gets it as the brief's `Tree:`), never by reading their files. Each role and round gets a fresh agent.
 - **Briefs** are `.claude/templates/brief.md`, complete the first time. Quote decisions verbatim; add no step of your own.
 - **A stopped agent** goes to an `architect`, or to the user if the decision is product.
-- **Do nothing unasked:** no memory, CLAUDE.md or CLAUDE.local.md writes, PR comment edits, GitHub issues or standing rules. A problem the change didn't cause that a report names and doesn't show as filed: file it where CLAUDE.local.md says when you read the report.
+- **Do nothing unasked:** no memory, CLAUDE.md or CLAUDE.local.md writes, PR comment edits, GitHub issues or standing rules.
+- **Unfiled problems.** A problem the change didn't cause that a report shows unfiled: file it where CLAUDE.local.md says as you read the report.
 - **"Was it checked?"** Answer from state.md, naming every `NOT RUN` and weak check.
 
 ## Questions
@@ -38,7 +39,7 @@ Layouts: one file per hand-off in `.claude/templates/`; fill them, never restate
 ## State
 
 - **Folders**, from CLAUDE.local.md lines (a leading `~` is `$HOME`): plans `Plans folder:` (else `<main checkout>/.plans/`); worktrees `Worktrees folder:` (else `<main checkout>/.claude/worktrees/`); plan files `Plan files:` (none: `<plan file>` is an absolute path). `<main checkout>` is `git rev-parse --path-format=absolute --git-common-dir` less `/.git`. Each one outside the project, and any file the lead writes a status to, must be a working directory.
-- **State folder** `<plans folder>/<slug>/` (a group run: `<plans folder>/<stem>/`, `<stem>-s<k>` with `--stack`, `<stem>` the plan file's name without `.md`): `state.md`, `decisions.md`, `spec.md` (`spec-<n>.md` per PR of a stack), `ledger.md`, `plan-check-<n>.md`, `fix-<source>-<n>.md` (source `gate<g>`, `review<r>` or `ci<c>`; in a stack, `plan-check-` and `fix-` take the part's number after the stem as `spec-<n>.md` does: part 2's first gate list is `fix-2-gate1-1.md`), `report.md` (`report-<n>.md` per PR of a stack), `census.md` (align). Update state.md after every step, and `Head:` after every commit. Delete it once its PR is merged (a stack: its top part, after `stacks.md` › Write-back).
+- **State folder** `<plans folder>/<slug>/` (a group run: `<plans folder>/<stem>/`, `<stem>-s<k>` with `--stack`, `<stem>` the plan file's name without `.md`): `state.md`, `decisions.md`, `spec.md` (`spec-<n>.md` per PR of a stack), `ledger.md`, `plan-check-<n>.md`, `fix-<source>-<n>.md` (source `gate<g>`, `review<r>` or `ci<c>`; in a stack the part's number follows `plan-check-` and `fix-` as it follows `spec-`: part 2's `plan-check-2-1.md`, `fix-2-gate1-1.md`), `report.md` (`report-<n>.md` per PR of a stack), `census.md` (align). Update state.md after every step, and `Head:` after every commit. Delete it once its PR is merged (a stack: its top part, after `stacks.md` › Write-back).
 - **Tree and base:** the tree is the worktree; Base is state.md's `Base:`. Every command runs as `git -C <tree>` or `cd <tree> &&`. Before each skill, `git -C <tree> rev-parse --show-toplevel` must print the tree.
 
 ## Tiers
