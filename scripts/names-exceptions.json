@@ -1,5 +1,5 @@
 {
-  "_comment": "Names allowed to break a naming rule, each with its reason. scripts/check_names.py fails on an entry that waives nothing.",
+  "_comment": "Names and files allowed to break a naming rule, each with its reason. scripts/check_names.py fails on an entry that waives nothing.",
   "OSD": {
     "rules": ["acronym-case"],
     "reason": "the stem and section `OSD`: the one acronym the shell keeps in capitals"

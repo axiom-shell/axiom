@@ -59,53 +59,12 @@ REQUEST_VERBS = "show|hide|toggle|open|close|save|reset|remove|select"
 CALLBACK_PARAMS = {"callback", "cb", "then", "fn"}
 SHORT_PARAMS_OK = set("ijknxy") | {"id", "on", "to", "at", "by", "up", "ok"}
 
-ID = re.compile(r"\bid\s*:\s*(\w+)")
 GETTER = re.compile(r"([a-z]\w*?)(Of|For|On|At)")
 OBJECT_KEY = re.compile(r'[{,]\s*"?(w|h|lo|hi|from|to|extent)"?\s*:')
 FORWARD = re.compile(r"\bproperty\s+\S+\s+(\w+)\s*:\s*(\w+)\.(\w+)\s*;?\s*$", re.M)
 TIMER = re.compile(r"\bTimer\s*\{")
 BANNER = re.compile(r"^[ \t]*//[ \t]*(?:([=#*~-]{3,}).*|.*[^-](-{3,}))[ \t]*$", re.M)
 SIDE_KEY = re.compile(r'"(\w+(?:Start|End))"\s*:\s*(?:true|false)\b')
-
-
-def _params(raw):
-    """The parameter names of a parameter list's text (parens included): `name`, `name: type`, `name = value`
-    or `type name`."""
-    return [m.group(1) for part in raw.strip("()").split(",") if (m := re.search(r"(\w+)\s*(?:[:=].*)?$", part))]
-
-
-class Source:
-    """One QML file: its text, the same without comments (`stripped`), and with string literals emptied too
-    (`code`, same lines); its declared properties, functions, signals and ids."""
-
-    def __init__(self, rel, text):
-        self.rel, self.stem, self.text = rel, Path(rel).stem, text
-        self.stripped = qml_modules.blank_comments(text)
-        self.code = qml_modules.blank_strings(self.stripped)
-        self.starts = [0] + [m.end() for m in re.finditer("\n", self.stripped)]
-        self.properties, self.functions, self.signals = [], [], []
-        for m in qml_modules.DECLARATION.finditer(self.code):
-            at = self.at(m.start())
-            if m.group(3):
-                self.properties.append((m.group(2), m.group(3), at))
-            elif m.group(5):
-                self.signals.append((m.group(5), _params(m.group(6) or ""), at))
-            else:
-                self.functions.append((m.group(7), _params(m.group(8)), at))
-        self.ids = [(m.group(1), self.at(m.start())) for m in ID.finditer(self.code)]
-
-    def at(self, offset):
-        """`offset` in `code` as the offset of the same place in `stripped`."""
-        line = self.code.count("\n", 0, offset)
-        return self.starts[line] + offset - (self.code.rfind("\n", 0, offset) + 1)
-
-    def declared(self):
-        """[(name, offset)] of every declared name: properties, functions, signals, their parameters, ids;
-        the file's stem last with no offset."""
-        names = [(name, at) for _, name, at in self.properties]
-        for name, params, at in self.functions + self.signals:
-            names += [(name, at)] + [(p, at) for p in params]
-        return names + self.ids + [(self.stem, None)]
 
 
 def _bool_is_prefix(src, facts):
@@ -147,7 +106,7 @@ def _callback_param(src, facts):
 def _unit_suffix(src, facts):
     found = [(at, name) for name, at in src.declared() if at is not None and re.search(r"[a-z](?:Ms|Px)$", name)]
     if not src.rel.startswith("qml/config/"):
-        ends = {gen_docs._skip_balanced(src.code, m.end() - 1)
+        ends = {gen_docs.skip_balanced(src.code, m.end() - 1)
                 for m in re.finditer(r"\bMath\.(?:round|floor|ceil)\(", src.code)}
         found += [(src.at(m.start()), "/ 100") for m in re.finditer(r"/\s*100\b", src.code)
                   if len(src.code[:m.start()].rstrip()) not in ends]
@@ -214,8 +173,8 @@ def _forward_rename(src, facts):
 def _timer_name(src, facts):
     names = [(at, name) for typ, name, at in src.properties if typ == "Timer"]
     for m in TIMER.finditer(src.code):
-        body = src.code[m.end():gen_docs._skip_balanced(src.code, m.end() - 1)]
-        if (declared := ID.search(body)) and declared.group(1) != "root":
+        body = src.code[m.end():gen_docs.skip_balanced(src.code, m.end() - 1)]
+        if (declared := qml_modules.ID.search(body)) and declared.group(1) != "root":
             names.append((src.at(m.start()), declared.group(1)))
     return [(at, name) for at, name in names if not re.search(r"(?:Soon|Tick|Timeout)$", name)]
 
@@ -249,7 +208,7 @@ def survey(only=None, files=None):
     in `files` (repo-relative paths; default all). The facts a rule reads across files cover the whole tree;
     with `files` the exceptions that waive nothing aren't reported (that is a whole-tree fact)."""
     retired, errors = manifests.retired()
-    sources = [Source(f.relative_to(ROOT).as_posix(), f.read_text()) for f in qml_modules.qml_files() if f.is_file()]
+    sources = [qml_modules.Source(f.relative_to(ROOT).as_posix(), f.read_text()) for f in qml_modules.qml_files() if f.is_file()]
     suffixes = {}
     for src in sources:
         for name, _, _ in src.functions:
@@ -282,7 +241,7 @@ def retired_sites():
 
 
 def check(base, files=None):
-    new_rules = set(RULES) - set(qml_modules.rules_at(base, SELF))
+    new_rules = qml_modules.new_rules(base, SELF, RULES)
     found, errors = survey(files=files)
     return errors + qml_modules.ratchet(found, BASELINE, base, new_rules, files=files)
 
@@ -297,7 +256,7 @@ def main():
     files = None if args.files is None else {Path(os.path.relpath(f, ROOT) if Path(f).is_absolute() else f).as_posix() for f in args.files}
     try:
         if args.update_baseline:
-            new_rules = set(RULES) - set(qml_modules.rules_at(base, SELF))
+            new_rules = qml_modules.new_rules(base, SELF, RULES)
             found, errors = survey()
             if not errors:
                 print(f"{qml_modules.add_to_baseline(found, BASELINE, new_rules, base=base)} entries in {BASELINE}")
@@ -308,7 +267,8 @@ def main():
         errors = [str(e)]
     if errors:
         print("\n".join(errors))
-        print("\n".join(qml_modules.rule_statements(errors, RULES)))
+        for line in qml_modules.rule_statements(errors, RULES):
+            print(line)
         print(f"\n{len(errors)} naming check failure(s)")
         sys.exit(1)
     print("names ok")

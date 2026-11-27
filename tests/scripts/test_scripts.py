@@ -680,11 +680,20 @@ class CheckStructure(unittest.TestCase):
             code, out = run_check(root, "check_structure.py", "--base", base, files=[("qml/shell/RootId.qml", self.plain("  id: copies"))])
             self.assertEqual(code, 0, out)
             self.assertEqual(out, "structure ok\n")
-            (root / "scripts/structure-baseline.json").write_text("{}")
-            code, out = run_check(root, "check_structure.py", "--base", base, "--update-baseline")
+        with tempfile.TemporaryDirectory() as tmp:
+            def empty_base(root):
+                without_root_id(root)
+                (root / "scripts/structure-baseline.json").write_text("{}")
+            root, base = fixture_repo(tmp, *self.NAMING_PATHS, plant=empty_base)
+            shutil.copy2(ROOT / "scripts/check_structure.py", root / "scripts/check_structure.py")
+            code, out = run_check(root, "check_structure.py", "--base", base, "--update-baseline",
+                                  files=[("qml/shell/RootId.qml", self.plain("  id: copies")),
+                                         ("qml/shell/Reach.qml", self.plain("  id: root\n  Item {\n    id: _soon\n  }"))])
             self.assertEqual(code, 0, out)
             data = json.loads((root / "scripts/structure-baseline.json").read_text())
             self.assertEqual(data["qml/shell/RootId.qml"], {"root-id": ["RootId:copies"]})
+            self.assertNotIn("qml/shell/Reach.qml", data)
+            self.assertEqual({r for rules in data.values() for r in rules}, {"root-id"})
             self.assertTrue(all(isinstance(syms, list) and all(isinstance(x, str) for x in syms)
                                 for rules in data.values() for syms in rules.values()), data)
 
@@ -902,6 +911,18 @@ class Ratchet(unittest.TestCase):
         self.assertEqual(self.ratchet({"b.qml": {"purity": ["g:console"]}}),
                          [f"b.qml: purity g:console: added to the baseline since {self.base} (a baseline only shrinks)"])
 
+    def test_a_renamed_file_keeps_its_stem_symbols(self):
+        old = {"qml/a/Foo.qml": {"timer-name": ["Foo:_t"]}}
+        write(self.root, self.PATH, json.dumps(old))
+        git(self.root, self.tmp.name, "commit", "-q", "-am", "stem symbol")
+        base = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        renamed = {"qml/a/Bar.qml": {"timer-name": ["Bar:_t"]}}
+        write(self.root, self.PATH, json.dumps(renamed))
+        self.assertEqual(self.ratchet(renamed, base=base), [])
+        write(self.root, self.PATH, "{}")
+        self.qm.add_to_baseline(renamed, self.PATH, set(), root=self.root, base=base)
+        self.assertEqual(json.loads((self.root / self.PATH).read_text()), renamed)
+
     def test_moves_into_a_file_that_has_it(self):
         two = {"a.qml": {"purity": ["f:Date.now"]}, "b.qml": {"purity": ["f:Date.now"]}}
         write(self.root, self.PATH, json.dumps(two))
@@ -927,7 +948,7 @@ class Ratchet(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.qm.add_to_baseline(found, self.PATH, set(), root=self.root, base="nosuchref")
 
-    def test_rules_at(self):
+    def test_new_rules(self):
         path = "scripts/check_demo.py"
         write(self.root, path, 'RULES = ["a", "b"]\n')
         git(self.root, self.tmp.name, "add", "-A")
@@ -945,13 +966,13 @@ class Ratchet(unittest.TestCase):
         write(self.root, path, 'RULES = [x for x in "ab"]\n')
         git(self.root, self.tmp.name, "commit", "-q", "-am", "computed")
         computed = git(self.root, self.tmp.name, "rev-parse", "HEAD")
-        self.assertEqual(self.qm.rules_at(listed, path, root=self.root), ["a", "b"])
-        self.assertEqual(self.qm.rules_at(dicted, path, root=self.root), ["c", "d"])
-        self.assertEqual(self.qm.rules_at(none, path, root=self.root), [])
-        self.assertEqual(self.qm.rules_at(self.base, path, root=self.root), [])
+        self.assertEqual(self.qm.new_rules(listed, path, {"a", "b", "c"}, root=self.root), {"c"})
+        self.assertEqual(self.qm.new_rules(dicted, path, {"c", "d", "e"}, root=self.root), {"e"})
+        self.assertEqual(self.qm.new_rules(none, path, {"a", "b"}, root=self.root), {"a", "b"})
+        self.assertEqual(self.qm.new_rules(self.base, path, {"a", "b"}, root=self.root), {"a", "b"})
         for base in (twice, computed, "nosuchref"):
             with self.assertRaises(ValueError):
-                self.qm.rules_at(base, path, root=self.root)
+                self.qm.new_rules(base, path, {"a"}, root=self.root)
 
     def test_waive(self):
         def found():
@@ -2755,6 +2776,15 @@ class NewNames(unittest.TestCase):
         out = subprocess.run([sys.executable, str(SCRIPTS / "dev" / "new_names.py")],
                              cwd=self.repo, capture_output=True, text=True).stdout
         self.assertIn("joinGap is retired: use mergeGap", out)
+
+    def test_retired_names_are_qml_only(self):
+        write(self.repo, "scripts/names.json", json.dumps({"retired": {"joinGap": {"new": "mergeGap", "why": "one name"},
+                                                                       "opts": {"new": "options", "why": "x"}}}))
+        write(self.repo, "qml/A.qml", "Item {\n  property int joinGap: 1\n}\n")
+        write(self.repo, "backend/x.go", "package x\n\nfunc opts() {}\n")
+        rows = self.run_names()
+        self.assertEqual(self.find(rows, "property", "joinGap")["retired"], "mergeGap")
+        self.assertIsNone(self.find(rows, "func", "opts")["retired"])
 
     def test_rename_is_moved(self):
         write(self.repo, "qml/A.qml", "Item {\n  property string oldName: \"\"\n}\n")

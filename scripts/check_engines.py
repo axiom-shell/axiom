@@ -145,7 +145,7 @@ def _seam_register():
 def _new_rules(base):
     """The rule ids absent from the base's RULES and the files of each engine absent from the base's
     manifest; ValueError when the base can't be read."""
-    new = set(RULES) - set(qml_modules.rules_at(base, SELF))
+    new = qml_modules.new_rules(base, SELF, RULES)
     text = qml_modules.file_at(base, MANIFEST)
     at_base = manifests.engines(text=text)[0] if text is not None else {}
     for name, entry in manifests.engines()[0].items():
@@ -697,7 +697,8 @@ def main():
         errors = [str(e)]
     if errors:
         print("\n".join(errors))
-        print("\n".join(qml_modules.rule_statements(errors, RULES)))
+        for line in qml_modules.rule_statements(errors, RULES):
+            print(line)
         print(f"\n{len(errors)} engine check failure(s) ({DOC} > Checks)")
         sys.exit(1)
     print("engines ok")

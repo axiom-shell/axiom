@@ -18,7 +18,7 @@ only it lists what they define:
 edit or rename). `also defined:` lists up to 5 other places in the tracked
 tree where the same name is defined the same way; for a string, the I18n.tr
 calls with the same text ignoring case, spacing, digits and placeholders.
-A name, or `Stem.name`, that is a key of scripts/names.json > retired prints `is retired: use <new>`
+A QML name, or `Stem.name`, that is a key of scripts/names.json > retired prints `is retired: use <new>`
 (`retired` in --json: the new name, else null). Generated files are skipped. It informs, it never gates: exit 0.
 
   scripts/dev/new_names.py [--base REF] [--files PATH ...] [--json]
@@ -206,7 +206,7 @@ def collect(root, base, only):
             else:
                 also = [p for p in defs.get((lang, kind, name), [])
                         if p != here and not (kind == "component" and p.startswith(path + ":"))]
-            entry = None if kind == "string" else retired.get(name) or retired.get(f"{Path(path).stem}.{name}")
+            entry = None if kind == "string" or lang not in ("qml", "js") else retired.get(name) or retired.get(f"{Path(path).stem}.{name}")
             out.append({"file": path, "kind": kind, "name": name, "line": n,
                         "moved": (kind, name) in gone and kind != "component",
                         "also": also[:MAX_ALSO],

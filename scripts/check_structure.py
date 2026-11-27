@@ -101,7 +101,6 @@ import re
 import sys
 from pathlib import Path
 
-import check_names
 import gen_docs
 import qml_modules
 from qml_modules import qml_files
@@ -113,7 +112,7 @@ EXCEPTIONS = ROOT / "scripts" / "structure-exceptions.json"
 RULES = {
     "private-reach": "a `_name` member is its own file's: never read as `other._name`, never an `id: _name`",
     "root-id": "a file's root object is `id: root`",
-    "stem-unique": "a file's name is unique across qml/, tests/ and tests-layout/ and never a singleton's that a plug-in shares",
+    "stem-unique": "a file's name is unique across qml/, tests/ and tests-layout/; a singleton never takes a plug-in's file name",
     "suffix-rules": "a suffix says what the file is: Manager and Editor in services/, Window makes a window, Panel extends Panel, Layer is the layer model's",
     "folder-case": "grouping folders are lowercase words joined; a folder of one kind under surfaces/ or content/parts/ is singular",
     "test-names": "test functions are `test_snake_case`; a `tst_<X>` tests exactly the stem <X>, never a near-stem of another",
@@ -148,14 +147,14 @@ OSD_DEFINITION_IMPORTS = {"QtQuick", "qs.components.methods", OSD_ENGINE}
 POPOUT_DIR = "qml/components/content"
 # Beside the type folders, the folders of what they share (lowercase)
 SHARED_FOLDERS = {"base", "parts"}
-# The words a file name ends in to say what the file is (lexicon §2.23): a test name ending in one is a near-stem
+# The words a file name ends in to say what the file is: a test name ending in one is a near-stem
 STEM_SUFFIXES = ("Manager", "Config", "Engine", "Window", "Panel", "Pane", "Host", "Editor", "Surface", "Screen",
                  "Layer", "Card", "Base", "State", "Entry")
 # The files that are the layer model (the only `*Layer` stems)
 LAYER_MODEL = {"LayerManager", "LayerStack", "LayerSlot", "LayerOrigin", "LayerArrange"}
 # The directories that hold the tests
 TEST_DIRS = ("tests", "tests-layout")
-# The folders whose child folders are grouping folders: lowercase and singular (lexicon §2.24)
+# The folders whose child folders are grouping folders: lowercase and singular
 GROUPING_PARENTS = ("qml/components/surfaces", "qml/components/content/parts")
 WINDOW_TYPE = re.compile(r"(?<![\w.])\w+Window\s*\{")
 # Directories retired by restructuring: nothing may live or be imported there
@@ -556,7 +555,7 @@ def naming_hits(sources, tests):
     window_pieces = {Path(p).stem for p in sources if re.fullmatch(r"\w+Window", Path(p).stem)}
     for path, text in {**sources, **tests}.items():
         stem = Path(path).stem
-        src = check_names.Source(path, text)
+        src = qml_modules.Source(path, text)
         code = src.code
         plugin = is_plugin_main(path)
         if not plugin and (any(p != path and not is_plugin_main(p) for p in stems[stem])
@@ -618,7 +617,7 @@ def main():
     if args.update_baseline:
         try:
             if not hit_errors:
-                print(f"{qml_modules.add_to_baseline(named, BASELINE, set(RULES) - set(qml_modules.rules_at(base, SELF)), base=base)} entries in {BASELINE}")
+                print(f"{qml_modules.add_to_baseline(named, BASELINE, qml_modules.new_rules(base, SELF, RULES), base=base)} entries in {BASELINE}")
                 return 0
         except ValueError as e:
             hit_errors = [str(e)]
@@ -1235,7 +1234,7 @@ def main():
                 errors.append(f"{path}: {name} is defined in {' and '.join(sorted(sources_of))}; import only one")
 
     try:
-        errors.extend(hit_errors + qml_modules.ratchet(named, BASELINE, base, set(RULES) - set(qml_modules.rules_at(base, SELF))))
+        errors.extend(hit_errors + qml_modules.ratchet(named, BASELINE, base, qml_modules.new_rules(base, SELF, RULES)))
     except ValueError as e:
         errors.append(str(e))
     for e in errors:

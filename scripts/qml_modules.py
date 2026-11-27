@@ -18,9 +18,9 @@ declared as such, which qs's own VFS leaves out). Point a tool at it with
 
 As a library it also holds the checks' shared pieces: `baseline_diff` for counted
 baselines, `ratchet` and `add_to_baseline` for symbol baselines that only shrink,
-`Hits` (with `MEMBER`, a root declaration, `DECLARATION`, one at any depth, `blank_comments`,
+`Source` (one QML file's code and declarations), `Hits` (with `MEMBER`, a root declaration, `DECLARATION`, one at any depth, `blank_comments`,
 `blank_strings`) for a run's hits,
-`rules_at`, `waive` and `rule_statements` for a check's `RULES` and exceptions.
+`new_rules`, `waive` and `rule_statements` for a check's `RULES` and exceptions.
 """
 import ast
 import collections
@@ -161,12 +161,20 @@ def _baseline_entries(baseline):
     return {(f, r, s) for f, rules in baseline.items() for r, syms in rules.items() for s in syms}
 
 
+def _entries_at(base, path, root):
+    """The baseline entries of `path` at `base`; none when the file is absent there; ValueError as `file_at`'s."""
+    at_base = file_at(base, path, root)
+    return _baseline_entries(_baseline(at_base) or {}) if at_base is not None else set()
+
+
 def _moved(before, listed, added):
     """The entries of `added` that are moves: per (rule, symbol with a trailing `#k` stripped, since `numbered`
     renumbers a repeat per file), when `added` holds no more of it than the base's entries of it no longer
-    in `listed` (any file), all of them are, else none: the count per rule and symbol never grows."""
+    in `listed` (any file), all of them are, else none: the count per rule and symbol never grows. A member
+    part that is the file's own name is ignored, so a renamed file's entries pair with the old file's."""
     def rule_symbol(entry):
-        return entry[1], re.sub(r"#\d+$", "", entry[2])
+        member, colon, token = entry[2].partition(":")
+        return entry[1], ("" if colon and member == Path(entry[0]).stem else member) + colon + re.sub(r"#\d+$", "", token)
     gone = collections.Counter(rule_symbol(e) for e in before - listed)
     count = collections.Counter(rule_symbol(e) for e in added)
     return {e for e in added if count[rule_symbol(e)] <= gone[rule_symbol(e)]}
@@ -185,14 +193,13 @@ def ratchet(found, path, base, new_rules, root=ROOT, files=None):
     files. A move is an entry whose rule and symbol the base listed under a file where it no longer
     is, while the count of that rule and symbol doesn't grow (the pairing reads the whole baseline)."""
     try:
-        at_base = file_at(base, path, root)
+        before = _entries_at(base, path, root)
     except ValueError as e:
         return [str(e)]
     file = Path(root) / path
     known = _baseline(file.read_text()) if file.exists() else {}
     if known is None:
         return [f"{path}: not a {{file: {{rule: [symbol]}}}} baseline"]
-    before = _baseline_entries(_baseline(at_base) or {}) if at_base is not None else set()
     hits, listed = _baseline_entries(found), _baseline_entries(known)
     whole_before, whole_listed = before, listed
     if files is not None:
@@ -220,14 +227,55 @@ def add_to_baseline(found, path, new_rules, root=ROOT, base=None):
     entries = _baseline_entries(found)
     kept = {e for e in entries if e in keep} | (entries - _old(new_rules, entries))
     if base is not None:
-        at_base = file_at(base, path, root)
-        before = _baseline_entries(_baseline(at_base) or {}) if at_base is not None else set()
-        kept |= _moved(before, kept, entries - kept)
+        kept |= _moved(_entries_at(base, path, root), kept, entries - kept)
     out = {}
     for f, r, s in sorted(kept):
         out.setdefault(f, {}).setdefault(r, []).append(s)
     file.write_text(json.dumps(out, indent=2) + "\n")
     return sum(len(syms) for rules in out.values() for syms in rules.values())
+
+
+ID = re.compile(r"\bid\s*:\s*(\w+)")
+
+
+def _params(raw):
+    """The parameter names of a parameter list's text (parens included): `name`, `name: type`, `name = value`
+    or `type name`."""
+    return [m.group(1) for part in raw.strip("()").split(",") if (m := re.search(r"(\w+)\s*(?:[:=].*)?$", part))]
+
+
+class Source:
+    """One QML file: its text, the same without comments (`stripped`), and with string literals emptied too
+    (`code`, same lines); its declared properties, functions, signals and ids."""
+
+    def __init__(self, rel, text):
+        self.rel, self.stem, self.text = rel, Path(rel).stem, text
+        self.stripped = blank_comments(text)
+        self.code = blank_strings(self.stripped)
+        self.starts = [0] + [m.end() for m in re.finditer("\n", self.stripped)]
+        self.properties, self.functions, self.signals = [], [], []
+        for m in DECLARATION.finditer(self.code):
+            at = self.at(m.start())
+            if m.group(3):
+                self.properties.append((m.group(2), m.group(3), at))
+            elif m.group(5):
+                self.signals.append((m.group(5), _params(m.group(6) or ""), at))
+            else:
+                self.functions.append((m.group(7), _params(m.group(8)), at))
+        self.ids = [(m.group(1), self.at(m.start())) for m in ID.finditer(self.code)]
+
+    def at(self, offset):
+        """`offset` in `code` as the offset of the same place in `stripped`."""
+        line = self.code.count("\n", 0, offset)
+        return self.starts[line] + offset - (self.code.rfind("\n", 0, offset) + 1)
+
+    def declared(self):
+        """[(name, offset)] of every declared name: properties, functions, signals, their parameters, ids;
+        the file's stem last with no offset."""
+        names = [(name, at) for _, name, at in self.properties]
+        for name, params, at in self.functions + self.signals:
+            names += [(name, at)] + [(p, at) for p in params]
+        return names + self.ids + [(self.stem, None)]
 
 
 class Hits:
@@ -262,13 +310,13 @@ class Hits:
         return out
 
 
-def rules_at(base, path, root=ROOT):
-    """The rule ids of the `RULES` assignment in the base's copy of the check at `path`: a dict literal's
-    keys or, for a base from before RULES was a dict, a list literal; [] when the file is absent at the
+def new_rules(base, path, rules, root=ROOT):
+    """The ids of `rules` the `RULES` assignment in the base's copy of the check at `path` lacks: a dict literal's
+    keys or, for a base from before RULES was a dict, a list literal; all of them when the file is absent at the
     base or has no RULES; ValueError when the base can't be read or RULES is assigned twice or isn't a literal."""
     text = file_at(base, path, root)
     if text is None:
-        return []
+        return set(rules)
     try:
         values = [ast.literal_eval(n.value) for n in ast.parse(text).body
                   if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "RULES" for t in n.targets)]
@@ -276,7 +324,7 @@ def rules_at(base, path, root=ROOT):
         values = [None, None]
     if len(values) > 1 or any(not isinstance(v, (dict, list)) for v in values):
         raise ValueError(f"{path}: can't read RULES at the base {base}")
-    return list(values[0]) if values else []
+    return set(rules) - set(values[0] if values else [])
 
 
 def _waives(key, file, symbol):
