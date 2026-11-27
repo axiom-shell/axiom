@@ -9,26 +9,24 @@ import qs.services.compositor
 import qs.services.session
 import qs.services.system
 
-/*
- * What changes the look on its own. ThemeManager shows it (activeTheme,
- * wallpaperFor) without writing the config, which keeps only what the
- * user picked:
- * - Appearance.wallpaperMode "rotate": a new wallpaper from the folder every
- *   `rotationInterval` ms (random or in order, one for all monitors or
- *   one each). A pick by hand shows until the next one. The time of the
- *   last change survives restarts.
- * - "variant": the light or dark wallpaper, whichever the active theme's
- *   variant is, on every monitor (ThemeManager derives it).
- * - Appearance.themeScheduled: the theme's light variant from `lightAt`, its
- *   dark one from `darkAt` (DailySchedule; a switch by hand lasts until the
- *   next of those).
- * A generated theme follows a wallpaper changed this way (the primary
- * monitor's); a pick by hand always generates, as the picker does.
- * Created from shell.qml's `_services`.
- *
- *   axiom ipc wallpaper next
- *   axiom ipc wallpaper random
- */
+// What changes the look on its own. ThemeManager shows it (activeTheme,
+// wallpaperFor) without writing the config, which keeps only what the
+// user picked:
+// - Appearance.wallpaperMode "rotate": a new wallpaper from the folder every
+//   `rotationInterval` ms (random or in order, one for all monitors or
+//   one each). A pick by hand shows until the next one. The time of the
+//   last change survives restarts.
+// - "variant": the light or dark wallpaper, whichever the active theme's
+//   variant is, on every monitor (ThemeManager derives it).
+// - Appearance.themeScheduled: the theme's light variant from `lightAt`, its
+//   dark one from `darkAt` (DailySchedule; a switch by hand lasts until the
+//   next of those).
+// A generated theme follows a wallpaper changed this way (the primary
+// monitor's); a pick by hand always generates, as the picker does.
+// Created from shell.qml's `_services`.
+//
+//   axiom ipc wallpaper next
+//   axiom ipc wallpaper random
 Singleton {
   id: root
 

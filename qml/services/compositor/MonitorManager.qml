@@ -9,26 +9,24 @@ import qs.services.core
 import qs.services.system
 import qs.services.ui
 
-/*
- * The Monitors page: the connected outputs (CompositorManager.
- * withOutputDetails, read at startup and when monitors come, go or the
- * config reloads; never polled) and the editor for Monitors.items, a
- * draft of profiles (each a layout for one set of monitors). The saved
- * profile matching what's connected is picked and applied on every
- * hotplug by the daemon, which names it (CompositorConfigManager.
- * monitorProfile); the page finds that name in the draft.
- *
- * Apply tries the selected profile at once (CompositorManager.applyOutputs)
- * and asks to keep it: keep() saves the draft, and revert() (or the
- * countdown running out) puts back what was there before, on the monitors
- * and in the draft. A QML reload keeps the trial (its countdown starts
- * over). Apply shows while the draft differs from the saved config or
- * from the monitors as they are (differsFromLive).
- *
- * A monitor connected or removed (seen between two reads) is said where
- * the OSD's Monitors system (its `monitor` key) or Monitors.notify puts
- * it (lastEvent).
- */
+// The Monitors page: the connected outputs (CompositorManager.
+// withOutputDetails, read at startup and when monitors come, go or the
+// config reloads; never polled) and the editor for Monitors.items, a
+// draft of profiles (each a layout for one set of monitors). The saved
+// profile matching what's connected is picked and applied on every
+// hotplug by the daemon, which names it (CompositorConfigManager.
+// monitorProfile); the page finds that name in the draft.
+//
+// Apply tries the selected profile at once (CompositorManager.applyOutputs)
+// and asks to keep it: keep() saves the draft, and revert() (or the
+// countdown running out) puts back what was there before, on the monitors
+// and in the draft. A QML reload keeps the trial (its countdown starts
+// over). Apply shows while the draft differs from the saved config or
+// from the monitors as they are (differsFromLive).
+//
+// A monitor connected or removed (seen between two reads) is said where
+// the OSD's Monitors system (its `monitor` key) or Monitors.notify puts
+// it (lastEvent).
 Singleton {
   id: root
 

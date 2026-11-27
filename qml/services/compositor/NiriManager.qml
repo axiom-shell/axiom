@@ -8,12 +8,12 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 
-/* CompositorManager's backend on niri (docs/dev/compositor/contract.md,
- * docs/dev/compositor/niri-backend.md): niri's state as the
- * compositor-neutral shapes (NiriState), and the primitives CompositorManager
- * builds on. The state comes from niri's event stream, kept up event by
- * event (NiriState.reduce); the outputs, which the stream doesn't hold,
- * from an Outputs request whenever the workspaces or screens change. */
+// CompositorManager's backend on niri (docs/dev/compositor/contract.md,
+// docs/dev/compositor/niri-backend.md): niri's state as the
+// compositor-neutral shapes (NiriState), and the primitives CompositorManager
+// builds on. The state comes from niri's event stream, kept up event by
+// event (NiriState.reduce); the outputs, which the stream doesn't hold,
+// from an Outputs request whenever the workspaces or screens change.
 Singleton {
   id: root
 

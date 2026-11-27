@@ -5,18 +5,16 @@ import qs.components.methods
 import qs.config
 import qs.services.compositor
 
-/**
- * The blur behind the shell's chrome: the border's frame, bars and their
- * popouts, edge popouts, integrated edge menus and docks. Each surface
- * registers its shape (BlurShape); one click-through window per screen
- * (shell/BlurBacking) draws them all, filled, in every mode (opaque too),
- * and is the only one of them the compositor blurs. Blurred in one pass,
- * before any chrome is drawn, the blur behind joined surfaces matches
- * exactly; the surfaces themselves draw their outer fill transparent
- * (`backing`). Layer-shell windows don't know where they are on
- * screen: each shape is placed from its window's origin as LayerManager
- * works it out (hosts/window/LayerOrigin).
- */
+// The blur behind the shell's chrome: the border's frame, bars and their
+// popouts, edge popouts, integrated edge menus and docks. Each surface
+// registers its shape (BlurShape); one click-through window per screen
+// (shell/BlurBacking) draws them all, filled, in every mode (opaque too),
+// and is the only one of them the compositor blurs. Blurred in one pass,
+// before any chrome is drawn, the blur behind joined surfaces matches
+// exactly; the surfaces themselves draw their outer fill transparent
+// (`backing`). Layer-shell windows don't know where they are on
+// screen: each shape is placed from its window's origin as LayerManager
+// works it out (hosts/window/LayerOrigin).
 QtObject {
   id: root
 

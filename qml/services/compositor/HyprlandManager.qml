@@ -10,12 +10,12 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 
-/* CompositorManager's backend on Hyprland (docs/dev/compositor/contract.md):
- * Hyprland's state as the compositor-neutral shapes (HyprState), and the
- * primitives CompositorManager builds on. Also what only the Hyprland
- * features use (options, binds, outputs as Hyprland has them). The
- * only reader of Quickshell.Hyprland outside the Hyprland* services
- * (docs/dev/hyprland/ipc.md). */
+// CompositorManager's backend on Hyprland (docs/dev/compositor/contract.md):
+// Hyprland's state as the compositor-neutral shapes (HyprState), and the
+// primitives CompositorManager builds on. Also what only the Hyprland
+// features use (options, binds, outputs as Hyprland has them). The
+// only reader of Quickshell.Hyprland outside the Hyprland* services
+// (docs/dev/hyprland/ipc.md).
 Singleton {
   id: root
 

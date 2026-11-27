@@ -9,32 +9,30 @@ import qs.services.ui
 import qs.components.methods
 import qs.components.hosts.window
 
-/**
- * A popout that slides out of a screen edge and joins the screen border
- * (or a bar on that edge) with the same connector + fillets as bar
- * popouts — see AttachedSurface.qml.
- *
- * Open/close/queue state and hover-loss dismissal come from
- * PopoutWrapperBase, the same as bar popouts. Unlike bar popouts, every
- * instance owns its own state, so instantiate one per screen (Variants
- * over General.screensFor(mode)) and they open independently.
- *
- * Content is a Component, loaded only while open (unless keepLoaded). It
- * can optionally expose `autoDismiss` / `dismissDelay` / `hovered`
- * exactly like bar popout content; hovering the surface or the trigger strip already
- * keeps it open without the content doing anything.
- *
- * Usage:
- *   Variants {
- *     model: General.screensFor(mode)
- *     delegate: EdgePopout {
- *       required property ShellScreen modelData
- *       screen: modelData
- *       edge: ScreenEdge.Right
- *       content: Component { MyPanel {} }
- *     }
- *   }
- */
+// A popout that slides out of a screen edge and joins the screen border
+// (or a bar on that edge) with the same connector + fillets as bar
+// popouts — see AttachedSurface.qml.
+//
+// Open/close/queue state and hover-loss dismissal come from
+// PopoutWrapperBase, the same as bar popouts. Unlike bar popouts, every
+// instance owns its own state, so instantiate one per screen (Variants
+// over General.screensFor(mode)) and they open independently.
+//
+// Content is a Component, loaded only while open (unless keepLoaded). It
+// can optionally expose `autoDismiss` / `dismissDelay` / `hovered`
+// exactly like bar popout content; hovering the surface or the trigger strip already
+// keeps it open without the content doing anything.
+//
+// Usage:
+//   Variants {
+//     model: General.screensFor(mode)
+//     delegate: EdgePopout {
+//       required property ShellScreen modelData
+//       screen: modelData
+//       edge: ScreenEdge.Right
+//       content: Component { MyPanel {} }
+//     }
+//   }
 PopoutWrapperBase {
   id: root
 

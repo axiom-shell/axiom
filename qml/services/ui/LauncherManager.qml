@@ -10,28 +10,26 @@ import qs.services.compositor
 import qs.services.system
 import qs.services.apps
 
-/*
- * LauncherManager turns the launcher's search text into result rows and
- * runs them. The first character picks what's searched:
- *   /  shell commands (LauncherCommands)   =  calculator (qalc)
- *   >  run a shell command                 ?  web search
- *   @  ask the chat                        :  clipboard history
- *   ;  emoji (EmojiManager)                ~  files (LauncherFiles)
- * and anything else searches apps and open windows, with a calculator row
- * when the text is math, the best few files after them and a web search
- * row last. Every row is
- *   { kind, image, glyph, title, usage, subtitle, hint, complete, run(shift),
- *     crop, copy(), key }
- * where image is an icon path or url (crop: a picture that fills its tile),
- * glyph a Material Symbols name, complete the text Tab puts in the search
- * field, and run() returns true to close the launcher, false to keep it
- * open, or a string to search for instead; copy(), when a row has it, is
- * Ctrl+C's (a file's path); key, when a row has it, names what it shows
- * (a file's path), so rows rebuilt for the same text keep the selected one
- * selected however they moved.
- * App launches and commands run are counted (with their last time) for
- * frecency sorting.
- */
+// LauncherManager turns the launcher's search text into result rows and
+// runs them. The first character picks what's searched:
+//   /  shell commands (LauncherCommands)   =  calculator (qalc)
+//   >  run a shell command                 ?  web search
+//   @  ask the chat                        :  clipboard history
+//   ;  emoji (EmojiManager)                ~  files (LauncherFiles)
+// and anything else searches apps and open windows, with a calculator row
+// when the text is math, the best few files after them and a web search
+// row last. Every row is
+//   { kind, image, glyph, title, usage, subtitle, hint, complete, run(shift),
+//     crop, copy(), key }
+// where image is an icon path or url (crop: a picture that fills its tile),
+// glyph a Material Symbols name, complete the text Tab puts in the search
+// field, and run() returns true to close the launcher, false to keep it
+// open, or a string to search for instead; copy(), when a row has it, is
+// Ctrl+C's (a file's path); key, when a row has it, names what it shows
+// (a file's path), so rows rebuilt for the same text keep the selected one
+// selected however they moved.
+// App launches and commands run are counted (with their last time) for
+// frecency sorting.
 QtObject {
   id: root
 

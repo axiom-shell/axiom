@@ -10,24 +10,20 @@ import qs.components.methods.polkit
 import qs.services.core
 import qs.services.ui
 
-/*
- * axiom as the session's polkit agent (the Polkit section): while
- * PolkitConfig.enabled, a PolkitAgent answers apps' requests for
- * administrator rights, and each one goes through the shared prompt's
- * queue (PromptManager), which draws its card (prompt/PolkitCard). A session has one agent, so registering fails while another holds
- * it: axiom then stops the known ones (methods/polkit/PolkitAgents), their
- * systemd user units included, and registers again. The daemon does the
- * looking and the stopping (polkit.probe, polkit.stopOthers), only in
- * this session, and records what it stopped: it starts them again when the
- * Polkit switch goes off (polkit.handBack), when axiom quits, and after a
- * crash. 15 s after it starts it looks once more, for an agent a user's own
- * autostart launched after qs. Requests queue in Quickshell, one flow at a
- * time; a reload keeps the registration and the open flow.
- *
- * rpc: polkit.probe, polkit.stopOthers, polkit.handBack
- *
- * Nothing is polled. Created from shell.qml's `_services`.
- */
+// axiom as the session's polkit agent (the Polkit section): while
+// PolkitConfig.enabled, a PolkitAgent answers apps' requests for
+// administrator rights, and each one goes through the shared prompt's
+// queue (PromptManager), which draws its card (prompt/PolkitCard). A session has one agent, so registering fails while another holds
+// it: axiom then stops the known ones (methods/polkit/PolkitAgents), their
+// systemd user units included, and registers again. The daemon does the
+// looking and the stopping (polkit.probe, polkit.stopOthers), only in
+// this session, and records what it stopped: it starts them again when the
+// Polkit switch goes off (polkit.handBack), when axiom quits, and after a
+// crash. 15 s after it starts it looks once more, for an agent a user's own
+// autostart launched after qs. Requests queue in Quickshell, one flow at a
+// time; a reload keeps the registration and the open flow.
+//
+// Nothing is polled. Created from shell.qml's `_services`.
 Singleton {
   id: root
 

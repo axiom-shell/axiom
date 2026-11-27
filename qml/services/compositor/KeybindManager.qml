@@ -5,16 +5,14 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 
-/*
- * KeybindManager reads the keybinds the compositor has registered
- * (CompositorManager.withBinds). Each bind's `description` is its label (on
- * Hyprland's Lua config every action is an opaque `__lua` dispatcher). A
- * "Section: Label" prefix picks the overlay section. It also names the
- * bind actions (labels, icons, arguments) and shows keys and combos.
- *
- * The Keybinds page's editor of axiom's own binds is its `editor`
- * (KeybindEditor), the page's view state its `page` (KeybindsPageState).
- */
+// KeybindManager reads the keybinds the compositor has registered
+// (CompositorManager.withBinds). Each bind's `description` is its label (on
+// Hyprland's Lua config every action is an opaque `__lua` dispatcher). A
+// "Section: Label" prefix picks the overlay section. It also names the
+// bind actions (labels, icons, arguments) and shows keys and combos.
+//
+// The Keybinds page's editor of axiom's own binds is its `editor`
+// (KeybindEditor), the page's view state its `page` (KeybindsPageState).
 QtObject {
   id: root
 

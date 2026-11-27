@@ -7,26 +7,24 @@ import qs.services.core
 import qs.services.system
 import qs.services.ui
 
-/*
- * Calendars (the Calendar section): CalDAV accounts, .ics subscriptions and
- * local calendars, through axiom's calendar.* methods (backend/internal/
- * calendar, which looks each CalDAV account's password up by its id:
- * none passes through here). axiom
- * keeps the server's objects in $XDG_STATE_HOME/axiom/calendar/objects.json
- * and writes their occurrences in `range` to events.json, which this reads
- * (so the calendar shows at once, and offline). Syncs every
- * `Calendar.syncInterval` minutes while something has acquire()d it, or
- * while reminders are on; one call runs at a time, later jobs queued.
- *   CalendarManager.acquire(owner) / release(owner)
- *   CalendarManager.eventsOn("2026-10-05")    // that day's, in order
- *   CalendarManager.dotsFor("2026-10-05")     // its calendars' colour names
- *   CalendarManager.save(draft, scope, cb) / remove(event, scope, cb)
- * What a server says of a calendar (its name, color, whether it's
- * read-only, what it holds) is kept here, in the calendar state (`info`),
- * not in config: an account's calendars there hold only what the user set
- * (CalendarConfig.accounts). `calendars` joins the two.
- * Nothing runs in the greeter, which can't read the user's state anyway.
- */
+// Calendars (the Calendar section): CalDAV accounts, .ics subscriptions and
+// local calendars, through axiom's calendar.* methods (backend/internal/
+// calendar, which looks each CalDAV account's password up by its id:
+// none passes through here). axiom
+// keeps the server's objects in $XDG_STATE_HOME/axiom/calendar/objects.json
+// and writes their occurrences in `range` to events.json, which this reads
+// (so the calendar shows at once, and offline). Syncs every
+// `Calendar.syncInterval` minutes while something has acquire()d it, or
+// while reminders are on; one call runs at a time, later jobs queued.
+//   CalendarManager.acquire(owner) / release(owner)
+//   CalendarManager.eventsOn("2026-10-05")    // that day's, in order
+//   CalendarManager.dotsFor("2026-10-05")     // its calendars' colour names
+//   CalendarManager.save(draft, scope, cb) / remove(event, scope, cb)
+// What a server says of a calendar (its name, color, whether it's
+// read-only, what it holds) is kept here, in the calendar state (`info`),
+// not in config: an account's calendars there hold only what the user set
+// (CalendarConfig.accounts). `calendars` joins the two.
+// Nothing runs in the greeter, which can't read the user's state anyway.
 QtObject {
   id: root
 

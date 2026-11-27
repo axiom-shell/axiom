@@ -5,21 +5,19 @@ import qs.config
 import qs.services.core
 import qs.services.compositor
 
-/*
- * Page windows: overlay tool pages (`x-window`) popped out into windows of
- * their own (shell/PageWindows, hosts/window/PageWindow). A page is built
- * in one place at a time, as its state lives in singletons: while it's in
- * a window, the overlay shows a box in its place (PoppedOutCard).
- *   popOut(type)   closes the overlay and opens the page in a window
- *   popIn(type)    closes the window and opens the page in the overlay
- *   focus(type)    closes the overlay and goes to the page's window (its
- *                  workspace too)
- *   opened(key)    a request for a page by type or name: focuses its
- *                  window and answers true when it's popped out, so the
- *                  overlay doesn't open (OverlayPanel.openPage)
- * Which pages are out survives a QML reload (not a restart); each page's
- * window size is kept for good (StateManager).
- */
+// Page windows: overlay tool pages (`x-window`) popped out into windows of
+// their own (shell/PageWindows, hosts/window/PageWindow). A page is built
+// in one place at a time, as its state lives in singletons: while it's in
+// a window, the overlay shows a box in its place (PoppedOutCard).
+//   popOut(type)   closes the overlay and opens the page in a window
+//   popIn(type)    closes the window and opens the page in the overlay
+//   focus(type)    closes the overlay and goes to the page's window (its
+//                  workspace too)
+//   opened(key)    a request for a page by type or name: focuses its
+//                  window and answers true when it's popped out, so the
+//                  overlay doesn't open (OverlayPanel.openPage)
+// Which pages are out survives a QML reload (not a restart); each page's
+// window size is kept for good (StateManager).
 Singleton {
   id: root
 

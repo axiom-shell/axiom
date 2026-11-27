@@ -4,17 +4,15 @@ import QtQuick
 
 import qs.config
 
-/**
- * Secrets, which never go in config.json: chat API keys (scope `provider`)
- * and calendar account passwords (scope `calendar`). axiom keeps them
- * (backend/internal/secrets: the keyring through `secret-tool`, under
- * `service axiom <scope> <id>`, else $XDG_STATE_HOME/axiom/secrets.json,
- * mode 600) and reads them itself (packages chat and calendar; a
- * provider's `keyEnv` environment variable wins over a stored key). This
- * only stores and clears what the user types (`secrets.set`,
- * `secrets.clear`) and asks where each one is (`secrets.status`): no
- * secret is ever read back into QML.
- */
+// Secrets, which never go in config.json: chat API keys (scope `provider`)
+// and calendar account passwords (scope `calendar`). axiom keeps them
+// (backend/internal/secrets: the keyring through `secret-tool`, under
+// `service axiom <scope> <id>`, else $XDG_STATE_HOME/axiom/secrets.json,
+// mode 600) and reads them itself (packages chat and calendar; a
+// provider's `keyEnv` environment variable wins over a stored key). This
+// only stores and clears what the user types (`secrets.set`,
+// `secrets.clear`) and asks where each one is (`secrets.status`): no
+// secret is ever read back into QML.
 QtObject {
   id: root
 

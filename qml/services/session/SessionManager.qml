@@ -5,9 +5,9 @@ import qs.config
 import qs.services.compositor
 import qs.services.core
 
-/* The session actions (lock, suspend, hibernate, log out, restart, shut
-   down), shared by the power menu, the QuickActions and Power modules and
-   the launcher */
+// The session actions (lock, suspend, hibernate, log out, restart, shut
+// down), shared by the power menu, the QuickActions and Power modules and
+// the launcher
 QtObject {
   id: root
 

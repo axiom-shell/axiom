@@ -13,16 +13,14 @@ import qs.components.hosts.window
 // files see each other (scripts/check_structure.py)
 import qs.components.content.Submenu // qmllint disable unused-imports
 
-/**
- * Popout wrapper for bar widgets
- * Handles positioning, animation, and content loading for popouts that emerge from the bar.
- * Opened from a widget under or beside the open box, it switches in place
- * (canSwitchTo): the box glides to the new widget and resizes while the
- * old content, held as a still, fades out over the new.
- * Open/close/queue state and dismiss timing live in PopoutWrapperBase — this
- * file only adds what's specific to bar popouts: which content type to
- * load, where to position it, and how to animate it in/out.
- */
+// Popout wrapper for bar widgets
+// Handles positioning, animation, and content loading for popouts that emerge from the bar.
+// Opened from a widget under or beside the open box, it switches in place
+// (canSwitchTo): the box glides to the new widget and resizes while the
+// old content, held as a still, fades out over the new.
+// Open/close/queue state and dismiss timing live in PopoutWrapperBase — this
+// file only adds what's specific to bar popouts: which content type to
+// load, where to position it, and how to animate it in/out.
 PopoutWrapperBase {
   id: root
 

@@ -9,14 +9,12 @@ import qs.services.apps
 import qs.services.ui
 import qs.components.methods
 
-/*
- * What axiom changed outside its own folders (the daemon's footprint
- * ledger, docs/dev/backend/footprint.md): the rows with their status
- * (present, changed since, gone), undoing some of them or an owner's, and
- * the one-time backfill of what an earlier axiom left. Settings › General's
- * "Changes outside axiom" card and the fields' "Remove its changes" read
- * it. Nothing polls: the daemon pushes `footprint.changed`.
- */
+// What axiom changed outside its own folders (the daemon's footprint
+// ledger, docs/dev/backend/footprint.md): the rows with their status
+// (present, changed since, gone), undoing some of them or an owner's, and
+// the one-time backfill of what an earlier axiom left. Settings › General's
+// "Changes outside axiom" card and the fields' "Remove its changes" read
+// it. Nothing polls: the daemon pushes `footprint.changed`.
 Singleton {
   id: root
 

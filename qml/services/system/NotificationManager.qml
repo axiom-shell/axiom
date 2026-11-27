@@ -9,30 +9,28 @@ import qs.services.core
 import qs.services.compositor
 import qs.components.methods
 
-/*
- * NotificationManager is the DBus notification server and the notification
- * history. Every notification (bar transient ones) becomes an entry that
- * stays until the user removes it (dismiss, swipe, clear all), even if its
- * app withdraws it, and survives restarts: entries are saved to
- * $XDG_STATE_HOME/axiom/notifications.json, their images cached as small
- * PNGs beside it (raw image data is gone once the notification is).
- *
- * An entry is a plain object:
- *   { uid, nid, appName, appIcon, desktopEntry, summary, body, image,
- *     urgency, time, live, silent, key, actions, data }
- * `live` while its Notification is still around (liveNotification(uid)),
- * so its actions work; restored or withdrawn entries have none. `silent`
- * ones (NotificationLevel: the shell's status, apps set to Silent) sit in
- * the list's Quiet section, never toast and aren't counted. A `key` (the
- * shell's x-axiom-key hint) is held by one entry at a time: a newer one
- * replaces it. `actions` and `data` are a filed one's (sendNotification's
- * silent), run by its desktop entry's handler (registerHandler).
- *
- * The history keeps NotificationsConfig.maxEntries alerts and
- * quietMaxEntries silent ones, none older than their age limits; with
- * clearOnFocus an app's entries go when one of its windows is focused,
- * with followApps one its app withdraws goes too.
- */
+// NotificationManager is the DBus notification server and the notification
+// history. Every notification (bar transient ones) becomes an entry that
+// stays until the user removes it (dismiss, swipe, clear all), even if its
+// app withdraws it, and survives restarts: entries are saved to
+// $XDG_STATE_HOME/axiom/notifications.json, their images cached as small
+// PNGs beside it (raw image data is gone once the notification is).
+//
+// An entry is a plain object:
+//   { uid, nid, appName, appIcon, desktopEntry, summary, body, image,
+//     urgency, time, live, silent, key, actions, data }
+// `live` while its Notification is still around (liveNotification(uid)),
+// so its actions work; restored or withdrawn entries have none. `silent`
+// ones (NotificationLevel: the shell's status, apps set to Silent) sit in
+// the list's Quiet section, never toast and aren't counted. A `key` (the
+// shell's x-axiom-key hint) is held by one entry at a time: a newer one
+// replaces it. `actions` and `data` are a filed one's (sendNotification's
+// silent), run by its desktop entry's handler (registerHandler).
+//
+// The history keeps NotificationsConfig.maxEntries alerts and
+// quietMaxEntries silent ones, none older than their age limits; with
+// clearOnFocus an app's entries go when one of its windows is focused,
+// with followApps one its app withdraws goes too.
 Singleton {
   id: root
 

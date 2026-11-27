@@ -8,16 +8,14 @@ import qs.services.session
 import qs.services.system
 import qs.services.apps
 
-/*
- * The shell's one catalogue of actions: the keybind table's (KeybindManager.
- * actionTable, from backend/internal/compositor/actions/table.json: ids,
- * labels, icons, their IPC calls) with each one's state now. Every place
- * that offers an action reads it here and runs it through run(): the
- * QuickActions tiles, the OSD's status icons, the launcher's commands, the
- * bar widgets' clicks, the Button widget and hot corners, as keybinds do
- * (`axiom ipc`), so each runs the same IPC function.
- * docs/dev/core/actions.md says how to add one.
- */
+// The shell's one catalogue of actions: the keybind table's (KeybindManager.
+// actionTable, from backend/internal/compositor/actions/table.json: ids,
+// labels, icons, their IPC calls) with each one's state now. Every place
+// that offers an action reads it here and runs it through run(): the
+// QuickActions tiles, the OSD's status icons, the launcher's commands, the
+// bar widgets' clicks, the Button widget and hot corners, as keybinds do
+// (`axiom ipc`), so each runs the same IPC function.
+// docs/dev/core/actions.md says how to add one.
 QtObject {
   id: root
 

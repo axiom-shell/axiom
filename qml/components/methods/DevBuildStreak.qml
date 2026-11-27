@@ -1,15 +1,13 @@
 pragma Singleton
 import QtQuick
 
-/**
- * Which dev build notification to send (DevManager): only the first failure
- * of a failing streak, then one "works again" the next time a build
- * succeeds. The streak is `{ failing, failedAt }` (the latest failure's
- * time), kept by the caller across restarts: a successful build re-execs
- * axiom into the dev image, whose `lastBuild` starts empty, so a success
- * may only show as the build recorded for the dev tree (dev.state's
- * `build.at`), newer than the failure.
- */
+// Which dev build notification to send (DevManager): only the first failure
+// of a failing streak, then one "works again" the next time a build
+// succeeds. The streak is `{ failing, failedAt }` (the latest failure's
+// time), kept by the caller across restarts: a successful build re-execs
+// axiom into the dev image, whose `lastBuild` starts empty, so a success
+// may only show as the build recorded for the dev tree (dev.state's
+// `build.at`), newer than the failure.
 QtObject {
   id: root
 

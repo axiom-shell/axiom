@@ -6,22 +6,20 @@ import qs.services.core
 import qs.components.reusable
 import qs.components.forms
 
-/**
- * Settings page, System (the category's `card`, wide): save the config's
- * look, layout, keybinds, apps and wallpapers under a name, and restore or
- * delete saved ones. Only the active one (last saved or restored, always
- * there) can be overwritten from its row, and only the others deleted; it's
- * marked Current, with an unsaved dot once the running config differs, and
- * its Restore is Revert (its edits discarded). Overwrite, restore, delete
- * and reverting to the defaults ask for a second click to confirm (a ConfirmGate: the
- * arming waits for the second press); an
- * armed restore or apply says in place of its subtitle where the running
- * config goes first (SavedConfigsManager.keepHint). Restoring (a snapshot
- * or the defaults) leaves machine settings as they are. Below them, exporting
- * the look to share and importing a shared file (confirmed on its own row),
- * then the example setups (SavedConfigsManager.examples), applied the same
- * way.
- */
+// Settings page, System (the category's `card`, wide): save the config's
+// look, layout, keybinds, apps and wallpapers under a name, and restore or
+// delete saved ones. Only the active one (last saved or restored, always
+// there) can be overwritten from its row, and only the others deleted; it's
+// marked Current, with an unsaved dot once the running config differs, and
+// its Restore is Revert (its edits discarded). Overwrite, restore, delete
+// and reverting to the defaults ask for a second click to confirm (a ConfirmGate: the
+// arming waits for the second press); an
+// armed restore or apply says in place of its subtitle where the running
+// config goes first (SavedConfigsManager.keepHint). Restoring (a snapshot
+// or the defaults) leaves machine settings as they are. Below them, exporting
+// the look to share and importing a shared file (confirmed on its own row),
+// then the example setups (SavedConfigsManager.examples), applied the same
+// way.
 PageCard {
   id: root
 

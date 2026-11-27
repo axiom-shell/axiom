@@ -2,10 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 
-/**
- * Reusable slide animation container
- * Supports sliding from any direction, or fading in place (`fade`)
- */
+// Reusable slide animation container
+// Supports sliding from any direction, or fading in place (`fade`)
 Item {
   id: root
 

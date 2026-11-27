@@ -5,15 +5,13 @@ import qs.config
 import qs.services.core
 import qs.services.system
 
-/*
- * This machine, for Settings › System › System info: its name, operating
- * system, kernel, processor, graphics, memory, root disk and boot time,
- * and the bug report's lines (system.info, backend/internal/sysinfo and
- * buginfo). Read on `refresh()` (the card's opening), never polled.
- * `copyReport()` copies the bug report's lines, which hold nothing
- * personal (no hostname); `rename(name)` renames the machine through
- * hostnamed, polkit asking the user.
- */
+// This machine, for Settings › System › System info: its name, operating
+// system, kernel, processor, graphics, memory, root disk and boot time,
+// and the bug report's lines (system.info, backend/internal/sysinfo and
+// buginfo). Read on `refresh()` (the card's opening), never polled.
+// `copyReport()` copies the bug report's lines, which hold nothing
+// personal (no hostname); `rename(name)` renames the machine through
+// hostnamed, polkit asking the user.
 Singleton {
   id: root
 

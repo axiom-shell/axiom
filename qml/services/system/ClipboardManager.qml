@@ -5,26 +5,24 @@ import Quickshell
 import qs.config
 import qs.services.core
 
-/*
- * The clipboard history the launcher searches (":" or /clipboard), while
- * Launcher.clipboard is on, and copying for the whole shell. The axiom
- * daemon keeps both (internal/clipboard, on the compositor's data
- * control): the history in memory only (gone on restart), text and
- * images, skipping clips a password manager marks sensitive.
- * `entries` is [{ id, text, time, image }], newest first; text is the
- * clip's first 1000 characters. An image also has `format` (png, jpeg,
- * …), `dimensions` ("1920x1080", when known), `size` ("1.2 MiB") and
- * `image`, its file's url. HTML that is just an image (a browser's copy)
- * has `html` set and `image` from its src. Copying back goes through the
- * daemon, never through argv.
- *
- * `pins` are text clips the user pinned ([{ id, text, preview, time,
- * pinned: true }], newest first): the one part written to disk
- * ($XDG_STATE_HOME/axiom/ui/clipboardPins.json), kept through clear() and
- * restarts. A clip is fetched whole to pin it; the pin keeps the row's
- * text as `preview`, which is how its row is matched. Images can't be
- * pinned. Created from shell.qml's `_services`.
- */
+// The clipboard history the launcher searches (":" or /clipboard), while
+// Launcher.clipboard is on, and copying for the whole shell. The axiom
+// daemon keeps both (internal/clipboard, on the compositor's data
+// control): the history in memory only (gone on restart), text and
+// images, skipping clips a password manager marks sensitive.
+// `entries` is [{ id, text, time, image }], newest first; text is the
+// clip's first 1000 characters. An image also has `format` (png, jpeg,
+// …), `dimensions` ("1920x1080", when known), `size` ("1.2 MiB") and
+// `image`, its file's url. HTML that is just an image (a browser's copy)
+// has `html` set and `image` from its src. Copying back goes through the
+// daemon, never through argv.
+//
+// `pins` are text clips the user pinned ([{ id, text, preview, time,
+// pinned: true }], newest first): the one part written to disk
+// ($XDG_STATE_HOME/axiom/ui/clipboardPins.json), kept through clear() and
+// restarts. A clip is fetched whole to pin it; the pin keeps the row's
+// text as `preview`, which is how its row is matched. Images can't be
+// pinned. Created from shell.qml's `_services`.
 Singleton {
   id: root
 

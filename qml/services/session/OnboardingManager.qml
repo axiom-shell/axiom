@@ -11,23 +11,21 @@ import qs.services.compositor
 import qs.services.system
 import qs.services.ui
 
-/*
- * The first-run onboarder (shell/Onboarding): a series of pages that set
- * the essentials up (the compositor, monitors, apps and keys, workspaces,
- * the look, the system's integrations, other apps' colors), each applying
- * as the user goes, with the compositor mode applied on Finish.
- *
- * It opens by itself when there was no config.json (ConfigManager.firstRun),
- * and again after a reload or restart until it's finished or skipped:
- * ui/onboarding.json (Paths.statePath) keeps { completedVersion, step }. Existing
- * setups (a config, no state file) are never prompted. IPC `onboarding`
- * (open, close, reset) and the launcher's /welcome run it again.
- *
- * In detached mode it also nudges, once per qs launch, toward Included or
- * Managed (a notification: DetachedNudge): right after the onboarder ends
- * on detached, and at every launch while detached.
- * Created from shell.qml's `_services`.
- */
+// The first-run onboarder (shell/Onboarding): a series of pages that set
+// the essentials up (the compositor, monitors, apps and keys, workspaces,
+// the look, the system's integrations, other apps' colors), each applying
+// as the user goes, with the compositor mode applied on Finish.
+//
+// It opens by itself when there was no config.json (ConfigManager.firstRun),
+// and again after a reload or restart until it's finished or skipped:
+// ui/onboarding.json (Paths.statePath) keeps { completedVersion, step }. Existing
+// setups (a config, no state file) are never prompted. IPC `onboarding`
+// (open, close, reset) and the launcher's /welcome run it again.
+//
+// In detached mode it also nudges, once per qs launch, toward Included or
+// Managed (a notification: DetachedNudge): right after the onboarder ends
+// on detached, and at every launch while detached.
+// Created from shell.qml's `_services`.
 Singleton {
   id: root
 

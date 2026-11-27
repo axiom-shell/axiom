@@ -9,12 +9,12 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 
-/* CompositorManager's backend on sway (docs/dev/compositor/contract.md,
- * docs/dev/compositor/sway-backend.md): sway's state as the
- * compositor-neutral shapes (SwayState), and the primitives CompositorManager
- * builds on. Outputs and workspaces come live from Quickshell.I3; the windows
- * from sway's tree (get_tree), read again on its events. The only reader of
- * Quickshell.I3 outside the Sway* services. */
+// CompositorManager's backend on sway (docs/dev/compositor/contract.md,
+// docs/dev/compositor/sway-backend.md): sway's state as the
+// compositor-neutral shapes (SwayState), and the primitives CompositorManager
+// builds on. Outputs and workspaces come live from Quickshell.I3; the windows
+// from sway's tree (get_tree), read again on its events. The only reader of
+// Quickshell.I3 outside the Sway* services.
 Singleton {
   id: root
 

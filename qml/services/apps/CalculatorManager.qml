@@ -4,22 +4,20 @@ import Quickshell
 import qs.config
 import qs.services.core
 
-/*
- * Math, units and currencies through qalc (libqalculate, which fetches and
- * caches its own exchange rates), for the launcher's calculator rows and
- * the Calculator module. Each caller evaluates under its own key, so they
- * don't take each other's answers:
- *   evaluate(key, expr)   asks for expr (debounced; "" forgets the key's)
- *   resultFor(key, expr)  qalc's answer once it's in, else ""
- *   busyFor(key)          an answer is on its way
- * `evaluated(key)` fires when one lands. One qalc runs at a time; a key
- * asked again while its last is running is run again for the newest only.
- * `history` is the last answers a caller kept ({ expr, result }, newest
- * first), kept for the login session (StateManager's session handler: QML
- * reloads and restarts, not a new login), and `draft` the Calculator
- * module's unfinished expression (so it's still there when the overlay
- * opens again), kept across QML reloads only.
- */
+// Math, units and currencies through qalc (libqalculate, which fetches and
+// caches its own exchange rates), for the launcher's calculator rows and
+// the Calculator module. Each caller evaluates under its own key, so they
+// don't take each other's answers:
+//   evaluate(key, expr)   asks for expr (debounced; "" forgets the key's)
+//   resultFor(key, expr)  qalc's answer once it's in, else ""
+//   busyFor(key)          an answer is on its way
+// `evaluated(key)` fires when one lands. One qalc runs at a time; a key
+// asked again while its last is running is run again for the newest only.
+// `history` is the last answers a caller kept ({ expr, result }, newest
+// first), kept for the login session (StateManager's session handler: QML
+// reloads and restarts, not a new login), and `draft` the Calculator
+// module's unfinished expression (so it's still there when the overlay
+// opens again), kept across QML reloads only.
 Singleton {
   id: root
 

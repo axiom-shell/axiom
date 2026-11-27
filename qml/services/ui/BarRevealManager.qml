@@ -7,21 +7,21 @@ import qs.components.methods
 import qs.services.core
 import qs.services.compositor
 
-/* Whether each running auto-hiding bar (Bars.items[].autoHide always or
- * whenCovered) is shown, by its id in ScreenEdgeManager.bars (a bar on
- * every monitor has one per screen): pinned (the `bar` IPC toggle, which
- * also makes it reserve its space), hovered (its edge strip or the bar,
- * after timing.openDelay, until timing.closeDelay after the pointer
- * leaves), held (its open popouts, an edge menu opened from it, the bar
- * editor with it selected, an instant action surface up), revealed for a moment (revealFor: a workspace
- * change, a widget's news, the IPC reveal), or for whenCovered, while no
- * window covers its slot. One one-shot Timer runs to the earliest
- * deadline. A bar a window rule hides (`hiddenByRule`) is hidden at
- * once as that starts (hideNow: a pin or a moment from before doesn't
- * keep it shown); its edge, holds, the IPC reveal and a pin made then
- * show it, and nothing is undone as the hold ends. The bars themselves
- * (BarPanel) report hover, holds and coverage, and slide in and out by
- * `shownOf`. */
+// Whether each running auto-hiding bar (Bars.items[].autoHide always or
+// whenCovered) is shown, by its id in ScreenEdgeManager.bars (a bar on
+// every monitor has one per screen): pinned (the `bar` IPC toggle, which
+// also makes it reserve its space), hovered (its edge strip or the bar,
+// after timing.openDelay, until timing.closeDelay after the pointer
+// leaves), held (its open popouts, an edge menu opened from it, the bar
+// editor with it selected, an instant action surface up), revealed for a moment (revealFor: a workspace
+// change, a widget's news, the IPC reveal), or for whenCovered, while no
+// window covers its slot. One one-shot Timer runs to the earliest
+// deadline. A bar a window rule hides (`hiddenByRule`) is hidden at
+// once as that starts (hideNow: a pin or a moment from before doesn't
+// keep it shown); its edge, holds, the IPC reveal and a pin made then
+// show it, and nothing is undone as the hold ends. The bars themselves
+// (BarPanel) report hover, holds and coverage, and slide in and out by
+// `shownOf`.
 QtObject {
   id: root
 

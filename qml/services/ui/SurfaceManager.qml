@@ -3,10 +3,10 @@ import QtQuick
 
 import qs.components.methods
 
-/* The registry of shown surfaces: each SurfaceGroup's window and whether
-   it's open, the windows focus grabs let input through to (grab partners,
-   screenshot pickers, modal prompts), stepping aside, the border's
-   openings, and screen layouts' required fields */
+// The registry of shown surfaces: each SurfaceGroup's window and whether
+// it's open, the windows focus grabs let input through to (grab partners,
+// screenshot pickers, modal prompts), stepping aside, the border's
+// openings, and screen layouts' required fields
 QtObject {
   // Surfaces on every monitor at once act as one: each SurfaceGroup
   // reports its instance opening or closing, and the others follow

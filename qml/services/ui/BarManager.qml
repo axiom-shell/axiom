@@ -5,24 +5,24 @@ import qs.components.methods
 import qs.services.core
 import qs.services.compositor
 
-/* BarManager holds the bar editor's working copy of the Bars section (its
- * `style`, every bar's look unless a bar sets its own, and the bars,
- * `items`). Edits
- * show live on the running bars (through ConfigManager.previews) as
- * they're made; saveChanges() writes them to config.json, resetChanges()
- * drops them. The preview is never part of ConfigManager.config, so other
- * saves (a theme, the settings page) don't persist unsaved bar edits.
- *
- * Also keeps the page's own state (selected bar and widget), since the
- * page is unloaded `keptFor` after the overlay closes, and, while the page is
- * on screen, what the running bars report back about the selected bar.
- * The running bars themselves are ScreenEdgeManager's.
- *
- * Every edit can be undone (`history`: the bars and the selection, taken
- * before each edit; edits to one field in a row are one step). The widget
- * hovered on the page's board is outlined on the running bars
- * (`hoveredWidget`), and the one hovered on a running bar is reported
- * back (`barHover`). */
+// BarManager holds the bar editor's working copy of the Bars section (its
+// `style`, every bar's look unless a bar sets its own, and the bars,
+// `items`). Edits
+// show live on the running bars (through ConfigManager.previews) as
+// they're made; saveChanges() writes them to config.json, resetChanges()
+// drops them. The preview is never part of ConfigManager.config, so other
+// saves (a theme, the settings page) don't persist unsaved bar edits.
+//
+// Also keeps the page's own state (selected bar and widget), since the
+// page is unloaded `keptFor` after the overlay closes, and, while the page is
+// on screen, what the running bars report back about the selected bar.
+// The running bars themselves are ScreenEdgeManager's.
+//
+// Every edit can be undone (`history`: the bars and the selection, taken
+// before each edit; edits to one field in a row are one step). The widget
+// hovered on the page's board is outlined on the running bars
+// (`hoveredWidget`), and the one hovered on a running bar is reported
+// back (`barHover`).
 QtObject {
   id: root
 

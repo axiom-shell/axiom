@@ -8,11 +8,11 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 
-/* The running compositor, for the rest of axiom: its windows, outputs and
- * workspaces in shapes that don't depend on it, what it supports, and every
- * workspace switch and window focus (docs/dev/compositor/README.md). The
- * compositor's own work is its backend's (HyprlandManager, SwayManager); with none
- * (an unknown compositor) everything here is empty and does nothing. */
+// The running compositor, for the rest of axiom: its windows, outputs and
+// workspaces in shapes that don't depend on it, what it supports, and every
+// workspace switch and window focus (docs/dev/compositor/README.md). The
+// compositor's own work is its backend's (HyprlandManager, SwayManager); with none
+// (an unknown compositor) everything here is empty and does nothing.
 Singleton {
   id: root
 

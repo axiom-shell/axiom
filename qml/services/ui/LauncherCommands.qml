@@ -9,24 +9,22 @@ import qs.services.session
 import qs.services.system
 import qs.services.apps
 
-/*
- * The launcher's slash commands, one per shell feature. LauncherManager
- * filters and runs them; each entry is
- *   { name, aliases, glyph, description, usage,
- *     needsArg,   Enter without an argument completes "/name " instead
- *     confirm,    asks for a second Enter first (what can't be undone:
- *                 destructive session actions, clearing notifications,
- *                 installing an update)
- *     available() whether it's listed at all
- *     status()    current state, shown on the command's row
- *     options(arg) completion rows [{ title, subtitle, glyph, image, value,
- *                  matched: already matched to arg, so not scored by title }]
- *     run(arg, value) value is the picked option's, else undefined;
- *                     returns false to keep the launcher open (where the
- *                     change shows, so several can be tried), or a string
- *                     to search for instead }
- * Descriptions are read when listed, so they follow the language.
- */
+// The launcher's slash commands, one per shell feature. LauncherManager
+// filters and runs them; each entry is
+//   { name, aliases, glyph, description, usage,
+//     needsArg,   Enter without an argument completes "/name " instead
+//     confirm,    asks for a second Enter first (what can't be undone:
+//                 destructive session actions, clearing notifications,
+//                 installing an update)
+//     available() whether it's listed at all
+//     status()    current state, shown on the command's row
+//     options(arg) completion rows [{ title, subtitle, glyph, image, value,
+//                  matched: already matched to arg, so not scored by title }]
+//     run(arg, value) value is the picked option's, else undefined;
+//                     returns false to keep the launcher open (where the
+//                     change shows, so several can be tried), or a string
+//                     to search for instead }
+// Descriptions are read when listed, so they follow the language.
 QtObject {
   id: root
 

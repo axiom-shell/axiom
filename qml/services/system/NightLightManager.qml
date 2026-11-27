@@ -6,26 +6,22 @@ import qs.config
 import qs.services.core
 import qs.services.ui
 
-/*
- * The night light (the NightLight section): warmer colors, set by the
- * axiom daemon on the compositor's color transform or gamma ramps
- * (nightlight.set: internal/nightlight), or, where the compositor offers
- * neither (niri), by wlsunset, started and stopped by the daemon
- * (nightlight.wlsunset: it stops the user's own, records it and starts it
- * again when axiom quits, and marks axiom's). On a
- * schedule it turns on at `startAt` and off at `endAt` (DailySchedule); a
- * switch by hand (the quick action, /nightlight, the `nightLight` IPC
- * target or bind) lasts until the next of those. A new temperature or
- * gamma is applied while it's on.
- *
- * `active` is what axiom last set, kept across QML reloads; at startup
- * it's what the daemon holds, or whether wlsunset already runs. Created
- * from shell.qml's `_services`.
- *
- * rpc: nightlight.set, nightlight.get, nightlight.wlsunset, nightlight.wlsunsetState
- *
- *   axiom ipc nightLight toggle
- */
+// The night light (the NightLight section): warmer colors, set by the
+// axiom daemon on the compositor's color transform or gamma ramps
+// (nightlight.set: internal/nightlight), or, where the compositor offers
+// neither (niri), by wlsunset, started and stopped by the daemon
+// (nightlight.wlsunset: it stops the user's own, records it and starts it
+// again when axiom quits, and marks axiom's). On a
+// schedule it turns on at `startAt` and off at `endAt` (DailySchedule); a
+// switch by hand (the quick action, /nightlight, the `nightLight` IPC
+// target or bind) lasts until the next of those. A new temperature or
+// gamma is applied while it's on.
+//
+// `active` is what axiom last set, kept across QML reloads; at startup
+// it's what the daemon holds, or whether wlsunset already runs. Created
+// from shell.qml's `_services`.
+//
+//   axiom ipc nightLight toggle
 Singleton {
   id: root
 

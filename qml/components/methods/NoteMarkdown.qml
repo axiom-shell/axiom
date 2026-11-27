@@ -1,24 +1,22 @@
 pragma Singleton
 import QtQuick
 
-/**
- * A note's Markdown as blocks for the notes editor (content/parts/notes/
- * NoteEditor): paragraphs of plain lines (split at blank lines, which stay
- * with the paragraph above; a code fence is never split, and holds no
- * tasks), and task lines (`- [ ] text`), each its own row with a checkbox.
- * Every structural edit parses the note again, so its blocks are always what
- * parse() would give. Lossless: serialize(parse(text)) is text, and an
- * edit only rewrites the lines it touches, so a note in a linked folder
- * (Obsidian, a synced vault) keeps its formatting.
- *
- * A doc is { blocks, eol, trailingNewline }. A block is
- *   { kind: "text", text }  one or more lines, joined with "\n"
- *   { kind: "task", indent, marker, mark, sep, text }  one line:
- *     indent + marker + " [" + mark + "]" + sep + text
- *
- * Edits take a doc and return { doc, focus }, a new doc and where the
- * cursor goes ({ block, pos }, or null). They never modify their input.
- */
+// A note's Markdown as blocks for the notes editor (content/parts/notes/
+// NoteEditor): paragraphs of plain lines (split at blank lines, which stay
+// with the paragraph above; a code fence is never split, and holds no
+// tasks), and task lines (`- [ ] text`), each its own row with a checkbox.
+// Every structural edit parses the note again, so its blocks are always what
+// parse() would give. Lossless: serialize(parse(text)) is text, and an
+// edit only rewrites the lines it touches, so a note in a linked folder
+// (Obsidian, a synced vault) keeps its formatting.
+//
+// A doc is { blocks, eol, trailingNewline }. A block is
+//   { kind: "text", text }  one or more lines, joined with "\n"
+//   { kind: "task", indent, marker, mark, sep, text }  one line:
+//     indent + marker + " [" + mark + "]" + sep + text
+//
+// Edits take a doc and return { doc, focus }, a new doc and where the
+// cursor goes ({ block, pos }, or null). They never modify their input.
 QtObject {
   id: root
 

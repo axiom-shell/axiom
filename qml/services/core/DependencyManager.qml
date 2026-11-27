@@ -6,19 +6,17 @@ import qs.components.methods
 import qs.services.compositor
 import qs.services.system
 
-/*
- * A startup check for what the whole shell needs to look right: the text
- * font (`Appearance.font.family`, a free-text setting: a misspelt name
- * silently falls back to fontconfig's default; the icon font is bundled,
- * Appearance.iconFamily). Warns in the log and notifies once per name,
- * checked again whenever it changes. Created from shell.qml's
- * `_services`.
- *
- * Also which commands are installed
- * (`found`, filled by `check(commands)` through axiom's deps.check),
- * for the onboarder: the optional `tools` below, the apps it offers; and
- * what installs them on this distribution (`distro`, `installLines`).
- */
+// A startup check for what the whole shell needs to look right: the text
+// font (`Appearance.font.family`, a free-text setting: a misspelt name
+// silently falls back to fontconfig's default; the icon font is bundled,
+// Appearance.iconFamily). Warns in the log and notifies once per name,
+// checked again whenever it changes. Created from shell.qml's
+// `_services`.
+//
+// Also which commands are installed
+// (`found`, filled by `check(commands)` through axiom's deps.check),
+// for the onboarder: the optional `tools` below, the apps it offers; and
+// what installs them on this distribution (`distro`, `installLines`).
 Singleton {
   id: root
 

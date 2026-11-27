@@ -6,31 +6,29 @@ import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
 
-/**
- * A popout's submenu, one level deep: each popout host has one
- * (BarPopouts.submenu, EdgePopout.submenu), which a PopoutAnchor in its
- * content opens by itself (its window's `popoutHost`), loading
- * content/<name>.qml as a bar popout does (the tray's submenus:
- * "parts/TraySubmenu"). A PopoutAnchor inside a submenu opens its content
- * in this same one, in place: there's no second level.
- * Attaches to the side of the parent popout's box (right, or left when
- * openToLeft) with the same AttachedSurface shape as bar/edge popouts,
- * level with the item that opened it and slid out of the parent. Another
- * submenu of the same popout switches in place (SwitchStill).
- * Along the parent's side it's placed as a bar popout is along a pill
- * (SurfaceContext.submenuPlace): a side whose fillet has no room before an
- * end of the parent's side runs flush to it where that end is free (the parent
- * squaring its corner there), or joins the stroke the parent grows from
- * at its bar side (a solid bar's, a pill's, the border's), as a popout
- * joins the perpendicular border; a submenu longer than the side
- * stretches the parent (parentStretch, which the parent's BarPopouts
- * draws, a joined submenu's outer fillet on its pill included).
- * It's the parent's in PopoutManager (kind "submenu", ranked as its
- * parent), closes with it, and closing with the pointer off the parent
- * (it left, or an entry was picked) takes the parent with it at once.
- * Open/close/queue state and dismiss timing come from PopoutWrapperBase —
- * this file only adds submenu-specific positioning and animation.
- */
+// A popout's submenu, one level deep: each popout host has one
+// (BarPopouts.submenu, EdgePopout.submenu), which a PopoutAnchor in its
+// content opens by itself (its window's `popoutHost`), loading
+// content/<name>.qml as a bar popout does (the tray's submenus:
+// "parts/TraySubmenu"). A PopoutAnchor inside a submenu opens its content
+// in this same one, in place: there's no second level.
+// Attaches to the side of the parent popout's box (right, or left when
+// openToLeft) with the same AttachedSurface shape as bar/edge popouts,
+// level with the item that opened it and slid out of the parent. Another
+// submenu of the same popout switches in place (SwitchStill).
+// Along the parent's side it's placed as a bar popout is along a pill
+// (SurfaceContext.submenuPlace): a side whose fillet has no room before an
+// end of the parent's side runs flush to it where that end is free (the parent
+// squaring its corner there), or joins the stroke the parent grows from
+// at its bar side (a solid bar's, a pill's, the border's), as a popout
+// joins the perpendicular border; a submenu longer than the side
+// stretches the parent (parentStretch, which the parent's BarPopouts
+// draws, a joined submenu's outer fillet on its pill included).
+// It's the parent's in PopoutManager (kind "submenu", ranked as its
+// parent), closes with it, and closing with the pointer off the parent
+// (it left, or an entry was picked) takes the parent with it at once.
+// Open/close/queue state and dismiss timing come from PopoutWrapperBase —
+// this file only adds submenu-specific positioning and animation.
 Item {
   id: outer
 

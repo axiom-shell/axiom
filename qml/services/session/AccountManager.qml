@@ -6,17 +6,15 @@ import qs.services.core
 import qs.services.system
 import qs.services.apps
 
-/*
- * The user's own account, for Settings › General › Account and the lock
- * screen's picture: their login and real name, picture and whether
- * they're an administrator (account.get: AccountsService, else
- * /etc/passwd and ~/.face; backend/internal/account), and the changes a
- * user makes to it: the picture (`setIcon`, a file picked; "" removes it),
- * the real name (`setRealName`, AccountsService only) and the password
- * (`changePassword`, through passwd in axiom; the passwords go in the call
- * and to passwd's terminal only). Never in greeter mode: the greeter shows
- * the users GreetdManager lists.
- */
+// The user's own account, for Settings › General › Account and the lock
+// screen's picture: their login and real name, picture and whether
+// they're an administrator (account.get: AccountsService, else
+// /etc/passwd and ~/.face; backend/internal/account), and the changes a
+// user makes to it: the picture (`setIcon`, a file picked; "" removes it),
+// the real name (`setRealName`, AccountsService only) and the password
+// (`changePassword`, through passwd in axiom; the passwords go in the call
+// and to passwd's terminal only). Never in greeter mode: the greeter shows
+// the users GreetdManager lists.
 Singleton {
   id: root
 

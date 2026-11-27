@@ -3,16 +3,14 @@ import QtQuick
 import Quickshell
 import qs.services.core
 
-/*
- * The default apps, the freedesktop way (backend/internal/mimeapps): which
- * desktop entry opens each kind of file and link, from the mimeapps.list
- * files, and which terminal starts (xdg-terminals.list). For Settings ›
- * General › Default apps (`roles`, `setDefault`, `typeState` /
- * `setType` for one MIME type), and for opening anything with them
- * (`open(target, args)`: a role id, a URL or a path, through axiom's
- * apps.open, which uses the Apps section's command where it sets one).
- * What the keybinds run is `axiom open <role>` (Apps.terminalCommand …).
- */
+// The default apps, the freedesktop way (backend/internal/mimeapps): which
+// desktop entry opens each kind of file and link, from the mimeapps.list
+// files, and which terminal starts (xdg-terminals.list). For Settings ›
+// General › Default apps (`roles`, `setDefault`, `typeState` /
+// `setType` for one MIME type), and for opening anything with them
+// (`open(target, args)`: a role id, a URL or a path, through axiom's
+// apps.open, which uses the Apps section's command where it sets one).
+// What the keybinds run is `axiom open <role>` (Apps.terminalCommand …).
 Singleton {
   id: root
 

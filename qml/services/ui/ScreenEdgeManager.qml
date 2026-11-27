@@ -6,13 +6,13 @@ import qs.components.methods
 import qs.services.core
 import qs.services.compositor
 
-/* What's on each screen edge: the running bars (`bars`, while the bar
- * editor has unsaved edits, those), laid out with the compositor's gaps
- * (BarsConfig.enrichBarConfig) and stacked on their edges (BarEnds: bars
- * on one edge lie one inside the other), their windows (the bar panels),
- * and the zones open integrated edge menus reserve, with what they leave
- * on each edge: which bar is innermost there, where windows start, where
- * surfaces held off it measure from. */
+// What's on each screen edge: the running bars (`bars`, while the bar
+// editor has unsaved edits, those), laid out with the compositor's gaps
+// (BarsConfig.enrichBarConfig) and stacked on their edges (BarEnds: bars
+// on one edge lie one inside the other), their windows (the bar panels),
+// and the zones open integrated edge menus reserve, with what they leave
+// on each edge: which bar is innermost there, where windows start, where
+// surfaces held off it measure from.
 QtObject {
   id: root
 

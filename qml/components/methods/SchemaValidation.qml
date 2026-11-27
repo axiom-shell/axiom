@@ -1,15 +1,13 @@
 pragma Singleton
 import QtQuick
 
-/**
- * JSON-schema helpers for the config: filling in defaults (for new entries
- * and previews) and resolving a $ref; pruning, loading and validating are
- * the axiom binary's (internal/config), which the shared fixtures check
- * these against (tests/Shared.qml). Every entry point takes the root
- * schema, which is used to resolve `#/definitions/...` refs, so this has
- * no dependency on ConfigManager (which lets ConfigManager load eagerly at
- * startup).
- */
+// JSON-schema helpers for the config: filling in defaults (for new entries
+// and previews) and resolving a $ref; pruning, loading and validating are
+// the axiom binary's (internal/config), which the shared fixtures check
+// these against (tests/Shared.qml). Every entry point takes the root
+// schema, which is used to resolve `#/definitions/...` refs, so this has
+// no dependency on ConfigManager (which lets ConfigManager load eagerly at
+// startup).
 QtObject {
   id: root
 

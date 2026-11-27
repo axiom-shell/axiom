@@ -7,28 +7,26 @@ import qs.config
 import qs.services.core
 import qs.services.ui
 
-/*
- * The chat: conversations, sending and streaming replies (axiom's
- * chat.send, which reads the key and the attachments itself and pushes
- * the reply as chat.delta), attachments, and their history on disk. Every
- * Chat module shows the one current conversation.
- *
- * A conversation is { id, title, created, updated, preset, provider, model,
- * messages }; a message is { role: "user" | "assistant", text, time, and
- * for a reply: thinking, blocks (the provider's raw content, for thinking
- * signatures), provider, model, state: "streaming" | "done" | "stopped" |
- * "error", error, errorKind: "auth" | "nokey" | "network" | "", notice:
- * "refusal" | "length" | "", thinkingMs; for a user message: attachments
- * [{ path, mime, name }] }.
- *
- * Saved as $XDG_STATE_HOME/axiom/chats/<id>.json, with index.json listing
- * them and <id>/ holding attachments, up to Chat.keepConversations.
- *
- *   axiom ipc chat open
- *   axiom ipc chat newChat
- *   axiom ipc chat ask "question"
- *   axiom ipc chat settings
- */
+// The chat: conversations, sending and streaming replies (axiom's
+// chat.send, which reads the key and the attachments itself and pushes
+// the reply as chat.delta), attachments, and their history on disk. Every
+// Chat module shows the one current conversation.
+//
+// A conversation is { id, title, created, updated, preset, provider, model,
+// messages }; a message is { role: "user" | "assistant", text, time, and
+// for a reply: thinking, blocks (the provider's raw content, for thinking
+// signatures), provider, model, state: "streaming" | "done" | "stopped" |
+// "error", error, errorKind: "auth" | "nokey" | "network" | "", notice:
+// "refusal" | "length" | "", thinkingMs; for a user message: attachments
+// [{ path, mime, name }] }.
+//
+// Saved as $XDG_STATE_HOME/axiom/chats/<id>.json, with index.json listing
+// them and <id>/ holding attachments, up to Chat.keepConversations.
+//
+//   axiom ipc chat open
+//   axiom ipc chat newChat
+//   axiom ipc chat ask "question"
+//   axiom ipc chat settings
 Singleton {
   id: root
 

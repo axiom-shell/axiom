@@ -7,18 +7,18 @@ import qs.services.core
 import qs.services.compositor
 import qs.services.session
 
-/* OverlayManager holds the layouts editor's working copy of Overlay.items
- * (the editor is the pinned last page). Edits only affect localViews and
- * the editor's canvas; the real overlay pages and config.json are
- * untouched until saveChanges(). Mirrors BarManager.
- *
- * Also keeps the page's own state, since the page is unloaded `keptFor`
- * after the overlay closes: whether it's editing a page, an edge menu or the lock
- * screen (`editTarget`; the menus are `menus`' (MenuEditor) and the lock
- * screen LockManager's), the selected
- * page, and each overlay's room (for the canvas's "fits" line). The
- * selected page's modules are edited through `layout` (GridEditor, which
- * also holds the selected module). */
+// OverlayManager holds the layouts editor's working copy of Overlay.items
+// (the editor is the pinned last page). Edits only affect localViews and
+// the editor's canvas; the real overlay pages and config.json are
+// untouched until saveChanges(). Mirrors BarManager.
+//
+// Also keeps the page's own state, since the page is unloaded `keptFor`
+// after the overlay closes: whether it's editing a page, an edge menu or the lock
+// screen (`editTarget`; the menus are `menus`' (MenuEditor) and the lock
+// screen LockManager's), the selected
+// page, and each overlay's room (for the canvas's "fits" line). The
+// selected page's modules are edited through `layout` (GridEditor, which
+// also holds the selected module).
 QtObject {
   id: root
 

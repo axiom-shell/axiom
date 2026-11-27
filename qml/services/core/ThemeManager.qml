@@ -9,20 +9,20 @@ import qs.components.methods
 import qs.services.compositor
 import qs.services.system
 
-/* ThemeManager owns the active theme's data (loaded from its file, watched,
- * with defaults for what it leaves out), the theme lists, theme generation
- * from a wallpaper, the wallpaper itself, and re-theming integrated tools.
- * The choice of theme and wallpapers is config (Appearance.theme,
- * fixedWallpaper(s)), persisted through ConfigManager. What changes on its
- * own (the light/dark schedule's variant, the rotation's wallpapers, the
- * light/dark wallpapers) is shown without touching the config: activeTheme
- * and wallpaperFor() are what's showing (ShownLook), and the runtime part
- * is kept in state/look.json.
- *
- * In the greeter (Paths.greeter) it only reads: the active theme is the
- * theme.json beside the greeter's config (the bundle's, what the user's
- * theme was when it was exported, or the install's snapshot when the
- * config came from there), and nothing is generated, linked or run. */
+// ThemeManager owns the active theme's data (loaded from its file, watched,
+// with defaults for what it leaves out), the theme lists, theme generation
+// from a wallpaper, the wallpaper itself, and re-theming integrated tools.
+// The choice of theme and wallpapers is config (Appearance.theme,
+// fixedWallpaper(s)), persisted through ConfigManager. What changes on its
+// own (the light/dark schedule's variant, the rotation's wallpapers, the
+// light/dark wallpapers) is shown without touching the config: activeTheme
+// and wallpaperFor() are what's showing (ShownLook), and the runtime part
+// is kept in state/look.json.
+//
+// In the greeter (Paths.greeter) it only reads: the active theme is the
+// theme.json beside the greeter's config (the bundle's, what the user's
+// theme was when it was exported, or the install's snapshot when the
+// config came from there), and nothing is generated, linked or run.
 QtObject {
   id: root
 

@@ -11,18 +11,16 @@ import qs.services.session
 import qs.services.system
 import qs.services.ui
 
-/*
- * The compositor set up for axiom (the Compositor section's mode,
- * CompositorConfig.mode): the axiom daemon does it (backend/internal/
- * compositor/manager, docs/dev/compositor/config-modes.md), writing the
- * compositor's config, taking it over and giving it back, moving the
- * user's binds in and applying the runtime layer, made of the config and
- * what only the shell knows, which this sends it (compositor.inputs: the
- * capabilities, paths, the look as the theme resolves it, the cursor, the
- * monitors connected, unsaved edits), and shows what it pushes back
- * (compositor.state): the status, the problem, the takeover, the merge.
- * Notifications are sent from here, translated.
- */
+// The compositor set up for axiom (the Compositor section's mode,
+// CompositorConfig.mode): the axiom daemon does it (backend/internal/
+// compositor/manager, docs/dev/compositor/config-modes.md), writing the
+// compositor's config, taking it over and giving it back, moving the
+// user's binds in and applying the runtime layer, made of the config and
+// what only the shell knows, which this sends it (compositor.inputs: the
+// capabilities, paths, the look as the theme resolves it, the cursor, the
+// monitors connected, unsaved edits), and shows what it pushes back
+// (compositor.state): the status, the problem, the takeover, the merge.
+// Notifications are sent from here, translated.
 Singleton {
   id: root
 

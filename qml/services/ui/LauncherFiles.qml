@@ -6,19 +6,17 @@ import qs.config
 import qs.components.methods
 import qs.services.apps
 
-/*
- * The launcher's file rows (LauncherManager's part, `_files`): "~" mode
- * (FilePaths.parse: the recent files, a folder's entries, a search
- * everywhere or below a folder) and the few files under the apps in the
- * main search. Answers come later: rowsFor / mainRows return the newest
- * answer's rows (an older text's until the new one lands, so the list
- * doesn't flicker) and ask once per new text; `updated` says new rows are
- * in, and the launcher reads them again, which asks nothing.
- * A row is the launcher's shape plus `thumb` (the file whose thumbnail
- * LauncherRow shows once FileSearchManager has it), `mtime`, copy()
- * (Ctrl+C: the path) and its path as `key` (the panel keeps the selected
- * file selected when an answer while the index builds moves it).
- */
+// The launcher's file rows (LauncherManager's part, `_files`): "~" mode
+// (FilePaths.parse: the recent files, a folder's entries, a search
+// everywhere or below a folder) and the few files under the apps in the
+// main search. Answers come later: rowsFor / mainRows return the newest
+// answer's rows (an older text's until the new one lands, so the list
+// doesn't flicker) and ask once per new text; `updated` says new rows are
+// in, and the launcher reads them again, which asks nothing.
+// A row is the launcher's shape plus `thumb` (the file whose thumbnail
+// LauncherRow shows once FileSearchManager has it), `mtime`, copy()
+// (Ctrl+C: the path) and its path as `key` (the panel keeps the selected
+// file selected when an answer while the index builds moves it).
 QtObject {
   id: root
 

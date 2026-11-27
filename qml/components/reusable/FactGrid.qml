@@ -3,17 +3,15 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 
-/**
- * Label and value facts in columns, the labels muted (the self-update and dev
- * tree cards, the system info card, the custom widgets' contract). Each of
- * `facts` is { label, value, mono, wrap, middle }: `mono` shows the value in
- * the monospace font, `wrap` lets it wrap instead of eliding at the end and
- * `middle` elides the middle (a path). `pairsPerLine` is 1 (a pair a line) or
- * 2 (two pairs side by side); `monoLabels` sets the labels in the monospace
- * font too (a list of keys); `labelWidth` fixes the label column's width, the
- * labels wrapping in it. The cells are made per fact, so the list's
- * length is the only thing the grid builds from.
- */
+// Label and value facts in columns, the labels muted (the self-update and dev
+// tree cards, the system info card, the custom widgets' contract). Each of
+// `facts` is { label, value, mono, wrap, middle }: `mono` shows the value in
+// the monospace font, `wrap` lets it wrap instead of eliding at the end and
+// `middle` elides the middle (a path). `pairsPerLine` is 1 (a pair a line) or
+// 2 (two pairs side by side); `monoLabels` sets the labels in the monospace
+// font too (a list of keys); `labelWidth` fixes the label column's width, the
+// labels wrapping in it. The cells are made per fact, so the list's
+// length is the only thing the grid builds from.
 GridLayout {
   id: root
 
