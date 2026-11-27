@@ -7,7 +7,7 @@ TestCase {
 
   readonly property string passwd: ["root:x:0:0::/root:/usr/bin/zsh", "bin:x:1:1::/:/usr/bin/nologin", "greeter:x:962:962:greetd greeter user:/:/bin/bash", "zoe:x:1001:1001:Zoe Q,,,:/home/zoe:/bin/bash", "amy:x:1000:1000::/home/amy:/usr/bin/fish", "locked:x:1002:1002::/home/locked:/usr/bin/false", "nobody:x:65534:65534:Kernel Overflow User:/:/usr/bin/nologin", "# a comment", "broken line", ""].join("\n")
 
-  function test_uidRange() {
+  function test_uid_range() {
     compare(GreeterUsers.uidRange("# x\nUID_MIN\t\t\t 1000\nUID_MAX\t\t60000\nSYS_UID_MIN 500"), {
       "min": 1000,
       "max": 60000

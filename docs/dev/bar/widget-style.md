@@ -186,7 +186,7 @@ How the four widget-style features meet (each decided in `BarLook`, `BarWidgetSt
 ### Which color fields show
 - A widget's color fields show in the bar editor's inspector only in the bar looks where they draw something.
   - Their `x-showIf` reads the look of the selected bar through `$bar.<key>` keys (`BarsConfig.lookContext`: `BarLook.context`): a `BarStyle` value, with shape and grouping as drawn, or a trait the user sees (`BarLook.contextTraits`, each a function of the look): `boxed`, `merged`, `underlined`, `ownColorShows`, `textColorShows`, `cellsFilled` ([Schema annotations](../core/schema-annotations.md) › Bar look). A widget's schema never lists styles: what a style shows is its traits'.
-  - `tst_SchemaLayout` (`test_real_schema_showIf_targets_exist`) checks that each such key names a `BarStyle` field or a trait, never `widgetStyle`, in a bar widget's options only; `tst_BarLook` holds each trait per style.
+  - `tst_SchemaLayout` (`test_real_schema_show_if_targets_exist`) checks that each such key names a `BarStyle` field or a trait, never `widgetStyle`, in a bar widget's options only; `tst_BarLook` holds each trait per style.
 - **The widget's own color** (`backgroundColor` titled "Color", and its state colors: the `WidgetColor` definition). It is the fill when filled, the tint or outline when tinted or outlined, the icon part's fill (and the label's tint or text) when split, the line when underlined, and the icon when merged or under colored icons.
   - Hidden under Plain text (`$bar.ownColorShows`).
   - A widget with no icon (Time, the tray's box) shows it only when boxed and not merged, or when underlined (`$bar.boxed` and not `$bar.merged`, or `$bar.underlined`).

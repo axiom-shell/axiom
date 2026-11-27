@@ -5,7 +5,7 @@ import qs.components.methods
 TestCase {
   name: "NotificationLevel"
 
-  function test_levelOf_data() {
+  function test_level_of_data() {
     return [
       {
         tag: "a rule wins",
@@ -66,7 +66,7 @@ TestCase {
     ];
   }
 
-  function test_levelOf(row) {
+  function test_level_of(row) {
     compare(NotificationLevel.levelOf(row.rule, row.urgency, row.low), row.want);
   }
 
@@ -131,7 +131,7 @@ TestCase {
     }), []);
   }
 
-  function test_groupKey_data() {
+  function test_group_key_data() {
     return [
       {
         tag: "an app",
@@ -173,7 +173,7 @@ TestCase {
     ];
   }
 
-  function test_groupKey(row) {
+  function test_group_key(row) {
     compare(NotificationLevel.groupKey(row.entry), row.want);
   }
 }

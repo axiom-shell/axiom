@@ -39,7 +39,7 @@ TestCase {
     harness.configure({});
   }
 
-  function test_actionsHiddenUntilFocused() {
+  function test_actions_hidden_until_focused() {
     const row = createTemporaryObject(rowComp, root);
     verify(row);
     const action = findChild(row, "action");

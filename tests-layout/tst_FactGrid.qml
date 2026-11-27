@@ -39,7 +39,7 @@ TestCase {
     harness.configure({});
   }
 
-  function test_labels_wrap_at_labelWidth() {
+  function test_labels_wrap_at_label_width() {
     const grid = createTemporaryObject(gridComp, root);
     verify(grid);
     wait(50);

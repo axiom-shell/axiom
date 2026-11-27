@@ -13,7 +13,7 @@ TestCase {
     compare(Sizing.factor(50), 0.5);
   }
 
-  function test_moduleZoom() {
+  function test_module_zoom() {
     compare(Sizing.moduleZoom(1, null), 1, "no module factor: the grid's zoom");
     compare(Sizing.moduleZoom(1.5, null), 1.5);
     compare(Sizing.moduleZoom(1, 150), 1.5, "on a page the grid zooms nothing: the factor alone");
@@ -22,7 +22,7 @@ TestCase {
     compare(Sizing.moduleZoom(1, 101), 1, "within 2 % is 1");
   }
 
-  function test_fitInto() {
+  function test_fit_into() {
     compare(Sizing.fitInto({
       "width": 300,
       "height": 200
@@ -178,7 +178,7 @@ TestCase {
     compare(Sizing.edited(old, null), null);
   }
 
-  function test_editedIn_the_sizing_itself() {
+  function test_edited_in_the_sizing_itself() {
     const old = {
       "cardSize": 80,
       "linked": true,
@@ -190,7 +190,7 @@ TestCase {
   }
 
   // A form emits a nested edit as the whole top-level object
-  function test_editedIn_nested() {
+  function test_edited_in_nested() {
     const old = {
       "grid": {
         "fine": false
@@ -224,7 +224,7 @@ TestCase {
     verify(Sizing.editedIn(old, other, ["sizing"]) === other, "an edit elsewhere returns the object itself");
   }
 
-  function test_editedIn_missing_parts() {
+  function test_edited_in_missing_parts() {
     const next = {
       "grid": {
         "fine": true
@@ -327,7 +327,7 @@ TestCase {
     verify(!Sizing.breakdown(own, root._global, 0.996, false).shrunk, "rounds to 100%: no shrink to name");
   }
 
-  function test_shrinkOf_is_the_one_rule() {
+  function test_shrink_of_is_the_one_rule() {
     compare(Sizing.shrinkOf(null), {
       "shrunkTo": 100,
       "shrunk": false
@@ -352,7 +352,7 @@ TestCase {
     verify(b.shrunk);
   }
 
-  function test_moduleBreakdown_includes_its_surface_fit() {
+  function test_module_breakdown_includes_its_surface_fit() {
     const own = {
       "cardSize": 120,
       "linked": true,
@@ -394,7 +394,7 @@ TestCase {
     compare(Sizing.tightest([c, b]).screen, "C");
   }
 
-  function test_popoutLayout() {
+  function test_popout_layout() {
     const card = 100;
     const big = Sizing.popoutLayout(null, card, {
       "width": 800,

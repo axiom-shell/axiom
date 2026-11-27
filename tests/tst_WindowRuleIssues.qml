@@ -80,13 +80,13 @@ TestCase {
     compare(WindowRuleIssues.of({}, "a"), []);
   }
 
-  function test_rowOf() {
+  function test_row_of() {
     compare(WindowRuleIssues.rowOf(report, "a").placed, ["workspace"]);
     compare(WindowRuleIssues.rowOf(report, "zz"), null);
     compare(WindowRuleIssues.rowOf(null, "a"), null);
   }
 
-  function test_atCondition() {
+  function test_at_condition() {
     const issues = WindowRuleIssues.of(report, "a");
     compare(paths(WindowRuleIssues.atCondition(issues, 0, 1)), ["windows.0.conditions.1.value", "windows.0.conditions.1"]);
     compare(paths(WindowRuleIssues.atCondition(issues, 1, 1)), []);
@@ -94,7 +94,7 @@ TestCase {
     compare(WindowRuleIssues.atCondition(null, 0, 0), []);
   }
 
-  function test_atKind() {
+  function test_at_kind() {
     const issues = WindowRuleIssues.of(report, "a");
     compare(paths(WindowRuleIssues.atKind(issues, 0)), ["windows.0"]);
     compare(WindowRuleIssues.atKind(issues, 1), []);
@@ -105,7 +105,7 @@ TestCase {
     compare(paths(WindowRuleIssues.general(WindowRuleIssues.of(report, "b"))), ["id"]);
   }
 
-  function test_countOf() {
+  function test_count_of() {
     const rows = [
       {
         "rule": "a",

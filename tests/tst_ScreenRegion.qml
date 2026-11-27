@@ -51,7 +51,7 @@ TestCase {
     verify(ScreenRegion.isEmpty(ScreenRegion.local(r(0, 0, 100, 100), dp2)), "not on it");
   }
 
-  function test_toGlobal() {
+  function test_to_global() {
     compare(ScreenRegion.toGlobal(r(0, 100, 180, 400), dp2), r(1920, -100, 180, 400));
   }
 
@@ -61,7 +61,7 @@ TestCase {
     compare(ScreenRegion.covered(r(10, 2000, 300, 10), [dp1, dp2]).length, 0, "a gap below both");
   }
 
-  function test_boxAt() {
+  function test_box_at() {
     const spill = {
       "output": "DP-1",
       "x": 1500,

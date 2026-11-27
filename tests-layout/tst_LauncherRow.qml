@@ -56,7 +56,7 @@ TestCase {
     return row;
   }
 
-  function test_titleShows_data() {
+  function test_title_shows_data() {
     return [
       {
         tag: "app",
@@ -79,7 +79,7 @@ TestCase {
     ];
   }
 
-  function test_titleShows(data) {
+  function test_title_shows(data) {
     const row = makeRow(data);
     const title = findLabel(row, data.title);
     verify(title, "title label found");
@@ -99,7 +99,7 @@ TestCase {
     verify(Math.abs(at - refAt) < 0.5, "title x " + at + " vs " + refAt);
   }
 
-  function test_currentTitleReadsOnItsFill() {
+  function test_current_title_reads_on_its_fill() {
     harness.configure({
       theme: "rose-pine"
     });
@@ -116,7 +116,7 @@ TestCase {
     harness.configure({});
   }
 
-  function test_titleShowsWhenAssignedLate() {
+  function test_title_shows_when_assigned_late() {
     const row = createTemporaryObject(rowComp, root);
     verify(row);
     row.modelData = ({});
@@ -134,7 +134,7 @@ TestCase {
     verify(!title.truncated);
   }
 
-  function test_longTitleWithUsageFits() {
+  function test_long_title_with_usage_fits() {
     const row = makeRow({
       title: root.longTitle,
       kind: "command",
@@ -147,7 +147,7 @@ TestCase {
     verify(title.width > 0);
   }
 
-  function test_usageFollowsShortTitle() {
+  function test_usage_follows_short_title() {
     const row = makeRow({
       title: "calc",
       kind: "command",
@@ -173,7 +173,7 @@ TestCase {
     return null;
   }
 
-  function test_hintIsStatusChip() {
+  function test_hint_is_status_chip() {
     const row = makeRow({
       title: "Files",
       kind: "app",
@@ -188,7 +188,7 @@ TestCase {
 
   // A long hint stays whole inside its chip at the narrowest launcher: the
   // title gives way, the hint is never capped
-  function test_longHintStaysInItsChip() {
+  function test_long_hint_stays_in_its_chip() {
     const hint = "Press Enter again to confirm";
     const row = makeRow({
       title: "Shut down the computer",
@@ -214,7 +214,7 @@ TestCase {
     return null;
   }
 
-  function test_selectionFadesInHue_data() {
+  function test_selection_fades_in_hue_data() {
     return [
       {
         tag: "default",
@@ -227,7 +227,7 @@ TestCase {
     ];
   }
 
-  function test_selectionFadesInHue(data) {
+  function test_selection_fades_in_hue(data) {
     if (data.theme)
       harness.configure({
         theme: data.theme

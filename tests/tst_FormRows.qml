@@ -45,7 +45,7 @@ TestCase {
       row(true, 20)]), 1, "a form with every row hidden is skipped");
   }
 
-  function test_endsShut() {
+  function test_ends_shut() {
     verify(FormRows.endsShut([row(true, 20), row(true, 20, true)], false));
     verify(!FormRows.endsShut([row(true, 20, true), row(true, 20)], false), "the last decides");
     verify(FormRows.endsShut([row(true, 20, true), row(false, 20)], false), "a hidden last row is skipped");

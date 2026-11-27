@@ -5,7 +5,7 @@ import qs.components.methods
 TestCase {
   name: "TextBand"
 
-  function test_onXHeight() {
+  function test_on_x_height() {
     verify(TextBand.onXHeight("gaming"));
     verify(TextBand.onXHeight("Gaming"), "a capital among lowercase sits as the lowercase does");
     verify(TextBand.onXHeight("vpn.batk.me"));
@@ -25,7 +25,7 @@ TestCase {
     compare(TextBand.height("12:30", 8, 11), 11);
   }
 
-  function test_lineAscent() {
+  function test_line_ascent() {
     // Inter at 13 px: ascent 12.59, a 16 px line, moved up a pixel
     compare(TextBand.lineAscent(11.59375, -1, 1, 16, 16, Text.AlignTop), 12.59375, "the padding taken off");
     compare(TextBand.lineAscent(12.59375, 0, 0, 16, 16, Text.AlignVCenter), 12.59375, "a box its lines' height: nothing to align");

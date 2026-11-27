@@ -197,7 +197,7 @@ TestCase {
   // barOrder: OSDParts.barKey over its `x-barNames`) are keyed as its
   // definition's `exposes` keys them: a list's entries, one of each kind,
   // or a one-bar system's one
-  function test_barKeys() {
+  function test_bar_keys() {
     const schema = repo.json("qml/config/json/config.schema.json");
     let checked = 0;
     for (const option of schema.definitions.OSDSystem.oneOf) {

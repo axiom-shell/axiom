@@ -102,7 +102,7 @@ TestCase {
     compare(StopwatchClock.lapsText(rows, n => "Lap " + n), "Lap 1\t00:03.0\t00:03.0\nLap 2\t00:01.0\t00:04.0\nLap 3\t00:05.0\t00:09.0");
   }
 
-  function test_addTimeLess() {
+  function test_add_time_less() {
     let t = StopwatchClock.startTimer(StopwatchClock.idleTimer, 5 * minute, 0, "");
     t = StopwatchClock.addTime(t, -minute, minute);
     compare([t.endsAt, t.duration], [4 * minute, 4 * minute]);
@@ -150,7 +150,7 @@ TestCase {
     compare(StopwatchClock.normalizeRecent(null), []);
   }
 
-  function test_parseClock() {
+  function test_parse_clock() {
     // 14:00 local, so the hours below are local too
     const now = new Date(2026, 10, 1, 14, 0, 0, 0).getTime();
     const ms = text => StopwatchClock.parse(text, now).ms;
@@ -172,7 +172,7 @@ TestCase {
     compare(ms("5:30"), 5 * minute + 30000, "no prefix: m:s");
   }
 
-  function test_formatShort() {
+  function test_format_short() {
     compare(StopwatchClock.formatShort(90 * minute), "1h30m");
     compare(StopwatchClock.formatShort(5 * minute), "5m");
     compare(StopwatchClock.formatShort(90000), "1m30s");

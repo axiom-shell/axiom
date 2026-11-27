@@ -7,7 +7,7 @@ TestCase {
 
   readonly property string home: "/home/u"
 
-  function test_parseRecentAndSearch() {
+  function test_parse_recent_and_search() {
     compare(FilePaths.parse("~", home).kind, "recent");
     compare(FilePaths.parse("  ~   ", home).kind, "recent", "spaces alone are no query");
     compare(FilePaths.parse("~rep", home), {
@@ -23,7 +23,7 @@ TestCase {
     }, "a slash after a name is a segment of the pattern, not a folder");
   }
 
-  function test_parseFolders() {
+  function test_parse_folders() {
     compare(FilePaths.parse("~/", home), {
       "kind": "browse",
       "dir": "/home/u",
@@ -68,7 +68,7 @@ TestCase {
     compare(FilePaths.parse(FilePaths.completion("/mnt/data", home, true), home).dir, "/mnt/data");
   }
 
-  function test_parentOf() {
+  function test_parent_of() {
     compare(FilePaths.parentOf("/home/u/a.txt"), "/home/u");
     compare(FilePaths.parentOf("/a"), "/");
     compare(FilePaths.parentOf("/home/u/Pictures/Screenshots/2026-01-01_10-00-00.png"), "/home/u/Pictures/Screenshots");

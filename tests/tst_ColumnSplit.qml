@@ -38,7 +38,7 @@ TestCase {
     compare(ColumnSplit.placeN([60, 30, 30], [false, false, false], [[1, 2]], 2, 10, [], false).height, 70);
   }
 
-  function test_splitN_matches_two_columns() {
+  function test_split_n_matches_two_columns() {
     compare(first([], 10), 0);
     compare(first([100], 10), 1);
     compare(first([50, 50, 50], 10), 2);
@@ -47,19 +47,19 @@ TestCase {
     compare(first([60, 30, 30], 10), 1);
   }
 
-  function test_splitN_three() {
+  function test_split_n_three() {
     compare(ColumnSplit.splitN([50, 50, 50, 50, 50, 50], 3, 10), [2, 2, 2]);
     compare(ColumnSplit.splitN([300, 50, 50, 50, 50], 3, 10), [1, 2, 2], "the rest balances on its own optimum");
     compare(ColumnSplit.splitN([50, 50, 300], 3, 10), [1, 1, 1]);
     compare(ColumnSplit.splitN([50, 50, 50, 50], 3, 10), [2, 1, 1], "ties fill earlier columns");
   }
 
-  function test_splitN_four() {
+  function test_split_n_four() {
     compare(ColumnSplit.splitN([50, 50, 50, 50, 50, 50, 50, 50], 4, 10), [2, 2, 2, 2]);
     compare(ColumnSplit.splitN([50, 50, 50], 4, 10), [1, 1, 1], "never an empty column");
   }
 
-  function test_splitN_non_empty() {
+  function test_split_n_non_empty() {
     compare(ColumnSplit.splitN([1000, 10, 10, 10], 3, 10), [1, 2, 1]);
   }
 
@@ -72,13 +72,13 @@ TestCase {
     compare(one.cards.map(card => card.y), [0, 50]);
   }
 
-  function test_runsN() {
+  function test_runs_n() {
     compare(ColumnSplit.runsN([], []), []);
     compare(ColumnSplit.runsN([false, false, true, false, false], []).map(run => [run.from, run.to, run.wide]), [[0, 2, false], [2, 3, true], [3, 5, false]]);
     compare(ColumnSplit.runsN([false], []).map(run => run.wide), [false], "a lone unit is a narrow run; placeN spans it only with fill");
   }
 
-  function test_runsN_starts() {
+  function test_runs_n_starts() {
     compare(ColumnSplit.runsN([false, false, false, false], [false, false, true, false]).map(run => [run.from, run.to]), [[0, 2], [2, 4]]);
   }
 
@@ -90,7 +90,7 @@ TestCase {
     compare(placed.cards.map(card => [card.column, card.columns, card.y]), [[0, 2, 0], [0, 2, 50], [1, 2, 0], [1, 2, 30]]);
   }
 
-  function test_placeN_fill() {
+  function test_place_n_fill() {
     const heights = [50, 50];
     const wide = [false, false];
     const filled = ColumnSplit.placeN(heights, wide, [[1, 1]], 4, 10, [], true);
@@ -99,7 +99,7 @@ TestCase {
     compare(kept.cards.map(card => [card.column, card.columns]), [[0, 4], [1, 4]]);
   }
 
-  function test_placeN_wide_and_lone() {
+  function test_place_n_wide_and_lone() {
     // wide, then two narrow side by side, then wide
     const wide = [true, false, false, true];
     compare(ColumnSplit.splitsN([100, 50, 70, 30], wide, 2, 10, []), [[1], [1, 1], [1]]);
@@ -114,7 +114,7 @@ TestCase {
     compare(ColumnSplit.placeN([80], [false], [[1]], 2, 10, [], false).cards[0].column, 0, "not when it doesn't fill");
   }
 
-  function test_placeN_bad_splits() {
+  function test_place_n_bad_splits() {
     const heights = [50, 50, 50, 50];
     const wide = [false, false, false, false];
     const good = ColumnSplit.placeN(heights, wide, [[2, 2]], 2, 10, [], true).cards;
@@ -123,7 +123,7 @@ TestCase {
     compare(ColumnSplit.placeN(heights, wide, [], 2, 10, [], true).cards, good, "none");
   }
 
-  function test_estimateHeight() {
+  function test_estimate_height() {
     const rows = {
       "kind": "rows",
       "rows": [

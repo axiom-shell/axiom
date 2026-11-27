@@ -53,7 +53,7 @@ TestCase {
         })[key]), "a session effect under niri");
   }
 
-  function test_offValue() {
+  function test_off_value() {
     compare(Footprint.offValue({
       "type": "boolean",
       "default": true
@@ -118,7 +118,7 @@ TestCase {
     }, "/home/u"), "~/.config/mimeapps.list (text/html)");
   }
 
-  function test_ownerRows() {
+  function test_owner_rows() {
     const rows = [
       {
         "id": "a",

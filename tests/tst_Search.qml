@@ -17,7 +17,7 @@ TestCase {
     compare(Search.score("Firefox", ""), 0);
   }
 
-  function test_rankIcons() {
+  function test_rank_icons() {
     const entries = [["search", "find magnify"], ["home", "house"], ["volume_up", "audio sound speaker"], ["volume_off", "audio mute"], ["speaker", "audio sound"], ["music_note", "audio song"]];
     compare(Search.rankIcons(entries, "", 2), ["search", "home"], "no query: the most popular");
     compare(Search.rankIcons(entries, "volume", 5), ["volume_up", "volume_off"], "by name prefix, in catalog order");
@@ -53,14 +53,14 @@ TestCase {
     }, now), 2.5);
   }
 
-  function test_useBonus() {
+  function test_use_bonus() {
     compare(Search.useBonus(0), 0, "never used");
     compare(Search.useBonus(1), 8);
     compare(Search.useBonus(3), 16);
     compare(Search.useBonus(100), 25, "capped");
   }
 
-  function test_looksLikeMath() {
+  function test_looks_like_math() {
     verify(Search.looksLikeMath("2+2"));
     verify(Search.looksLikeMath("(3 × 4) ÷ 2"));
     verify(Search.looksLikeMath("5!"));

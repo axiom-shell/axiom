@@ -5,7 +5,7 @@ import qs.components.methods
 TestCase {
   name: "CustomWidgetData"
 
-  function test_parseAuto() {
+  function test_parse_auto() {
     for (const format of ["waybar", "json"]) {
       compare(CustomWidgetData.parse("[1,2,3]", [1, 2, 3], format, false), {
         "text": "3",
@@ -49,7 +49,7 @@ TestCase {
     }, "text ignores the JSON");
   }
 
-  function test_withoutScreen() {
+  function test_without_screen() {
     const def = {
       "actions": {
         "items": [
@@ -97,7 +97,7 @@ TestCase {
     compare(def.actions.items.length, 3, "the input is not changed");
   }
 
-  function test_rowsMap() {
+  function test_rows_map() {
     const items = [
       {
         "name": "Docs",
@@ -144,7 +144,7 @@ TestCase {
     })[0].id, "", "an empty id stays empty");
   }
 
-  function test_ownValue() {
+  function test_own_value() {
     const f = CustomWidgetData.resolve({}, {
       "text": "x",
       "unit": "%",
@@ -164,7 +164,7 @@ TestCase {
     }, "unit"), "°C", "typed text");
   }
 
-  function test_unknownPaths() {
+  function test_unknown_paths() {
     const f = CustomWidgetData.resolve({}, {
       "text": "x",
       "cpu": {
@@ -230,7 +230,7 @@ TestCase {
     compare(CustomWidgetData.fill("{text:>5}|{nope}|", values), "hi||", "spec ignored, unknown empty");
   }
 
-  function test_pickIcon() {
+  function test_pick_icon() {
     const bars = ["▁", "▂", "▃", "▄"];
     compare(CustomWidgetData.pickIcon(bars, "", 0), "▁");
     compare(CustomWidgetData.pickIcon(bars, "", 49), "▂");
@@ -263,7 +263,7 @@ TestCase {
     compare(CustomWidgetData.stateColor("accent", []), "", "no colour names: a theme name isn't known");
   }
 
-  function test_isThemeColor() {
+  function test_is_theme_color() {
     verify(CustomWidgetData.isThemeColor("accent", ["accent", "error"]));
     verify(!CustomWidgetData.isThemeColor("#ff0000", ["accent"]));
     verify(!CustomWidgetData.isThemeColor("front", ["accent"]));
@@ -286,7 +286,7 @@ TestCase {
     verify(CustomWidgetData.truthy("maybe"), "maybe");
   }
 
-  function test_actionsOf() {
+  function test_actions_of() {
     compare(CustomWidgetData.actionsOf(undefined), null, "missing");
     compare(CustomWidgetData.actionsOf("x"), null, "not an object");
     compare(CustomWidgetData.actionsOf([1]), null, "a list");
@@ -464,7 +464,7 @@ TestCase {
     }).message, "", "words missing");
   }
 
-  function test_resolveContext() {
+  function test_resolve_context() {
     const names = ["accent", "error"];
     const f = CustomWidgetData.resolve({}, {
       "text": "x",
@@ -590,7 +590,7 @@ TestCase {
   }
 
   // The bar widget's tooltip: a multi-line Pango tooltip, as rich text
-  function test_resolveTooltip() {
+  function test_resolve_tooltip() {
     const f = CustomWidgetData.resolve({}, {
       "text": "x",
       "tooltip": "<span foreground='#f00'>CPU</span> 40%\n<b>RAM</b> 3 GiB"
@@ -601,7 +601,7 @@ TestCase {
     }).tooltip, "", "none: no tooltip");
   }
 
-  function test_resolveValue() {
+  function test_resolve_value() {
     const p = CustomWidgetData.resolve({}, {
       "text": "40%",
       "percentage": 40
@@ -626,7 +626,7 @@ TestCase {
     }).value, 50, "a percentage wins over the text");
   }
 
-  function test_resolveHidden() {
+  function test_resolve_hidden() {
     verify(CustomWidgetData.resolve({}, {
       "text": ""
     }).hidden, "empty text hides, as Waybar");
@@ -669,7 +669,7 @@ TestCase {
     compare(f.items[1].value, 2);
   }
 
-  function test_elementValue() {
+  function test_element_value() {
     const f = CustomWidgetData.resolve({}, {
       "text": "x",
       "percentage": 50,
@@ -729,7 +729,7 @@ TestCase {
 
   // resolve hands colorNames on; a sample's own keys of those names still
   // bind to the sample (C-B9)
-  function test_resolveOwnKeys() {
+  function test_resolve_own_keys() {
     const names = ["accent", "error"];
     const f = CustomWidgetData.resolve({}, {
       "text": "x"
@@ -787,7 +787,7 @@ TestCase {
     compare(CustomWidgetData.holds("nonsense", "x", "x"), false);
   }
 
-  function test_readKey() {
+  function test_read_key() {
     const f = CustomWidgetData.resolve({}, {
       "text": "x",
       "level": 90,
@@ -801,7 +801,7 @@ TestCase {
     compare(CustomWidgetData.readKey(f, "nope", "own"), undefined, "a missing key");
   }
 
-  function test_colorFor() {
+  function test_color_for() {
     const f = CustomWidgetData.resolve({}, {
       "text": "x",
       "cpu": 85,
@@ -874,7 +874,7 @@ TestCase {
     }, f, "own", "auto"), "success", "an empty key reads what the element shows");
   }
 
-  function test_rowColor() {
+  function test_row_color() {
     const row = CustomWidgetData.rows([
       {
         "text": "Read",
@@ -1002,7 +1002,7 @@ TestCase {
     }, f, "own"), "off while on");
   }
 
-  function test_colorFields() {
+  function test_color_fields() {
     const color = {
       "x-options": "colors"
     };
@@ -1125,7 +1125,7 @@ TestCase {
     }, "no place yet: an empty rect");
   }
 
-  function test_rowValueText() {
+  function test_row_value_text() {
     const rows = CustomWidgetData.rows([
       {
         "text": "a",
@@ -1239,7 +1239,7 @@ TestCase {
     ])[0].max, undefined, "a negative max");
   }
 
-  function test_graphRange() {
+  function test_graph_range() {
     const def = {
       "format": "{}"
     };
@@ -1268,7 +1268,7 @@ TestCase {
     }).max, 50, "a bound max");
   }
 
-  function test_defaultElements() {
+  function test_default_elements() {
     const els = CustomWidgetData.defaultElements([4, 2], true);
     compare(els.length, 2);
     compare(els[0].type, "Ring");
@@ -1284,7 +1284,7 @@ TestCase {
     }, "the text shows the output's text");
   }
 
-  function test_alignOffset() {
+  function test_align_offset() {
     compare(CustomWidgetData.alignOffset("left", 40), 0);
     compare(CustomWidgetData.alignOffset("top", 40), 0);
     compare(CustomWidgetData.alignOffset("center", 40), 20);
@@ -1295,13 +1295,13 @@ TestCase {
     compare(CustomWidgetData.alignOffset("", 40), 0, "unknown: the start");
   }
 
-  function test_textLines() {
+  function test_text_lines() {
     compare(CustomWidgetData.textLines(100, 20), 3, "26 px a line");
     compare(CustomWidgetData.textLines(10, 40), 1, "never fewer than one");
     compare(CustomWidgetData.textLines(0, 0), 1);
   }
 
-  function test_stripJsonc() {
+  function test_strip_jsonc() {
     compare(JSON.parse(CustomWidgetData.stripJsonc('{"a": "http://x", // c\n"b": [1, 2,], /* d */ "c": "/* no */",}')), {
       "a": "http://x",
       "b": [1, 2],
@@ -1309,7 +1309,7 @@ TestCase {
     }, "comments and trailing commas go, strings stay");
   }
 
-  function test_fromWaybar() {
+  function test_from_waybar() {
     const block = '"custom/media": {\n  "format": "{icon} {}", // shown\n  "return-type": "json",\n  "max-length": 40,\n  "escape": true,\n  "format-icons": {"spotify": "S", "default": "D"},\n  "exec": "$HOME/mediaplayer.py 2> /dev/null",\n  "on-click": "playerctl play-pause",\n}';
     const defs = CustomWidgetData.fromWaybar(block);
     compare(defs.length, 1);
@@ -1353,7 +1353,7 @@ TestCase {
     compare(config.map(d => d.name), ["A", "B c"], "every custom module of a whole config");
   }
 
-  function test_iconPick() {
+  function test_icon_pick() {
     const d = {
       "formatIcons": {
         "on": "vpn_lock",
@@ -1377,7 +1377,7 @@ TestCase {
     }).icon, "", "a glyph isn't an icon name");
   }
 
-  function test_presetsLoad() {
+  function test_presets_load() {
     for (const preset of CustomWidgetData.presets) {
       verify(preset.name && (preset.command || preset.template), preset.name);
       if (!preset.command)
@@ -1401,7 +1401,7 @@ TestCase {
     }
   }
 
-  function test_presetDailyHabits() {
+  function test_preset_daily_habits() {
     const preset = CustomWidgetData.presets.find(p => p.name === "Daily habits");
     verify(preset, "the preset is listed");
     verify(preset.command.includes("{tree}data/custom-widgets/habits.sh"), "the script is found through {tree}");
@@ -1460,7 +1460,7 @@ TestCase {
 
   // -- Screens --
 
-  function test_allElements() {
+  function test_all_elements() {
     compare(CustomWidgetData.allElements(null).length, 0, "none");
     compare(CustomWidgetData.allElements({
       "elements": [
@@ -1641,7 +1641,7 @@ TestCase {
     }, failing), true, "error is its message");
   }
 
-  function test_pickView() {
+  function test_pick_view() {
     const view = (id, when) => ({
           "id": id,
           "when": when
@@ -1726,7 +1726,7 @@ TestCase {
     }).builtinError, true, "failing: the choice is ignored");
   }
 
-  function test_conditionView() {
+  function test_condition_view() {
     const view = (id, key, values) => ({
           "id": id,
           "when": {
@@ -1753,7 +1753,7 @@ TestCase {
     }, null), -1, "null fields");
   }
 
-  function test_historyBindings() {
+  function test_history_bindings() {
     compare(CustomWidgetData.historyBindings({}).length, 0, "none");
     const spark = value => ({
           "type": "Sparkline",
@@ -1821,7 +1821,7 @@ TestCase {
 
   // -- Named actions --
 
-  function test_actionOf() {
+  function test_action_of() {
     const def = {
       "actions": {
         "items": [
@@ -1850,7 +1850,7 @@ TestCase {
     compare(CustomWidgetData.actionOf(null, "a1"), null, "no definition");
   }
 
-  function test_axiomValues() {
+  function test_axiom_values() {
     const refused = ["lock", "poweroff"];
     compare(CustomWidgetData.axiomValues(["overlay", "lock", "seek", "edgeMenu", "poweroff"], refused, id => id === "seek", ["main", "second"]), ["refresh", "restart", "screen:", "screen:main", "screen:second", "overlay", "edgeMenu"], "refused and argument-taking dropped, in order");
     compare(CustomWidgetData.axiomValues(["a", "seek"], [], ["seek"], []), ["refresh", "restart", "screen:", "a"], "a list of argument-taking ids");
@@ -1858,7 +1858,7 @@ TestCase {
     compare(CustomWidgetData.axiomValues(undefined, undefined, undefined, undefined), ["refresh", "restart", "screen:"], "nothing given");
   }
 
-  function test_actionRefs() {
+  function test_action_refs() {
     const def = {
       "bar": {
         "run": {
@@ -1917,7 +1917,7 @@ TestCase {
     compare(def.bar.run.click, "x", "the original is untouched");
   }
 
-  function test_actionEnabled() {
+  function test_action_enabled() {
     const actions = {
       "undo": {
         "enabled": false
@@ -1947,7 +1947,7 @@ TestCase {
     compare(CustomWidgetData.actionEnabled(actions, item("toString")), false, "toString isn't listed");
   }
 
-  function test_shellQuote() {
+  function test_shell_quote() {
     compare(CustomWidgetData.shellQuote("42.5"), "42.5", "a number is bare");
     compare(CustomWidgetData.shellQuote("."), "'.'", "a dot is quoted");
     compare(CustomWidgetData.shellQuote("1.2.3"), "'1.2.3'", "two dots are quoted");
@@ -1960,7 +1960,7 @@ TestCase {
     compare(CustomWidgetData.shellQuote("a$&b"), "'a$&b'", "shell characters stay inside the quotes");
   }
 
-  function test_fillCommand() {
+  function test_fill_command() {
     compare(CustomWidgetData.fillCommand("playerctl-do seek {value}", {
       "value": "42.5"
     }), "playerctl-do seek 42.5", "a number is bare");
@@ -2000,7 +2000,7 @@ TestCase {
     }), "x 'a$&b'", "shell characters intact");
   }
 
-  function test_fillCommandArg() {
+  function test_fill_command_arg() {
     compare(CustomWidgetData.fillCommand("x {arg}", {
       "arg": "'a' 'b'"
     }), "x 'a' 'b'", "{arg} is the words as they are (already quoted)");
@@ -2016,7 +2016,7 @@ TestCase {
     }), "'{arg}' 'z'", "a filled value is never searched again");
   }
 
-  function test_commandLine() {
+  function test_command_line() {
     const fields = {
       "plain": "hello",
       "sample": {
@@ -2082,7 +2082,7 @@ TestCase {
     }), "kby 'a; b' 'x'", "an own value is quoted as before");
   }
 
-  function test_builtinAllowed() {
+  function test_builtin_allowed() {
     const refused = ["poweroff", "lock", "reboot"];
     compare(CustomWidgetData.builtinAllowed("poweroff", refused), false, "poweroff");
     compare(CustomWidgetData.builtinAllowed("lock", refused), false, "lock");
@@ -2093,7 +2093,7 @@ TestCase {
 
   // -- Samples --
 
-  function test_viewKey() {
+  function test_view_key() {
     const module = {
       "views": [
         {
@@ -2110,7 +2110,7 @@ TestCase {
     compare(CustomWidgetData.viewKey(null, 0), "", "no module");
   }
 
-  function test_keepSample() {
+  function test_keep_sample() {
     const limits = {
       "entries": 2,
       "bytes": 100
@@ -2151,14 +2151,14 @@ TestCase {
     }).refused, "", "20000 fit");
   }
 
-  function test_utf8Length() {
+  function test_utf8_length() {
     compare(CustomWidgetData.utf8Length("a"), 1);
     compare(CustomWidgetData.utf8Length("é"), 2);
     compare(CustomWidgetData.utf8Length("語"), 3);
     compare(CustomWidgetData.utf8Length("😀"), 4);
   }
 
-  function test_sampleForView() {
+  function test_sample_for_view() {
     const module = {
       "views": [
         {
@@ -2222,7 +2222,7 @@ TestCase {
     }, -1, {}, null).kept, 1, "the empty key is no screen");
   }
 
-  function test_moveItem() {
+  function test_move_item() {
     compare(CustomWidgetData.moveItem(["a", "b", "c"], 0, 2), ["b", "c", "a"]);
     compare(CustomWidgetData.moveItem(["a", "b", "c"], 2, 1), ["a", "c", "b"]);
     compare(CustomWidgetData.moveItem(["a", "b"], 0, 5), ["a", "b"], "out of range: as it is");
@@ -2233,7 +2233,7 @@ TestCase {
     compare(list, ["a", "b"], "not changed in place");
   }
 
-  function test_viewCopy() {
+  function test_view_copy() {
     const views = [
       {
         "id": "open",
@@ -2263,7 +2263,7 @@ TestCase {
     compare(CustomWidgetData.viewCopy(views, 3, "x"), null);
   }
 
-  function test_elementCopy() {
+  function test_element_copy() {
     const element = {
       "id": "a",
       "type": "Text",
@@ -2287,7 +2287,7 @@ TestCase {
     ], element).place, element.place, "the same place");
   }
 
-  function test_bindChoicesEdges() {
+  function test_bind_choices_edges() {
     compare(CustomWidgetData.bindChoices([
       {
         "constructor": 1,
@@ -2310,7 +2310,7 @@ TestCase {
     verify(long.endsWith("…"));
   }
 
-  function test_bindChoices() {
+  function test_bind_choices() {
     const choices = CustomWidgetData.bindChoices([
       {
         "text": "x",
@@ -2340,7 +2340,7 @@ TestCase {
     compare(CustomWidgetData.bindChoices(null), []);
   }
 
-  function test_commandsOf() {
+  function test_commands_of() {
     compare(CustomWidgetData.commandsOf({
       "command": "a.sh",
       "execIf": "  ",
@@ -2389,7 +2389,7 @@ TestCase {
     compare(CustomWidgetData.commandsOf(null), []);
   }
 
-  function test_exportAndImport() {
+  function test_export_and_import() {
     const def = {
       "id": "x",
       "name": "X",
@@ -2422,7 +2422,7 @@ TestCase {
     compare(CustomWidgetData.fromExport("[]").error, "empty");
   }
 
-  function test_readImport() {
+  function test_read_import() {
     compare(CustomWidgetData.readImport(CustomWidgetData.exportOf({
       "command": "a"
     })).kind, "widget");
@@ -2435,7 +2435,7 @@ TestCase {
     compare(CustomWidgetData.readImport("{nope").error, "json");
   }
 
-  function test_pushLog() {
+  function test_push_log() {
     compare(CustomWidgetData.pushLog([1, 2, 3], 4, 3), [2, 3, 4], "the last `cap`");
     compare(CustomWidgetData.pushLog(null, 1, 3), [1]);
   }
@@ -2500,7 +2500,7 @@ TestCase {
     compare(CustomWidgetData.pickView(status.module, failing).index, 0, "a script's error picks the error screen");
   }
 
-  function test_nameFromCommand() {
+  function test_name_from_command() {
     compare(CustomWidgetData.nameFromCommand("~/bin/cpu.sh x"), "cpu", "a path with an extension and an argument");
     compare(CustomWidgetData.nameFromCommand("checkupdates | wc -l"), "checkupdates", "a pipeline");
     compare(CustomWidgetData.nameFromCommand("uptime"), "uptime", "a bare command");
@@ -2510,14 +2510,14 @@ TestCase {
     compare(CustomWidgetData.nameFromCommand(""), "", "empty");
   }
 
-  function test_freeName() {
+  function test_free_name() {
     compare(CustomWidgetData.freeName("Custom widget", []), "Custom widget", "free");
     compare(CustomWidgetData.freeName("Custom widget", ["Custom widget"]), "Custom widget 2", "taken");
     compare(CustomWidgetData.freeName("Custom widget", ["Custom widget", "Custom widget 2"]), "Custom widget 3", "two taken");
     compare(CustomWidgetData.freeName("cpu", ["cpu 2"]), "cpu", "a gap elsewhere is no clash");
   }
 
-  function test_sampleSource() {
+  function test_sample_source() {
     const module = {
       "views": [
         {
@@ -2555,7 +2555,7 @@ TestCase {
     compare(CustomWidgetData.sampleSource(def, -1, {}, null), "none");
   }
 
-  function test_fitZoom() {
+  function test_fit_zoom() {
     compare(CustomWidgetData.fitZoom([4, 4], 100, 10000, 10000), 1, "never past full size");
     verify(CustomWidgetData.fitZoom([4, 4], 100, 50, 10000) < 1, "narrow: smaller");
     verify(CustomWidgetData.fitZoom([4, 4], 100, 10000, 50) < 1, "short: smaller");
@@ -2563,7 +2563,7 @@ TestCase {
     verify(CustomWidgetData.fitZoom([8, 2], 100, 150, 400) < CustomWidgetData.fitZoom([2, 2], 100, 150, 400), "a wider module is drawn smaller");
   }
 
-  function test_lockIssues() {
+  function test_lock_issues() {
     compare(CustomWidgetData.lockIssues(null), []);
     compare(CustomWidgetData.lockIssues({
       "module": {
@@ -2673,7 +2673,7 @@ TestCase {
     }), ["actions"], "the bar's click");
   }
 
-  function test_restorePlace() {
+  function test_restore_place() {
     const items = [
       {
         "id": "a"
@@ -2799,7 +2799,7 @@ TestCase {
     }, [cmd])), "an id that doesn't exist");
   }
 
-  function test_actionsFailing() {
+  function test_actions_failing() {
     const module = {
       "views": [
         {
@@ -2828,7 +2828,7 @@ TestCase {
     verify(CustomWidgetData.actionsFailing(module, failing("exit"), 1), "a screen keyed on state");
   }
 
-  function test_resolveNoScript() {
+  function test_resolve_no_script() {
     const f = CustomWidgetData.resolve({
       "format": "Hi {icon}",
       "hideEmpty": true,
@@ -2846,7 +2846,7 @@ TestCase {
     compare(CustomWidgetData.elementValue(f, "a{foo}"), "a", "a path reads empty");
   }
 
-  function test_runShape() {
+  function test_run_shape() {
     compare(CustomWidgetData.runShape(false, undefined, true), "discrete");
     compare(CustomWidgetData.runShape(true, 5, true), "latest");
     compare(CustomWidgetData.runShape(true, 5, false), "latest");
@@ -2854,7 +2854,7 @@ TestCase {
     compare(CustomWidgetData.runShape(true, undefined, true), "queue");
   }
 
-  function test_pendingEntry() {
+  function test_pending_entry() {
     const first = CustomWidgetData.pendingEntry(null, 5, "a", "latest");
     compare(first.value, 5);
     compare(first.arg, "a");
@@ -2869,7 +2869,7 @@ TestCase {
     }, undefined, "", "queue").count, 10, "at most 10");
   }
 
-  function test_nextPending() {
+  function test_next_pending() {
     const one = CustomWidgetData.nextPending({
       "value": 5,
       "arg": "a"
@@ -2890,7 +2890,7 @@ TestCase {
     }).rest, null, "a count of 1 is the last");
   }
 
-  function test_keepChoice() {
+  function test_keep_choice() {
     const module = {
       "views": [
         {
@@ -2918,7 +2918,7 @@ TestCase {
     compare(CustomWidgetData.keepChoice(module, _fields({}), null), null);
   }
 
-  function test_rowKey() {
+  function test_row_key() {
     compare(CustomWidgetData.rowKey({
       "id": "a",
       "value": 84,
@@ -2939,7 +2939,7 @@ TestCase {
     }), "Firefox");
   }
 
-  function test_freeRefreshName() {
+  function test_free_refresh_name() {
     const items = [
       {
         "id": "a",
@@ -2960,7 +2960,7 @@ TestCase {
     compare(CustomWidgetData.freeRefreshName("vol", items, "a"), "vol", "its own refresh name");
   }
 
-  function test_changedTabs() {
+  function test_changed_tabs() {
     const saved = {
       "name": "A",
       "command": "x",
@@ -2990,7 +2990,7 @@ TestCase {
     compare(CustomWidgetData.changedTabs(null, f), [], "a new definition");
   }
 
-  function test_withLook() {
+  function test_with_look() {
     const source = {
       "color": "base08",
       "colorStates": [

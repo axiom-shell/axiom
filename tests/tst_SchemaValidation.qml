@@ -113,7 +113,7 @@ TestCase {
     compare(input.mode, undefined);
   }
 
-  function test_defaults_follow_oneOf_by_type() {
+  function test_defaults_follow_one_of_by_type() {
     const filled = shared.applyDefaults({
       "widgets": [
         {

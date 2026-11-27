@@ -56,7 +56,7 @@ TestCase {
     }
   }
 
-  function test_listSpansTheRow() {
+  function test_list_spans_the_row() {
     harness.configure({});
     const row = createTemporaryObject(rowComp, root);
     verify(row);

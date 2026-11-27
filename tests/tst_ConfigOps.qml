@@ -273,7 +273,7 @@ TestCase {
     ]), null, "an order");
   }
 
-  function test_previewOps() {
+  function test_preview_ops() {
     const config = {
       "Bars": {
         "style": {

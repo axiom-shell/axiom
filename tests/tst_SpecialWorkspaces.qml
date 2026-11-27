@@ -5,7 +5,7 @@ import qs.components.methods
 TestCase {
   name: "SpecialWorkspaces"
 
-  function test_validId_data() {
+  function test_valid_id_data() {
     return [
       {
         "tag": "plain",
@@ -75,7 +75,7 @@ TestCase {
     ];
   }
 
-  function test_validId(data) {
+  function test_valid_id(data) {
     compare(SpecialWorkspaces.validId(data.id), data.ok);
   }
 
@@ -250,7 +250,7 @@ TestCase {
     ], [], []).length, 1, "no duplicate rows");
   }
 
-  function test_blockersAndDeletable() {
+  function test_blockers_and_deletable() {
     const free = {
       "configured": true,
       "windowCount": 0,
@@ -326,7 +326,7 @@ TestCase {
     compare(SpecialWorkspaces.cells(null, null, "all"), []);
   }
 
-  function test_cellsUnnamed() {
+  function test_cells_unnamed() {
     const unnamed = (count, open) => special("", count, open);
     const rows = SpecialWorkspaces.list([
       {
@@ -340,7 +340,7 @@ TestCase {
     compare(SpecialWorkspaces.cells(rows, [unnamed(1), special("a", 0)], "all").map(c => c.name), ["term", ""], "last in all too");
   }
 
-  function test_entryFor() {
+  function test_entry_for() {
     const entries = [
       {
         "id": "a",
@@ -383,14 +383,14 @@ TestCase {
     compare(SpecialWorkspaces.content(null, "m", "name", false, false), shown("name", "m", "", false));
   }
 
-  function test_contentUnnamed() {
+  function test_content_unnamed() {
     compare(SpecialWorkspaces.content(null, "", "name", false, false), shown("glyph", "star", "", false), "a star, never empty text");
     compare(SpecialWorkspaces.content(null, "", "both", true, false), shown("glyph", "star", "", false));
     compare(SpecialWorkspaces.content(null, "", "icon", true, false), shown("icons", "", "", false), "the apps' icons as for any");
     compare(SpecialWorkspaces.content(null, "", "icon", false, false), shown("glyph", "star", "", false));
   }
 
-  function test_contentBoth() {
+  function test_content_both() {
     const entry = {
       "id": "m",
       "icon": "ico",
@@ -404,7 +404,7 @@ TestCase {
     }, "m", "both", false, false), shown("text", "T", "star", false));
   }
 
-  function test_contentSplit() {
+  function test_content_split() {
     const entry = {
       "id": "m",
       "icon": "ico",
@@ -417,7 +417,7 @@ TestCase {
     compare(SpecialWorkspaces.content(null, "m", "name", true, true), shown("name", "m", "", true));
   }
 
-  function test_keyOfNamesOf() {
+  function test_key_of_names_of() {
     compare(SpecialWorkspaces.namesOf(SpecialWorkspaces.keyOf([""])), [""], "the unnamed cell alone is a cell");
     compare(SpecialWorkspaces.namesOf(SpecialWorkspaces.keyOf(["a", "", "b"])), ["a", "", "b"]);
     compare(SpecialWorkspaces.namesOf(SpecialWorkspaces.keyOf([])), []);
@@ -426,7 +426,7 @@ TestCase {
   }
 
   // What an x-ref dropdown offers: valid ids only, with their labels
-  function test_refOptionsLabels() {
+  function test_ref_options_labels() {
     const rows = [
       {
         "id": "magic",

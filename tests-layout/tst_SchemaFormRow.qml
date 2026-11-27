@@ -114,7 +114,7 @@ TestCase {
     compare(form.discards, [["flag"]]);
   }
 
-  function test_form_without_changedAt_has_no_marks() {
+  function test_form_without_changed_at_has_no_marks() {
     const form = createTemporaryObject(formComp, root, {
       "marked": false
     });
@@ -148,7 +148,7 @@ TestCase {
   }
 
   // The onboarder's rows get the reset button and the links too
-  function test_settingRows_marks_and_links() {
+  function test_setting_rows_marks_and_links() {
     const rows = createTemporaryObject(rowsComp, root);
     verify(rows);
     tryVerify(() => root.marks(rows).length === 1);
@@ -199,7 +199,7 @@ TestCase {
     }
   }
 
-  function test_settingsField_marks_and_links() {
+  function test_settings_field_marks_and_links() {
     const host = createTemporaryObject(fieldComp, root);
     verify(host);
     tryVerify(() => root.marks(host).length === 1);

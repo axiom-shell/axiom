@@ -45,26 +45,26 @@ TestCase {
     compare(WorkspaceCells.roomed([20, 30], null), [20, 30], "not segments: as they are");
   }
 
-  function test_startOf() {
+  function test_start_of() {
     compare(WorkspaceCells.startOf([20, 50, 20], 4, 0), 0);
     compare(WorkspaceCells.startOf([20, 50, 20], 4, 2), 78);
     compare(WorkspaceCells.startOf([20, 50, 20], 4, -1), 0, "none: the start");
     compare(WorkspaceCells.startOf([20, 50, 20], 4, 3), 102, "past the end: where a next cell would start");
   }
 
-  function test_iconSize() {
+  function test_icon_size() {
     compare(WorkspaceCells.iconSize(20), 12, "an even margin on an even cell");
     compare(WorkspaceCells.iconSize(21), 13, "and on an odd one");
     compare(WorkspaceCells.iconSize(26), 16);
   }
 
-  function test_contentSize() {
+  function test_content_size() {
     compare(WorkspaceCells.contentSize(26, 14, false), 17, "a symbol label, 1.2 × the text");
     compare(WorkspaceCells.contentSize(30, 14, true), 20, "an app icon taller than the label");
     compare(WorkspaceCells.contentSize(20, 14, true), 17, "a label taller than the app icon");
   }
 
-  function test_splitTail() {
+  function test_split_tail() {
     // thickness 20: pad 5, gap 2, icon 12; a line divider 1 along
     compare(WorkspaceCells.splitTail(0, 20, 1), 0, "no icons, no divider");
     compare(WorkspaceCells.splitTail(1, 20, 1), 23, "pad 5, divider, pad 5, one icon");
@@ -75,7 +75,7 @@ TestCase {
   // A label whose box has margins at its ends (an icon before text: 2 at
   // the start; a lone icon: 2 each side): the ink sits the padding in from
   // the start, and the end padding mirrors it
-  function test_splitShiftInk() {
+  function test_split_shift_ink() {
     for (const [box, start, end, what] of [[34, 2, 0, "an icon, then text"], [17, 2, 2, "a lone icon"], [40, 0, 0, "text only"], [40, 1, 1, "text with ink margins at both ends"], [36, 2, 1, "an icon, then text ending in a margin"]]) {
       const ink = box - start - end;
       const pad = WorkspaceCells.splitPad(28);
@@ -88,7 +88,7 @@ TestCase {
     }
   }
 
-  function test_dividerAlong() {
+  function test_divider_along() {
     compare(WorkspaceCells.dividerAlong(28, "line", 1), 1);
     compare(WorkspaceCells.dividerAlong(28, "none", 2), 2, "none draws a line");
     compare(WorkspaceCells.dividerAlong(28, "dot", 2), 4);
@@ -100,7 +100,7 @@ TestCase {
 
   // [pad][label][pad] divider [pad][icons][pad]: the label side of the
   // divider as far from it as the icons' side, the ends alike
-  function test_splitGeometry() {
+  function test_split_geometry() {
     // [label length, icons, thickness, divider along, what]; the helper is the
     // same along either axis (the vertical bar's text and glyph lengths are
     // CellContents' own), so a vertical bar's rows are the same sums
@@ -124,14 +124,14 @@ TestCase {
     }
   }
 
-  function test_rowLength() {
+  function test_row_length() {
     compare(WorkspaceCells.rowLength(1, 20, 20), 20, "one icon: a normal cell");
     // 3 × 12 + 2 × 2 + 8
     compare(WorkspaceCells.rowLength(3, 20, 20), 48);
     compare(WorkspaceCells.rowLength(0, 20, 12), 12, "never under the rest length");
   }
 
-  function test_distinctApps() {
+  function test_distinct_apps() {
     const windows = [
       {
         "id": "a",
@@ -159,7 +159,7 @@ TestCase {
     compare(WorkspaceCells.distinctApps([], 3), []);
   }
 
-  function test_byPosition() {
+  function test_by_position() {
     const windows = [
       {
         "id": "right",
@@ -226,7 +226,7 @@ TestCase {
     compare(WorkspaceCells.chosen([], 3, false, []), []);
   }
 
-  function test_squareSlots() {
+  function test_square_slots() {
     compare(WorkspaceCells.squareSlots(0), []);
     compare(WorkspaceCells.squareSlots(1), [
       {
@@ -242,7 +242,7 @@ TestCase {
     compare(WorkspaceCells.squareSlots(7).length, 4, "four or more: a 2×2 block");
   }
 
-  function test_labelFor() {
+  function test_label_for() {
     const entries = [
       {
         "workspace": 2,
@@ -300,7 +300,7 @@ TestCase {
     compare(WorkspaceCells.labelFor(undefined, 1), label("", "", "icon"));
   }
 
-  function test_badgeText() {
+  function test_badge_text() {
     compare(WorkspaceCells.badgeText(3, 3, "3", false), "3");
     compare(WorkspaceCells.badgeText(13, 3, "", false), "13");
     compare(WorkspaceCells.badgeText(102, 2, "", true), "2");
@@ -308,14 +308,14 @@ TestCase {
     compare(WorkspaceCells.badgeText(5, 5, " ", false), "5");
   }
 
-  function test_nameShown() {
+  function test_name_shown() {
     compare(WorkspaceCells.nameShown("3", 3, 3), "", "Hyprland's default name is its id");
     compare(WorkspaceCells.nameShown("1", 11, 1), "", "or the relative number shown");
     compare(WorkspaceCells.nameShown("3:web", 3, 3), "3:web");
     compare(WorkspaceCells.nameShown("", 3, 3), "", "niri's unnamed ones");
   }
 
-  function test_bySize_biggest_first_ties_in_order() {
+  function test_by_size_biggest_first_ties_in_order() {
     const wins = [
       {
         "id": "a",

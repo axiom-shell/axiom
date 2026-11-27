@@ -44,7 +44,7 @@ TestCase {
   // Every perpendicular edge, border on and off: what an end meets, and
   // what that makes it for an attached surface. One row per intersection,
   // the same for bar popouts, edge popouts, docks and submenus alike.
-  function test_endKinds_data() {
+  function test_end_kinds_data() {
     const rows = [];
     const expect = {
       "none": ["border", "bare"],
@@ -64,7 +64,7 @@ TestCase {
     }
     return rows;
   }
-  function test_endKinds(data) {
+  function test_end_kinds(data) {
     const e = SurfaceContext.endKind({
       "border": data.border,
       "bar": data.bar
@@ -85,7 +85,7 @@ TestCase {
     }[data.kind]);
   }
 
-  function test_menuStripIsAWall() {
+  function test_menu_strip_is_a_wall() {
     compare(SurfaceContext.endKind({
       "border": true,
       "bar": null,
@@ -96,7 +96,7 @@ TestCase {
   // Held, detached or on an island, no end joins (each host once gated
   // this differently); only a held surface has no walls (it keeps its
   // gaps), nor an island at a bar its own end is held clear of
-  function test_nothingJoins_data() {
+  function test_nothing_joins_data() {
     return [
       {
         "tag": "held",
@@ -129,7 +129,7 @@ TestCase {
       }
     ];
   }
-  function test_nothingJoins(data) {
+  function test_nothing_joins(data) {
     const s = Object.assign({}, surface, data.s);
     for (const background of [null, "solid", "pills"]) {
       const end = SurfaceContext.end(SurfaceContext.endKind({
@@ -342,7 +342,7 @@ TestCase {
     compare(SurfaceContext.opening(5.5, 5.2).end, 6);
   }
 
-  function test_openingOrNull() {
+  function test_opening_or_null() {
     compare(SurfaceContext.openingOrNull(5.5, 5.2), null);
     compare(SurfaceContext.openingOrNull(10, 10), null);
     compare(SurfaceContext.openingOrNull(0.5, 100, 22.5, 22.5), SurfaceContext.opening(0.5, 100, 22.5, 22.5));
@@ -1102,7 +1102,7 @@ TestCase {
   // A submenu joined at its parent's bar side, opening toward the end
   // (radius 14, so a fillet and its corner take 28): the parent's island
   // runs 400..600 as its box stretches it, its neighbour 700..900
-  function test_submenuJoin_data() {
+  function test_submenu_join_data() {
     const pills = [
       {
         "start": 100,
@@ -1181,7 +1181,7 @@ TestCase {
         "stretchTo": 760
       }, false, 750, true),
       // Toward the start: mirrored, the first island its neighbour (its
-      // start: test_submenuJoin_before_reaches); its end stays put
+      // start: test_submenu_join_before_reaches); its end stays put
       row("before: straight", {
         "wall": 350,
         "before": true
@@ -1191,7 +1191,7 @@ TestCase {
       }, true, 600, false)];
   }
 
-  function test_submenuJoin(data) {
+  function test_submenu_join(data) {
     const j = SurfaceContext.submenuJoin(data.p);
     compare(j.fillet, data.fillet);
     compare(j.stretch.end, data.end);
@@ -1199,7 +1199,7 @@ TestCase {
     compare(j.stretch.index, 1);
   }
 
-  function test_submenuJoin_before_reaches() {
+  function test_submenu_join_before_reaches() {
     const pills = [
       {
         "start": 100,
@@ -1236,7 +1236,7 @@ TestCase {
     verify(!landed.stretch.squareStart);
   }
 
-  function test_submenuJoin_off_a_pill() {
+  function test_submenu_join_off_a_pill() {
     // On the border's or a solid bar's stroke: a fillet where the stroke
     // runs on past it, nothing stretched
     const p = {
@@ -1262,7 +1262,7 @@ TestCase {
 
   // A submenu along its parent's side (100..500 at rest; radius 14, so a
   // fillet and the parent's corner take `need`), on a screen 0..1000
-  function test_submenuPlace() {
+  function test_submenu_place() {
     const need = EdgeAttach.filletMargin(2, 14) + 14;
     const at = extra => SurfaceContext.submenuPlace(Object.assign({
         "attach": {

@@ -22,7 +22,7 @@ TestCase {
     });
   }
 
-  function test_slideEdge_detached_nearest() {
+  function test_slide_edge_detached_nearest() {
     compare(edgeFor(ScreenEdge.Top, 1548, 50), ScreenEdge.Right, "top right, under a bar: the right edge is nearer (12 px) than the top (50)");
     compare(edgeFor(ScreenEdge.Top, 12, 50), ScreenEdge.Left);
     compare(edgeFor(ScreenEdge.Top, 780, 50), ScreenEdge.Top, "centred on the top edge");
@@ -32,7 +32,7 @@ TestCase {
     compare(edgeFor(ScreenEdge.Bottom, 1548, 968), ScreenEdge.Bottom);
   }
 
-  function test_slideEdge_attached_and_override() {
+  function test_slide_edge_attached_and_override() {
     compare(edgeFor(ScreenEdge.Top, 1548, 12, true), ScreenEdge.Top, "attached: out of its own edge");
     compare(edgeFor(ScreenEdge.Right, 1548, 0, true), ScreenEdge.Right);
     compare(edgeFor(ScreenEdge.Top, 1548, 50, false, "top"), ScreenEdge.Top, "an override wins");

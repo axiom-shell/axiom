@@ -16,7 +16,7 @@ TestCase {
     }), "niri", "an empty variable is unset");
   }
 
-  function test_sessionKey() {
+  function test_session_key() {
     const env = {
       "HYPRLAND_INSTANCE_SIGNATURE": "abc_1_2",
       "SWAYSOCK": "/run/user/1000/sway-ipc.1000.130759.sock"

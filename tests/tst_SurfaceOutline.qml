@@ -73,7 +73,7 @@ TestCase {
     verify(SurfaceOutline.strokePath(s, m, 252, 127).trim().startsWith("M 0 0.5 L 0.5 0.5 A 26 26"), SurfaceOutline.strokePath(s, m, 252, 127));
   }
 
-  function test_blurRegion_odd_stroke() {
+  function test_blur_region_odd_stroke() {
     const s = spec({
       "strokeWidth": 1,
       "filletRadius": 26,
@@ -88,7 +88,7 @@ TestCase {
   }
 
   // A fitted fractional fillet (26.2) also gets a whole margin
-  function test_blurRegion_odd_stroke_fitted() {
+  function test_blur_region_odd_stroke_fitted() {
     const s = spec({
       "strokeWidth": 1,
       "filletRadius": 28,
@@ -135,7 +135,7 @@ TestCase {
   // item: blurRegion's circle round each fillet's arc is centred on the arc
   // the stroke draws, to the half pixel its pieces are rounded to (the top edge's tests
   // do the same for the horizontal case)
-  function test_blurRegion_fillet_cuts_centre_on_the_arcs_vertical() {
+  function test_blur_region_fillet_cuts_centre_on_the_arcs_vertical() {
     for (const edge of [ScreenEdge.Left, ScreenEdge.Right]) {
       const s = spec({
         "edge": edge,
@@ -227,7 +227,7 @@ TestCase {
     compare(filleted.joinThroughEnd, 0);
   }
 
-  function test_withBoxStart() {
+  function test_with_box_start() {
     const s = spec({});
     const m = SurfaceOutline.withBoxStart(s, SurfaceOutline.metrics(s), 28);
     compare(m.boxStart, 28);
@@ -261,7 +261,7 @@ TestCase {
     compare(SurfaceOutline.metrics(spec({})).startCornerRadius, 27);
   }
 
-  function test_fitRadii() {
+  function test_fit_radii() {
     // Room for both: unchanged
     compare(SurfaceOutline.fitRadii(60, 28, 27), {
       "fillet": 28,
@@ -309,7 +309,7 @@ TestCase {
     compare(SurfaceOutline.metrics(spec({})).attachR, 28);
   }
 
-  function test_toItem_edges() {
+  function test_to_item_edges() {
     // 100 wide, 50 high; u = 10 along, v = 5 away from the edge
     compare(SurfaceOutline.toItem(ScreenEdge.Top, 100, 50, 0, 10, 5), {
       "x": 10,
@@ -459,7 +459,7 @@ TestCase {
 
   // The blur region: the fill out to the stroke's outer edge, rounded
   // where the outline is, the fillets' circles cut out of their squares
-  function test_blurRegion_attached_top() {
+  function test_blur_region_attached_top() {
     const s = spec({});
     const m = SurfaceOutline.metrics(s);
     const pieces = SurfaceOutline.blurRegion(s, m, 254, 128, 0, 0);
@@ -475,7 +475,7 @@ TestCase {
     compare([pieces[2].x, pieces[2].cuts[0].x], [227, 227]);
   }
 
-  function test_blurRegion_bottom_is_mirrored() {
+  function test_blur_region_bottom_is_mirrored() {
     const s = spec({
       "edge": ScreenEdge.Bottom
     });
@@ -486,7 +486,7 @@ TestCase {
     compare([pieces[1].y, pieces[1].cuts[0].y], [99, 72]);
   }
 
-  function test_blurRegion_left_edge_far_corners_right() {
+  function test_blur_region_left_edge_far_corners_right() {
     const s = spec({
       "edge": ScreenEdge.Left
     });
@@ -495,7 +495,7 @@ TestCase {
     compare([box.topLeft, box.topRight, box.bottomLeft, box.bottomRight], [0, 28, 0, 28]);
   }
 
-  function test_blurRegion_slid_is_cut_to_the_item() {
+  function test_blur_region_slid_is_cut_to_the_item() {
     const s = spec({});
     const pieces = SurfaceOutline.blurRegion(s, SurfaceOutline.metrics(s), 254, 128, 0, -80);
     compare(pieces.length, 1, "the fillets are behind the edge");
@@ -503,7 +503,7 @@ TestCase {
     compare(pieces[0].bottomLeft, 10, "a corner no bigger than what shows");
   }
 
-  function test_blurRegion_joined_and_detached() {
+  function test_blur_region_joined_and_detached() {
     const joined = spec({
       "joinStart": true,
       "backfill": 3
@@ -533,7 +533,7 @@ TestCase {
     compare([box[0].topLeft, box[0].topRight, box[0].bottomLeft, box[0].bottomRight], [6, 0, 28, 28]);
   }
 
-  function test_placeRegion() {
+  function test_place_region() {
     const placed = SurfaceOutline.placeRegion([
       {
         "x": 0.5,

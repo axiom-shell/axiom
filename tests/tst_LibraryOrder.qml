@@ -67,7 +67,7 @@ TestCase {
     compare(names(sections[2].types), ["Mystery"]);
   }
 
-  function test_grouped_keepOrder_keeps_the_given_order() {
+  function test_grouped_keep_order_keeps_the_given_order() {
     const given = [
       {
         "type": "b",

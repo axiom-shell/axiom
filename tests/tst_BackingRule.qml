@@ -5,7 +5,7 @@ import qs.components.methods
 TestCase {
   name: "BackingRule"
 
-  function test_backsOn_truth_table() {
+  function test_backs_on_truth_table() {
     for (let i = 0; i < 16; i++) {
       const o = {
         "backing": (i & 1) !== 0,

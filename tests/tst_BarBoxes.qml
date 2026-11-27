@@ -17,7 +17,7 @@ TestCase {
     compare(BarBoxes.fromList(ids, null), []);
   }
 
-  function test_sectionModel() {
+  function test_section_model() {
     const itemsOf = e => e.type === "multi" ? ["a", "b"] : [];
     const m = BarBoxes.sectionModel([
       {

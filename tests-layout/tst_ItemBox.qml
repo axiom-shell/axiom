@@ -100,7 +100,7 @@ TestCase {
   }
 
   // A box of FormRows takes `bodySpacing: 0`: the rows abut
-  function test_bodySpacing_zero_abuts_rows() {
+  function test_body_spacing_zero_abuts_rows() {
     harness.configure({});
     const rows = createTemporaryObject(rowsComp, root, {
       "bodySpacing": 0

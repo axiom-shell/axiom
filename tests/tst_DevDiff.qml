@@ -88,7 +88,7 @@ TestCase {
   // Titles from the schema (a `$ref` followed), keys without one, an
   // item by its id; unknown keys (a setting live has and dev's schema
   // doesn't) by name
-  function test_titleParts() {
+  function test_title_parts() {
     compare(DevDiff.titleParts(schema, ["Appearance", "font", "size"]), [
       {
         "text": "Appearance",
@@ -124,7 +124,7 @@ TestCase {
 
   // A string as it is, anything else as JSON on one line, long ones cut;
   // a side without the key has none
-  function test_valueText() {
+  function test_value_text() {
     const row = {
       "path": ["A"],
       "side": "dev",

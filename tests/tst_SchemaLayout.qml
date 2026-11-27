@@ -199,7 +199,7 @@ TestCase {
 
   // A nested object's `x-enabledIf` (and its `x-disabledNote`) goes on every
   // row inside it as `groupEnabledIf`, in both an `x-row` object and a plain one
-  function test_rows_group_enabledIf() {
+  function test_rows_group_enabled_if() {
     const rows = SchemaLayout.rows({
       "properties": {
         "plain": {
@@ -234,7 +234,7 @@ TestCase {
   }
 
   // A picker's value naming nothing, or something that's off (`x-mustExist`)
-  function test_optionProblem() {
+  function test_option_problem() {
     const options = ["", "a", "b"];
     const enabled = ["", "a"];
     const rows = [["", "", "empty"], ["a", "", "listed and on"], ["gone", "missing", "not listed"], ["b", "off", "listed, not on"]];
@@ -280,7 +280,7 @@ TestCase {
 
   // formRows: keys an icon field draws are left out, `order` goes first,
   // group and object rows are dropped
-  function test_formRows() {
+  function test_form_rows() {
     const props = {
       "icon": {
         "type": "string",
@@ -352,7 +352,7 @@ TestCase {
   // `x-placeUnder`: a row moves under the sibling it names, past the rows
   // beside it and those placed under it before; one naming a key not
   // there, or a placed one, stays put
-  function test_placedUnder() {
+  function test_placed_under() {
     const properties = {
       "style": {},
       "shape": {},
@@ -386,7 +386,7 @@ TestCase {
   // `x-control: tiles`: every option, one whose `x-enumShowIf` fails (the
   // chosen one too) with its `x-tileHint`, "" without one; a string hint
   // is the whole field's
-  function test_tileOptions() {
+  function test_tile_options() {
     const field = {
       "type": "string",
       "enum": ["a", "b", "c"],
@@ -449,7 +449,7 @@ TestCase {
     compare(SchemaLayout.tileHint(both, "a"), "");
   }
 
-  function test_waitsForUser() {
+  function test_waits_for_user() {
     verify(SchemaLayout.waitsForUser({
       "type": "string",
       "x-applyOnSave": true
@@ -469,7 +469,7 @@ TestCase {
     }
   }
 
-  function test_defaultAt() {
+  function test_default_at() {
     const objectSchema = {
       "properties": {
         "size": {
@@ -492,7 +492,7 @@ TestCase {
       compare(SchemaLayout.defaultAt(objectSchema, path), expected, message);
   }
 
-  function test_failingKey() {
+  function test_failing_key() {
     const values = {
       "/$supports.blur": false,
       "/$compositor": "sway",
@@ -516,7 +516,7 @@ TestCase {
   // `{ not: false }` on a form context key that isn't there holds (every
   // other form than the bar editor's widget options, which sets
   // `$widget.opensOwnPopout`)
-  function test_failingKey_absent_not_false() {
+  function test_failing_key_absent_not_false() {
     const condition = {
       "$widget.opensOwnPopout": {
         "not": false
@@ -527,7 +527,7 @@ TestCase {
     compare(SchemaLayout.failingKey(condition, key => false), "$widget.opensOwnPopout");
   }
 
-  function test_showIfHolds() {
+  function test_show_if_holds() {
     const values = {
       "mode": "grid",
       "on": true,
@@ -951,7 +951,7 @@ TestCase {
   }
 
   // Durations are stored in ms and shown in their unit
-  function test_unitScale() {
+  function test_unit_scale() {
     compare(SchemaLayout.unitScale("s"), 1000);
     compare(SchemaLayout.unitScale("min"), 60000);
     compare(SchemaLayout.unitScale("d"), 86400000);
@@ -961,7 +961,7 @@ TestCase {
   }
 
   // A condition key may be dotted and climb with `../`
-  function test_keyPath() {
+  function test_key_path() {
     compare(SchemaLayout.keyPath(["A", "b"], "c"), ["A", "b", "c"]);
     compare(SchemaLayout.keyPath(["A", "b"], "open.onHover"), ["A", "b", "open", "onHover"]);
     compare(SchemaLayout.keyPath(["A", "b"], "../c"), ["A", "c"]);
@@ -1174,7 +1174,7 @@ TestCase {
 
   // Wide cards ahead of every narrow one stay first, the rest go last;
   // the category's own card is wide, after its sections'
-  function test_categoryGroups_order() {
+  function test_category_groups_order() {
     const wide = {
       "type": "array",
       "x-wide": true,
@@ -1279,7 +1279,7 @@ TestCase {
     }
   }
 
-  function test_objectGroups() {
+  function test_object_groups() {
     const groups = SchemaLayout.objectGroups({
       "x-order": ["b", "a"],
       "properties": {
@@ -1322,7 +1322,7 @@ TestCase {
 
   // A section whose own `x-showIf` fails (the compositor can't do what it
   // sets) is left out, and its category with it; without `valueOf`, kept
-  function test_categories_section_showIf() {
+  function test_categories_section_show_if() {
     const field = {
       "type": "string",
       "default": ""
@@ -1357,7 +1357,7 @@ TestCase {
 
   // Only the compositor's (`/$`) conditions count, on the section, the
   // objects on the way and the field; the config's are ignored
-  function test_compositorAllows() {
+  function test_compositor_allows() {
     const schema = {
       "properties": {
         "Hypr": {
@@ -1444,7 +1444,7 @@ TestCase {
 
   // `x-hintedIf`: hidden while it fails, unless every failing key is a
   // capability the backend names an upgrade for (then greyed, failingKey)
-  function test_hintedHides_data() {
+  function test_hinted_hides_data() {
     const sway = capability => ["windowRounding", "windowDim"].includes(capability) ? "SwayFX can." : "";
     const none = capability => "";
     return [
@@ -1514,7 +1514,7 @@ TestCase {
     ];
   }
 
-  function test_hintedHides(data) {
+  function test_hinted_hides(data) {
     const valueOf = key => key === "/$compositor" ? "sway" : data.supports.includes(key.slice("/$supports.".length));
     compare(SchemaLayout.hintedHides(data.condition, valueOf, data.hint), data.hides);
   }
@@ -1590,7 +1590,7 @@ TestCase {
   // A declared category's `cards` ([{ card, title }]) are its own cards in
   // order; `showIf` (`/`-rooted keys, as a section's) leaves it out, with
   // any section naming it, and without `valueOf` it's kept
-  function test_categories_cards_and_showIf() {
+  function test_categories_cards_and_show_if() {
     const schema = {
       "x-categories": [
         {
@@ -1659,7 +1659,7 @@ TestCase {
     verify(!SchemaLayout.groups(schema, "Bars").some(group => group.rows.some(row => row.path[1] === "items")), "Bars.items is edited by the bar editor");
   }
 
-  function test_real_schema_showIf_targets_exist() {
+  function test_real_schema_show_if_targets_exist() {
     const bad = [];
     const resolve = node => node?.$ref ? schema.definitions[node.$ref.replace("#/definitions/", "")] : node;
     // `parents`: the objects holding `node`, outermost first, for `../`
@@ -1916,7 +1916,7 @@ TestCase {
 
   // A field that holds the id of something defined elsewhere (`x-ref`) is
   // drawn as its picker only for the items its `when` matches
-  function test_refKind() {
+  function test_ref_kind() {
     const bind = schema.definitions.Keybind.properties.argument;
     compare(SchemaLayout.refKind(bind, key => ({
           "action": "toggleSpecial"
@@ -1942,7 +1942,7 @@ TestCase {
         })[key]), "");
   }
 
-  function test_followsSibling() {
+  function test_follows_sibling() {
     verify(!SchemaLayout.followsSibling({}));
     verify(!SchemaLayout.followsSibling(null));
     verify(!SchemaLayout.followsSibling({

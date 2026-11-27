@@ -6,7 +6,7 @@ import qs.components.methods
 TestCase {
   name: "HyprState"
 
-  function test_keyboardPrefersTheMainOne() {
+  function test_keyboard_prefers_the_main_one() {
     compare(HyprState.keyboard({
       "keyboards": [
         {
@@ -27,7 +27,7 @@ TestCase {
     });
   }
 
-  function test_keyboardFallsBackToTheFirst() {
+  function test_keyboard_falls_back_to_the_first() {
     compare(HyprState.keyboard({
       "keyboards": [
         {
@@ -45,7 +45,7 @@ TestCase {
     compare(HyprState.keyboard(null), null);
   }
 
-  function test_specialsUnnamed() {
+  function test_specials_unnamed() {
     const workspaces = [
       {
         "id": -98,
@@ -137,7 +137,7 @@ TestCase {
     compare(result[1].output, "");
   }
 
-  function test_gapSides_data() {
+  function test_gap_sides_data() {
     return [
       {
         "tag": "no reply",
@@ -204,7 +204,7 @@ TestCase {
     ];
   }
 
-  function test_gapSides(data) {
+  function test_gap_sides(data) {
     compare(HyprState.gapSides(data.option), data.sides);
   }
 
@@ -256,7 +256,7 @@ TestCase {
   }
 
   // Hyprland 0.57: a special workspace has a name and no id
-  function test_windowSpecialNoId() {
+  function test_window_special_no_id() {
     const w = HyprState.window({
       "address": "0x6b",
       "mapped": true,
@@ -281,7 +281,7 @@ TestCase {
     compare(w.fullscreen, true);
   }
 
-  function test_outputSpecialNoId() {
+  function test_output_special_no_id() {
     const o = HyprState.output({
       "name": "DP-1",
       "activeWorkspace": {
@@ -371,7 +371,7 @@ TestCase {
     }).urgent, false, "not urgent unless it says so");
   }
 
-  function test_layerRects() {
+  function test_layer_rects() {
     const monitors = [
       {
         "name": "DP-1",

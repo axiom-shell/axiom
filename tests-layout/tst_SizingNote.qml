@@ -83,7 +83,7 @@ TestCase {
     compare(shrunk.lineFor("cardSize"), "Cards at 100% and content at 100%, as in Look & Feel · Cards 180 px · Shrunk to 80% to fit DP-1");
   }
 
-  function test_moduleLine() {
+  function test_module_line() {
     const n = root.note(null, null);
     compare(n.moduleLine(150), "Content at 150% (100% × 100% here × 150% this module)");
     const shrunk = root.note(null, {

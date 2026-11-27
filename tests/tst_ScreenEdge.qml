@@ -25,7 +25,7 @@ TestCase {
     compare(ScreenEdge.opposite(ScreenEdge.Right), ScreenEdge.Left);
   }
 
-  function test_fromConfig() {
+  function test_from_config() {
     compare(ScreenEdge.fromConfig("left"), ScreenEdge.Left);
     compare(ScreenEdge.fromConfig("bottom"), ScreenEdge.Bottom);
     compare(ScreenEdge.fromConfig("middle"), ScreenEdge.Top, "anything else is Top");
@@ -33,7 +33,7 @@ TestCase {
     compare(ScreenEdge.fromConfig(undefined), ScreenEdge.Top);
   }
 
-  function test_edgeSpot() {
+  function test_edge_spot() {
     compare(ScreenEdge.edgeSpot("top", 0.25, 0.1), Qt.point(0.25, 0.1));
     compare(ScreenEdge.edgeSpot("bottom", 0.25, 0.1), Qt.point(0.25, 0.9));
     compare(ScreenEdge.edgeSpot("left", 0.25, 0.1), Qt.point(0.1, 0.25));
@@ -41,7 +41,7 @@ TestCase {
     compare(ScreenEdge.edgeSpot("", 0.5, 0), Qt.point(0.5, 1), "anything else is the bottom edge");
   }
 
-  function test_spotPlace_nearest() {
+  function test_spot_place_nearest() {
     compare(ScreenEdge.spotPlace(0.3, 0.1, "bottom"), {
       "edge": "top",
       "along": 0.3,
@@ -55,7 +55,7 @@ TestCase {
     compare(ScreenEdge.spotPlace(0.5, 0.75, "top").edge, "bottom");
   }
 
-  function test_spotPlace_round_trip() {
+  function test_spot_place_round_trip() {
     // Spots nearer their own edge than the ends (further in, another
     // edge is nearer)
     for (const edge of ["top", "bottom", "left", "right"])
@@ -68,7 +68,7 @@ TestCase {
       }
   }
 
-  function test_spotPlace_ties_keep_preferred() {
+  function test_spot_place_ties_keep_preferred() {
     compare(ScreenEdge.spotPlace(0.5, 0.5, "right").edge, "right", "the middle keeps the current edge");
     compare(ScreenEdge.spotPlace(0.5, 0.5, "left").across, 0.5);
     compare(ScreenEdge.spotPlace(0, 0, "left").edge, "left", "a corner keeps either edge it's on");
@@ -76,7 +76,7 @@ TestCase {
     compare(ScreenEdge.spotPlace(0.5, 0.5, undefined).edge, "top");
   }
 
-  function test_spotPlace_clamps() {
+  function test_spot_place_clamps() {
     compare(ScreenEdge.spotPlace(-0.5, 1.4, "bottom"), {
       "edge": "bottom",
       "along": 0,

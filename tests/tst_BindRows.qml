@@ -22,7 +22,7 @@ TestCase {
     }, extra ?? {});
   }
 
-  function test_collapseNumbered() {
+  function test_collapse_numbered() {
     const rows = BindRows.collapseNumbered([row("Terminal", ["SUPER"], ["Return"]), row("Go to workspace 1", ["SUPER"], ["1"]), row("Go to workspace 2", ["SUPER"], ["2"]), row("Go to workspace 10", ["SUPER"], ["0"]), row("Move to workspace 1", ["SUPER", "SHIFT"], ["1"]), row("Move to workspace 3", ["SUPER", "SHIFT"], ["3"])]);
     compare(rows.map(r => r.label), ["Terminal", "Go to workspace", "Move to workspace"]);
     compare(rows[1].combos[0].keys, ["1", "2", "10"]);
@@ -33,7 +33,7 @@ TestCase {
     compare(BindRows.collapseNumbered([row("Go to workspace 1", ["SUPER"], ["1"])])[0].label, "Go to workspace 1", "a lone number stays");
   }
 
-  function test_collapseDirections() {
+  function test_collapse_directions() {
     const rows = BindRows.collapseDirections([row("Focus right", ["SUPER"], ["L", "→"]), row("Focus left", ["SUPER"], ["H", "←"], {
         "action": "focusLeft",
         "user": true
@@ -57,7 +57,7 @@ TestCase {
     compare(twice[0].overrides, "Focus left");
   }
 
-  function test_byModifiers() {
+  function test_by_modifiers() {
     const groups = BindRows.byModifiers([row("Mute", [], ["XF86AudioMute"]), row("Browser", ["SUPER", "SHIFT"], ["B"]), row("Terminal", ["SUPER"], ["Return"]), row("Lock", ["SUPER", "CTRL"], ["L"]), row("Files", ["SUPER"], ["E"])]);
     compare(groups.map(g => g.mods.join("+")), ["SUPER", "SUPER+CTRL", "SUPER+SHIFT", ""]);
     compare(groups[0].rows.map(r => r.label), ["Terminal", "Files"]);

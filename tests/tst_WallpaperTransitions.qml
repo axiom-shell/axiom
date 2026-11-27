@@ -5,7 +5,7 @@ import qs.components.methods
 TestCase {
   name: "WallpaperTransitions"
 
-  function test_namedTransition() {
+  function test_named_transition() {
     const t = WallpaperTransitions.pick("fade", [], 7, "");
     compare(t.name, "fade");
     compare(t.origin, {
@@ -24,16 +24,16 @@ TestCase {
     compare(WallpaperTransitions.pick("fade", [], 3, "nonsense").name, "fade", "an unknown preview is ignored");
   }
 
-  function test_unknownType() {
+  function test_unknown_type() {
     compare(WallpaperTransitions.pick("sparkle", [], 1, "").name, "fade");
   }
 
-  function test_randomIsDeterministic() {
+  function test_random_is_deterministic() {
     for (let seed = 0; seed < 50; seed++)
       compare(WallpaperTransitions.pick("random", [], seed, ""), WallpaperTransitions.pick("random", [], seed, ""), "seed " + seed);
   }
 
-  function test_randomStaysInPool() {
+  function test_random_stays_in_pool() {
     const pool = ["wipe", "grow", "unknown"];
     const seen = {};
     for (let seed = 0; seed < 200; seed++) {
@@ -44,7 +44,7 @@ TestCase {
     verify(seen.wipe && seen.grow, "both come up");
   }
 
-  function test_randomEmptyPoolUsesAll() {
+  function test_random_empty_pool_uses_all() {
     const seen = {};
     for (let seed = 0; seed < 500; seed++)
       seen[WallpaperTransitions.pick("random", [], seed, "").name] = true;
@@ -71,7 +71,7 @@ TestCase {
     };
   }
 
-  function test_fixedDirections() {
+  function test_fixed_directions() {
     const angles = {
       "right": 0,
       "downRight": Math.PI / 4,
@@ -85,7 +85,7 @@ TestCase {
         fuzzyCompare(WallpaperTransitions.pick(name, [], 5, "", opts(direction, "random")).angle, angles[direction], 1e-9, name + " " + direction);
   }
 
-  function test_randomDirectionKeepsAxis() {
+  function test_random_direction_keeps_axis() {
     for (let seed = 0; seed < 50; seed++) {
       const angle = WallpaperTransitions.pick("blinds", [], seed, "", opts("random", "random")).angle;
       const quarter = angle / (Math.PI / 2);
@@ -93,7 +93,7 @@ TestCase {
     }
   }
 
-  function test_clickPoint() {
+  function test_click_point() {
     const point = {
       "x": 0.1,
       "y": 0.2
@@ -113,13 +113,13 @@ TestCase {
     compare(WallpaperTransitions.pick("wipe", [], 9, "", opts("left", "click", middle)).angle, Math.PI, "a click in the middle leaves it to the direction");
   }
 
-  function test_clickWithoutPointIsRandom() {
+  function test_click_without_point_is_random() {
     for (let seed = 0; seed < 30; seed++)
       for (const name of ["grow", "wipe", "fade", "clock"])
         compare(WallpaperTransitions.pick(name, [], seed, "", opts("random", "click", null)), WallpaperTransitions.pick(name, [], seed, "", opts("random", "random")), name + " seed " + seed);
   }
 
-  function test_fixedPositions() {
+  function test_fixed_positions() {
     compare(WallpaperTransitions.pick("ripple", [], 2, "", opts("random", "center")).origin, {
       "x": 0.5,
       "y": 0.5

@@ -164,7 +164,7 @@ TestCase {
     compare(at.y, 50);
   }
 
-  function test_nearestEdge() {
+  function test_nearest_edge() {
     compare(FreeMenuPlace.nearestEdge(500, 10, 1000, 600), "top");
     compare(FreeMenuPlace.nearestEdge(500, 590, 1000, 600), "bottom");
     compare(FreeMenuPlace.nearestEdge(5, 300, 1000, 600), "left");
@@ -295,7 +295,7 @@ TestCase {
     })), null, "no longer draggable");
   }
 
-  function test_keepsDrag() {
+  function test_keeps_drag() {
     verify(FreeMenuPlace.keepsDrag({
       "free": true,
       "poppedOut": false,
@@ -313,7 +313,7 @@ TestCase {
     }), "a popped-out edge menu");
   }
 
-  function test_canDrag() {
+  function test_can_drag() {
     verify(FreeMenuPlace.canDrag({
       "placement": "free",
       "draggable": true
@@ -408,7 +408,7 @@ TestCase {
     }, "a strip is unaffected by atWidget");
   }
 
-  function test_openAction() {
+  function test_open_action() {
     const base = {
       "poppedOut": false,
       "free": true,
@@ -478,7 +478,7 @@ TestCase {
     ];
   }
 
-  function test_openedOn() {
+  function test_opened_on() {
     const base = {
       "opener": "",
       "at": "centre",
@@ -516,7 +516,7 @@ TestCase {
     })), "DP-1", "off every screen (right edges are outside): its configured screen");
   }
 
-  function test_shownOn() {
+  function test_shown_on() {
     const names = ["DP-1", "HDMI-A-1"];
     compare(FreeMenuPlace.shownOn({
       "popOut": null,

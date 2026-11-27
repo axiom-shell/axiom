@@ -26,14 +26,14 @@ TestCase {
     return files.json("qml/config/json/config.schema.json").definitions.Keybind.properties.action.enum;
   }
 
-  function test_everySchemaActionIsKnown() {
+  function test_every_schema_action_is_known() {
     for (const action of _schemaActions())
       verify(action === "exec" || test.table.ipcActions[action] !== undefined || test.table.compositorActions[action] !== undefined, action + " has no entry");
   }
 
   // Every action has its icon in the table (the picker, a tile, a
   // launcher command show it)
-  function test_everyActionHasAnIcon() {
+  function test_every_action_has_an_icon() {
     for (const action of _schemaActions())
       verify(test.table.icons[action] !== undefined, action + " has no icon");
     compare(BindActions.iconOf(test.table, "wifi"), "wifi");
@@ -62,7 +62,7 @@ TestCase {
     });
   }
 
-  function test_noActionIsBoth() {
+  function test_no_action_is_both() {
     for (const action of Object.keys(test.table.ipcActions))
       verify(test.table.compositorActions[action] === undefined, action + " is both an IPC and a compositor action");
   }
@@ -95,7 +95,7 @@ TestCase {
     }), "disable", "an on/off action's off");
   }
 
-  function test_ipcCall() {
+  function test_ipc_call() {
     compare(BindActions.ipcCall(test.table, "overlayPage", " Themes "), {
       "target": "overlay",
       "function": "page",
@@ -139,7 +139,7 @@ TestCase {
   // compositor's bind descriptions (the table's, where they take no
   // argument) are one name each; a hot corner's call (the table's calls,
   // as the schema build fills it) shows where a bind's does
-  function test_labelsAgree() {
+  function test_labels_agree() {
     const schema = files.json("qml/config/json/config.schema.json");
     const binds = schema.definitions.Keybind.properties;
     const corners = schema.properties.HotCorners.properties.items.items.properties;
@@ -151,7 +151,7 @@ TestCase {
     compare(corners.call["x-showIf"].action.filter(action => !binds.call["x-showIf"].action.includes(action)), [], "a corner's call shows where a bind's does");
   }
 
-  function test_needsArgument() {
+  function test_needs_argument() {
     verify(shared.calls.BindActions.needsArgument(test.table, "exec"));
     verify(shared.calls.BindActions.needsArgument(test.table, "workspaceNth"), "{0} in the IPC call");
     verify(shared.calls.BindActions.needsArgument(test.table, "focusDir"), "{0} in a compositor action's label");
@@ -162,7 +162,7 @@ TestCase {
 
   // An argument is needed exactly where the IPC call or the label has a
   // place for it ({0}), and by exec
-  function test_argumentsMatchTheTemplates() {
+  function test_arguments_match_the_templates() {
     for (const action of _schemaActions()) {
       const template = test.table.ipcActions[action]?.[0] ?? test.table.compositorActions[action]?.[0] ?? "";
       compare(shared.calls.BindActions.needsArgument(test.table, action), action === "exec" || template.includes("{0}"), action);
@@ -195,7 +195,7 @@ TestCase {
     }), "App launcher (open)");
   }
 
-  function test_splitDescription() {
+  function test_split_description() {
     compare(shared.calls.BindActions.splitDescription("Media: Play"), {
       "section": "Media",
       "label": "Play"
@@ -218,7 +218,7 @@ TestCase {
     });
   }
 
-  function test_hasOwnSection() {
+  function test_has_own_section() {
     verify(shared.calls.BindActions.hasOwnSection("Mine: Kill it"));
     verify(!shared.calls.BindActions.hasOwnSection("Mine:no space"));
   }
@@ -239,7 +239,7 @@ TestCase {
       verify(_schemaActions().includes(action), action + " is an action");
   }
 
-  function test_appliesUnder() {
+  function test_applies_under() {
     const raw = {
       "action": "raw",
       "compositor": "hyprland",
@@ -252,7 +252,7 @@ TestCase {
     }, "sway", {}));
   }
 
-  function test_tapsNeedModifierTap() {
+  function test_taps_need_modifier_tap() {
     const tap = {
       "key": "Super_L",
       "action": "launcher"
@@ -264,7 +264,7 @@ TestCase {
     verify(shared.calls.BindActions.keySupported("SUPER + Q", {}));
   }
 
-  function test_switcherHeld() {
+  function test_switcher_held() {
     compare(shared.calls.BindActions.switcherHeld(["ALT"]), ["ALT"]);
     compare(shared.calls.BindActions.switcherHeld(["ALT", "SHIFT"]), ["ALT"], "SHIFT only turns it around");
     compare(shared.calls.BindActions.switcherHeld(["SHIFT"]), ["SHIFT"], "unless it's all there is");

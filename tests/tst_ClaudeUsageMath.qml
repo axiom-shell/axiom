@@ -30,7 +30,7 @@ TestCase {
       "status": "pending"
     })
 
-  function test_percentOf() {
+  function test_percent_of() {
     compare(ClaudeUsageMath.percentOf(low, "session"), 20, "session is the default metric");
     compare(ClaudeUsageMath.percentOf(low, "weekly"), 80, "weekly reads the weekly limit");
     compare(ClaudeUsageMath.percentOf(pending, "session"), -1, "a pending row has no percent");

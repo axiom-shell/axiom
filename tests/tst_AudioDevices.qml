@@ -6,7 +6,7 @@ import qs.components.methods
 TestCase {
   name: "AudioDevices"
 
-  function test_deviceName() {
+  function test_device_name() {
     const rows = [
       // [device, title, detail, translate, what]
       [

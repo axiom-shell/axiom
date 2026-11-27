@@ -30,7 +30,7 @@ TestCase {
     root.levels = found;
   }
 
-  function test_settingsRows_data() {
+  function test_settings_rows_data() {
     return [
       {
         "path": "WindowSwitcher.edge",
@@ -75,7 +75,7 @@ TestCase {
     ];
   }
 
-  function test_settingsRows(data) {
+  function test_settings_rows(data) {
     compare(root.levels[data.path], data.level, data.path + ": " + data.why);
   }
 
@@ -90,7 +90,7 @@ TestCase {
     return out;
   }
 
-  function test_barStyleSections() {
+  function test_bar_style_sections() {
     const look = root.formLevels("Look");
     compare(look.splitLabelColor, 3);
     compare(look.tintOpacity, 0);

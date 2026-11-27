@@ -165,7 +165,7 @@ TestCase {
   }
 
   // The holder is the nearest ancestor (from the item itself) with a `buildHeld`
-  function test_holderOf_walks_parents() {
+  function test_holder_of_walks_parents() {
     const page = {
       "buildHeld": true,
       "parent": null

@@ -5,7 +5,7 @@ import qs.components.methods
 TestCase {
   name: "DateFormats"
 
-  function test_use24Hour() {
+  function test_use24_hour() {
     compare(DateFormats.use24Hour("24", "h:mm AP"), true, "set beats the region");
     compare(DateFormats.use24Hour("12", "HH:mm"), false);
     compare(DateFormats.use24Hour("auto", "h:mm AP"), false, "en_US");
@@ -15,7 +15,7 @@ TestCase {
     compare(DateFormats.use24Hour("auto", undefined), true);
   }
 
-  function test_orderOf() {
+  function test_order_of() {
     compare(DateFormats.orderOf("dd.MM.yy"), "dmy");
     compare(DateFormats.orderOf("d/M/yy"), "dmy");
     compare(DateFormats.orderOf("M/d/yy"), "mdy");
@@ -24,7 +24,7 @@ TestCase {
     compare(DateFormats.orderOf(""), "dmy");
   }
 
-  function test_styleOf() {
+  function test_style_of() {
     compare(DateFormats.styleOf("language", true, "M/d/yy"), null);
     compare(DateFormats.styleOf("region", false, "dd.MM.yy"), null, "no region: the language's");
     compare(DateFormats.styleOf("region", true, "dd.MM.yy"), "dmy");
@@ -42,7 +42,7 @@ TestCase {
     compare(DateFormats.named(null, "mediumDate"), null);
   }
 
-  function test_firstDay() {
+  function test_first_day() {
     compare(DateFormats.firstDay("monday", 7), 1);
     compare(DateFormats.firstDay("sunday", 1), 0);
     compare(DateFormats.firstDay("saturday", 1), 6);
@@ -58,7 +58,7 @@ TestCase {
     compare(DateFormats.timeName(false), "time12");
   }
 
-  function test_weekNumber_data() {
+  function test_week_number_data() {
     return [
       {
         "tag": "new year in week 1",
@@ -93,7 +93,7 @@ TestCase {
     ];
   }
 
-  function test_weekNumber(data) {
+  function test_week_number(data) {
     compare(DateFormats.weekNumber(data.date), data.week);
   }
 }

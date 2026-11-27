@@ -265,7 +265,7 @@ TestCase {
   }
 
   // Escape goes on to the parents unless the entry is told to cancel
-  function test_submitEntry_escape() {
+  function test_submit_entry_escape() {
     const host = createTemporaryObject(escapeComp, root);
     host.entry.input.forceActiveFocus();
     keyClick(Qt.Key_Escape);
@@ -288,7 +288,7 @@ TestCase {
   }
 
   // Tab out commits what was typed and the pushed value is that text, at once and after
-  function test_commitEntry_keeps_typed_text_on_tab_out() {
+  function test_commit_entry_keeps_typed_text_on_tab_out() {
     const entry = createTemporaryObject(pushedComp, root);
     root.type(entry, "typed");
     entry.input.focus = false;
@@ -311,7 +311,7 @@ TestCase {
 
   // Text typed under one scope is dropped when the scope changed before it
   // committed, never written onto the new one
-  function test_commitEntry_drops_a_commit_after_the_scope_changed() {
+  function test_commit_entry_drops_a_commit_after_the_scope_changed() {
     const entry = createTemporaryObject(scopedComp, root);
     root.type(entry, "typed");
     entry.scope = "two";

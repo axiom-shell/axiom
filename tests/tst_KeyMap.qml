@@ -5,12 +5,12 @@ import qs.components.methods
 TestCase {
   name: "KeyMap"
 
-  function test_rowsAreEvenlyWide() {
+  function test_rows_are_evenly_wide() {
     for (const row of KeyMap.rows)
       compare(row.reduce((sum, k) => sum + k.width, 0), 15);
   }
 
-  function test_keysAreUnique() {
+  function test_keys_are_unique() {
     const seen = {};
     for (const key of KeyMap.allKeys) {
       verify(seen[key.toLowerCase()] === undefined, key);
@@ -56,7 +56,7 @@ TestCase {
     compare(shifted.w.source, "free");
   }
 
-  function test_pausedYieldsToActive() {
+  function test_paused_yields_to_active() {
     const binds = [
       {
         "key": "SUPER + A",
@@ -71,7 +71,7 @@ TestCase {
     compare(map.a.index, 1);
   }
 
-  function test_labelOf() {
+  function test_label_of() {
     compare(KeyMap.labelOf("bracketleft"), "[");
     compare(KeyMap.labelOf("XF86AudioRaiseVolume"), "Vol +");
     compare(KeyMap.labelOf("return"), "Enter", "any case");

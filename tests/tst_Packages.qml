@@ -5,7 +5,7 @@ import qs.components.methods
 TestCase {
   name: "Packages"
 
-  function test_distroFamily_data() {
+  function test_distro_family_data() {
     return [
       {
         "tag": "arch",
@@ -45,18 +45,18 @@ TestCase {
     ];
   }
 
-  function test_distroFamily(data) {
+  function test_distro_family(data) {
     compare(Packages.distroFamily(data.text), data.want);
   }
 
   // Each key names every distribution, so a new one can't be half added
-  function test_everyKeyNamesEveryDistro() {
+  function test_every_key_names_every_distro() {
     for (const key of Object.keys(Packages.packages))
       for (const distro of Object.keys(Packages.distros))
         verify(Packages.packages[key][distro] !== undefined, `${key} has no ${distro} entry`);
   }
 
-  function test_packageFor() {
+  function test_package_for() {
     compare(Packages.packageFor("arch", "qalc"), {
       "name": "libqalculate"
     });
@@ -80,12 +80,12 @@ TestCase {
     verify(Packages.applies("", "checkupdates"), "unknown distribution: shown");
   }
 
-  function test_installLines_arch() {
+  function test_install_lines_arch() {
     compare(Packages.installLines("arch", ["qalc", "grim", "qalc"]), ["sudo pacman -S --needed libqalculate grim"]);
     compare(Packages.installLines("arch", []), []);
   }
 
-  function test_installLines_fedora() {
+  function test_install_lines_fedora() {
     const lines = Packages.installLines("fedora", ["satty", "qalc", "checkupdates"]);
     compare(lines.length, 2);
     compare(lines[0], "sudo dnf copr enable -y nett00n/hyprland", "the COPR first, once");
@@ -95,24 +95,24 @@ TestCase {
   }
 
   // niri and sway run X11 apps only with these (Hyprland's package pulls Xwayland in)
-  function test_x11Helpers() {
+  function test_x11_helpers() {
     compare(Packages.installLines("arch", ["xwayland-satellite", "Xwayland"]), ["sudo pacman -S --needed xwayland-satellite xorg-xwayland"]);
     compare(Packages.installLines("fedora", ["xwayland-satellite", "Xwayland"]), ["sudo dnf install xwayland-satellite xorg-x11-server-Xwayland"]);
   }
 
   // What install.sh installs: the compositors, and quickshell from its own
   // COPR on Fedora (beside the Hyprland one, when both are needed)
-  function test_installerKeys() {
+  function test_installer_keys() {
     compare(Packages.installCommand("arch", ["quickshell", "niri", "nmcli"]), "sudo pacman -S --needed quickshell niri networkmanager");
     compare(Packages.installLines("fedora", ["quickshell", "hyprland", "sway"]), ["sudo dnf copr enable -y errornointernet/quickshell", "sudo dnf copr enable -y nett00n/hyprland", "sudo dnf install quickshell hyprland sway"]);
   }
 
-  function test_unknownDistro() {
+  function test_unknown_distro() {
     compare(Packages.installLines("", ["qalc"]), []);
     compare(Packages.installCommand("", "qalc"), "");
   }
 
-  function test_installCommand() {
+  function test_install_command() {
     compare(Packages.installCommand("arch", "satty"), "sudo pacman -S --needed satty");
     compare(Packages.installCommand("fedora", "satty"), "sudo dnf copr enable -y nett00n/hyprland && sudo dnf install satty");
     compare(Packages.installCommand("arch", ["greetd", "agreety"]), "sudo pacman -S --needed greetd greetd-agreety");

@@ -5,7 +5,7 @@ import qs.components.methods
 TestCase {
   name: "ScreenShareSources"
 
-  function test_hookupTargets() {
+  function test_hookup_targets() {
     const hypr = ScreenShareSources.hookupTargets("hyprland", "/usr/bin/axiom");
     compare(hypr.length, 1);
     compare(hypr[0].file, "{config}/hypr/xdph.conf");
@@ -18,7 +18,7 @@ TestCase {
     compare(ScreenShareSources.hookupTargets("", "/usr/bin/axiom"), []);
   }
 
-  function test_busNames() {
+  function test_bus_names() {
     compare(ScreenShareSources.portal("hyprland").busName, "org.freedesktop.impl.portal.desktop.hyprland");
     compare(ScreenShareSources.portal("sway").busName, "org.freedesktop.impl.portal.desktop.wlr");
     compare(ScreenShareSources.portal("niri").busName, "org.freedesktop.impl.portal.desktop.gnome");
@@ -29,7 +29,7 @@ TestCase {
     compare(ScreenShareSources.portal("labwc"), null);
   }
 
-  function test_windowTiles() {
+  function test_window_tiles() {
     const windows = [
       {
         "id": "0x55d4",
@@ -84,7 +84,7 @@ TestCase {
     compare(ScreenShareSources.windowTiles(null, windows), []);
   }
 
-  function test_initialChoice() {
+  function test_initial_choice() {
     const request = {
       "outputs": [
         {

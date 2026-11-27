@@ -16,7 +16,7 @@ TestCase {
     };
   }
 
-  function test_barKey() {
+  function test_bar_key() {
     const audio = {
       "from": "bars",
       "by": "type",
@@ -58,7 +58,7 @@ TestCase {
     return entries.map(e => e.key);
   }
 
-  function test_orderBars() {
+  function test_order_bars() {
     const entries = bars(["Audio/other", "Audio/master", "Audio/app:a", "Brightness/brightness"]);
     compare(keysOf(OSDParts.orderBars(entries, [])), ["Audio/other", "Audio/master", "Audio/app:a", "Brightness/brightness"], "no order: the systems' order");
     compare(keysOf(OSDParts.orderBars(entries, undefined)), keysOf(entries), "none at all");
@@ -72,7 +72,7 @@ TestCase {
     verify(same[0] === entries[1], "the entries themselves, not copies");
   }
 
-  function test_rowTypes() {
+  function test_row_types() {
     const types = ["capsLock", "numLock", "dnd", "wifi"];
     const tiles = {
       "capsLock": tile(true),
@@ -90,7 +90,7 @@ TestCase {
     compare(OSDParts.rowTypes([], tiles, "all", []), []);
   }
 
-  function test_partOrder() {
+  function test_part_order() {
     compare(OSDParts.partOrder([], "level", false), ["level"]);
     compare(OSDParts.partOrder([], "status", false), ["status"]);
     compare(OSDParts.partOrder(["level"], "card", false), ["level", "card"], "the card always last");
@@ -107,7 +107,7 @@ TestCase {
     compare(OSDParts.partOrder(["level", "card"], "status", true, true), ["level", "status", "card"], "icons inside, holding still: after the bars");
   }
 
-  function test_partsDue() {
+  function test_parts_due() {
     compare(OSDParts.partsDue({}, 1000, 750), {
       "due": [],
       "next": 0
@@ -139,7 +139,7 @@ TestCase {
     }, "apart: each on its own");
   }
 
-  function test_sharedDeadlines() {
+  function test_shared_deadlines() {
     compare(OSDParts.sharedDeadlines({}), {});
     compare(OSDParts.sharedDeadlines({
       "level": 1000,

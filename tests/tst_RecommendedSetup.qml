@@ -195,7 +195,7 @@ TestCase {
     }
   }
 
-  function test_appKeys() {
+  function test_app_keys() {
     const section = tc.fixtureSchema.properties.ThemeIntegrations;
     compare(RecommendedSetup.appKeys(section, {}), [], "gtk never appears, nothing is found");
     compare(RecommendedSetup.appKeys(section, {
@@ -384,7 +384,7 @@ TestCase {
     compare(RecommendedSetup.steps(entries, rows, none), []);
   }
 
-  function test_portalAction() {
+  function test_portal_action() {
     compare(RecommendedSetup.portalAction(true), "defer");
     compare(RecommendedSetup.portalAction(false), "restart");
   }
