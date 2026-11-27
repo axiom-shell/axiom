@@ -41,7 +41,7 @@ Extra: backend/internal/compositor/takeover/kinds.go backend/internal/compositor
 Checks:
 - The event stream recovers when niri restarts or the socket drops; state rebuilt, not patched.
 - KDL is written and parsed by one module, round-trips the user's own nodes untouched, and is never loaded into the live session from a test.
-- Every contract member behaves as the Hyprland one does, or is a declared `supports` gap; known niri gaps (no `layerFrameSync`, no `outputCapture`) are gated, not special-cased by name.
+- Every contract member behaves as the Hyprland one does, or is a declared `supports` gap; known niri gaps (no `outputCapture`) are gated, not special-cased by name.
 Seams: CompositorManager.
 
 ## compositor-parity
@@ -63,7 +63,7 @@ Extra: qml/components/hosts/popout/EdgeTrigger.qml qml/components/methods/Screen
 Checks:
 - Geometry only from `SurfaceContext`/`EdgeAttach`; no host works out a rule itself (grep hosts for `vertical`, `location`, edge math).
 - Every popout holds a `PopoutClaim`; an open popout never moves.
-- Shadows only through `OutsideShadow`.
+- Shadows only through the backing window's group shadows (`BlurShape.shadow`); `ShapeShadow` for the overlay page box.
 - Each `SurfaceContext` rule has a `tst_SurfaceContext` row.
 Seams: bar widgets (`PopoutAnchor`), menus, OSD, dock, launcher.
 
@@ -271,7 +271,7 @@ Seams: idle, night light, clipboard, polkit and every feature using them; the da
 ## guardrails
 Scope: the checks, the tests' runners, CI and the agent rules: what stops a bad change before it merges.
 Docs: testing.md
-Extra: scripts/check_*.py scripts/check_*.sh scripts/check_all.sh scripts/generate.sh scripts/gen_docs.py scripts/qml_modules.py scripts/run_tests.sh scripts/lib/qt_paths.sh scripts/dev/*.sh scripts/dev/*.py scripts/qmllint-baseline.json scripts/manifests.py scripts/engines.json scripts/engines-*.json scripts/quickshell-io-allowlist.json .github/workflows/checks.yml .githooks/pre-commit .claude/hooks/guard.py .claude/settings.json tests/scripts/*.py tests/RepoFiles.qml tests/Shared.qml CLAUDE.md AGENTS.md .claude/rules/*.md .claude/agents/*.md .claude/skills/*/*.md docs/recipes/*.md
+Extra: scripts/check_*.py scripts/check_*.sh scripts/check_all.sh scripts/generate.sh scripts/gen_docs.py scripts/qml_modules.py scripts/run_tests.sh scripts/lib/qt_paths.sh scripts/dev/*.sh scripts/dev/*.py scripts/qmllint-baseline.json scripts/manifests.py scripts/engines.json scripts/engines-*.json scripts/quickshell-io-allowlist.json scripts/chrome-drawing-allowlist.json .github/workflows/checks.yml .githooks/pre-commit .claude/hooks/guard.py .claude/settings.json tests/scripts/*.py tests/RepoFiles.qml tests/Shared.qml CLAUDE.md AGENTS.md .claude/rules/*.md .claude/agents/*.md .claude/skills/*/*.md docs/recipes/*.md
 Checks:
 - Every check in `docs/dev/testing.md` › The checks runs in CI (`checks.yml`) and in `check_all.sh`, with the same arguments; the order lives in one place.
 - Each check fails on what its doc says it catches (try a bad input against it), and a check that can't fail is a finding.

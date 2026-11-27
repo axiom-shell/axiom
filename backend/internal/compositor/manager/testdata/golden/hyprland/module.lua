@@ -204,7 +204,6 @@ end
 
 -- Stacking order of axiom's surfaces (bars, border, edge menus, backdrops)
 function M.layers()
-  hl.layer_rule({ name = "axiom-border-shadow", match = { namespace = "^axiom-border-shadow$" }, order = 11 })
   hl.layer_rule({ name = "axiom-backdrop", match = { namespace = "^axiom-backdrop$" }, order = 10 })
   hl.layer_rule({ name = "axiom-blur-backing", match = { namespace = "^axiom-blur-backing$" }, no_anim = true, order = 9 })
   hl.layer_rule({ name = "axiom-shadows", match = { namespace = "^axiom-shadows$" }, no_anim = true, order = 8 })

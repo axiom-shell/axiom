@@ -12,7 +12,7 @@ What each end of a bar meets and whether surfaces may join it there, how two pil
   - **`bare`:** a bare screen edge.
   - **`solidBar`:** with the border off, a solid bar's inner stroke.
     - A pill joins it with a fillet, as it would the border (`AttachedSurface.straightJoinStart`/`straightJoinEnd`, per end).
-    - The solid bar draws that stroke in pieces around its `openings`. The stroke is left open under the joined end, and under a popout standing on it or joined to it at an end, opaque or not (`BarContainer.barAt`, `solidStart`/`solidEnd`).
+    - The solid bar draws that stroke as one rect. The stroke is left open under the joined end, and under a popout standing on it or joined to it at an end, opaque or not (`BarContainer.barAt`, `solidStart`/`solidEnd`).
   - **`bar`:** a bar it makes way for, with no stroke. This is a **held** end:
     - It is kept clear of that bar's inner edge, `over` into the window, by `gap`.
     - `gap` is a floating bar's own float gap (Automatic: `floatGaps`, the screen margin with no backend), else how far windows start past it.
@@ -39,7 +39,7 @@ What each end of a bar meets and whether surfaces may join it there, how two pil
   - Its end pill joins there with a fillet, as into a solid bar's stroke.
 - It pushes the other bar a request (`bar/CornerMerge`, an `endReach` through `BarContainer.setRequest`) to run its end pill (or a stub) straight off its end, past that fillet.
   - That end is `straight`: no fillet into the border.
-  - Its far stroke is opened from where the fillet meets it, and its shadow follows round the fillet. That is where the fillet's stroke ends (`CornerMerge._filletTip`): its centre line, half a stroke in from the pill's far edge, on whole pixels (`SurfaceContext.opening`). Open any further and a row of the corner shows through.
+  - Its far stroke is opened from where the fillet meets it. That is where the fillet's stroke ends (`CornerMerge._filletTip`): its centre line, half a stroke in from the pill's far edge, on whole pixels (`SurfaceContext.opening`). Open any further and a row of the corner shows through.
 - The result is one stroke and one concave corner, as solid bars make.
 - Surfaces inside the reserved space (edge popouts, docks) are arranged after every bar. They therefore meet whatever bar is on the perpendicular edge, whichever bar owns the corner.
 
@@ -50,7 +50,7 @@ What each end of a bar meets and whether surfaces may join it there, how two pil
 - **Pills lie as solid bars do** (`BarEnds.crossGeometry`): switching a bar between solid and pills, with no other option changed, moves neither the windows nor the widgets, border on or off (`tst_BarEnds`' `test_pills_lie_as_solid`). With the defaults (border 1 px, margin 8, padding 4, thickness 26) windows start 35 px in and the widgets span 4..30 px in both.
   - The body is the widgets with their padding either side (at least the border strip's depth, `margin − borderWidth`). A solid bar is the body (and its own stroke with the border off); a pill is the body and its far stroke.
   - A pill bar lying on the border itself (nothing reserving outside it) reaches back over the whole frame to the screen edge: its window's outer margin is the screen margin (`BarEnds.placeStack`'s `outerReach`, `BarPanel`), so it reserves the frame's room back, and its widgets sit across from the screen edge as a solid bar's do, over the frame's fill.
-  - Its pills hang off the border's stroke, `stripCover` (`margin − borderWidth`) in from the window's outer edge; between them the frame shows as ever. The bar's shadow is kept off the frame (`BarContainer._stripHole`).
+  - Its pills hang off the border's stroke, `stripCover` (`margin − borderWidth`) in from the window's outer edge; between them the frame shows as ever. The backing window's shadow is cut by the frame's shape, so none falls on it.
   - A pill bar stacked inside another bar keeps its `-borderWidth` reach onto the stroke there (`stripCover` 0).
   - Along the bar, a joined end pill's widgets sit where a solid bar's do (`BarEnds.endInset`; inside the border, just past the side stroke the pill covers), and a free end sits `pillGap` (the padding and its stroke) past its widgets.
 - Each pill is an `AttachedSurface` growing out of the border's stroke, covering it (`barConfig.overlap`).

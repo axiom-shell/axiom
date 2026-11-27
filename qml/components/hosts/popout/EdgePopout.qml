@@ -568,9 +568,8 @@ PopoutWrapperBase {
       detachedOffset: root.slideDistance
       fade: root.fades
       // Once its pill has grown out to carry it
-      // While the blur window backs surfaces, once it knows where this one
-      // is (LayerOrigin.settled), so it never shows unbacked beside them
-      active: root.isOpen && root.claimed && placement.stretchReady && (!BlurManager.backingOn(root.screen) || placeOnScreen.settled)
+      // Once it knows where this one is (LayerOrigin.settled)
+      active: root.isOpen && root.claimed && placement.stretchReady && placeOnScreen.settled
       boxWidth: root.vertical ? root._contentAcross + root.attachExtra : root.boxLength
       boxHeight: root.vertical ? root.boxLength : root._contentAcross + root.attachExtra + slot.shownStretchAcross
       fillColor: root.fillColor

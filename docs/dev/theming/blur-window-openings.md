@@ -1,6 +1,6 @@
 # Blur window and openings
 
-> **Files:** `qml/shell/BlurBacking.qml`, `qml/shell/BlurBackingWindow.qml`, `qml/services/ui/BlurManager.qml`, `qml/components/hosts/popout/BlurShape.qml`, `qml/components/hosts/popout/Copies.qml`, `qml/components/hosts/popout/KeyedModel.qml`, `qml/components/hosts/popout/AttachedSurfaceCopy.qml`, `qml/components/hosts/popout/ChromeComposite.qml`, `qml/components/reusable/HoledCopy.qml`, `qml/components/methods/PaintOrder.qml`, `qml/components/hosts/popout/OutsideShadow.qml`, `qml/components/hosts/popout/LayerOrigin.qml`, `qml/components/hosts/popout/BorderOpening.qml`, `qml/components/hosts/popout/StrokeOpening.qml`, `qml/components/reusable/HoledItem.qml`, `qml/components/surfaces/border/BorderPanel.qml`, `qml/components/surfaces/border/RoundedBorders.qml`
+> **Files:** `qml/shell/BlurBacking.qml`, `qml/shell/BlurBackingWindow.qml`, `qml/services/ui/BlurManager.qml`, `qml/components/hosts/popout/BlurShape.qml`, `qml/components/hosts/popout/Copies.qml`, `qml/components/hosts/popout/KeyedModel.qml`, `qml/components/hosts/popout/AttachedSurfaceCopy.qml`, `qml/components/hosts/popout/ChromeComposite.qml`, `qml/components/reusable/HoledCopy.qml`, `qml/components/methods/PaintOrder.qml`, `qml/components/hosts/popout/OutsideShadow.qml`, `qml/components/hosts/popout/LayerOrigin.qml`, `qml/components/hosts/popout/BorderOpening.qml`, `qml/components/hosts/popout/StrokeOpening.qml`, `qml/components/surfaces/border/BorderPanel.qml`, `qml/components/surfaces/border/RoundedBorders.qml`
 > **Config:** `Appearance.surface.*`
 > **Related:** [Translucency and blur](translucency-blur.md), [Shadows](../popouts/shadows.md), [Surface context](../popouts/surface-context.md), [Edge attach](../popouts/edge-attach.md), [Submenus](../popouts/submenus.md)
 
@@ -55,24 +55,16 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
   - none falls on a surface joined to the one casting it (no holes needed).
 - Kept under the blur threshold, they aren't blurred.
 - Where the blur has no threshold (SwayFX's `blur_ignore_transparent` blurs every pixel that isn't clear; no `supports.blurThreshold`), it would frost the whole halo. So the backing windows draw only the fills (`BlurBackingWindow.part`), and a window beside each, in a namespace nothing blurs (`axiom-shadows`, `axiom-shadows-overlay`; `LayerStack.layers`), casts the shadows from its own copies (`BlurManager.shadowsApart`).
-- Meanwhile the surfaces' own shadows (`OutsideShadow`, inactive while `backed`) and the border's shadow window stand down, blurred or not (the backing window draws every mode's chrome: opaque and blur off too).
+- No surface casts its own, and the border has no shadow window: the backing window draws every mode's chrome (opaque and blur off too), shadows included.
 
 ### Unbacked shadows
-- Unbacked (Top-layer chrome under a fullscreen window, a window not placed within `LayerOrigin`'s timeout, a `FreeMenu` while it scales), each surface casts its own again, from a black copy of its shape kept off screen (`OutsideShadow.hideTarget`):
-  - `AttachedSurface`'s;
-  - the bar's: each pill, island and solid fill puts its copy in `shadowShape` (pills an `AttachedSurfaceCopy`).
-- The bar shadow's holes:
-  - the bar's `openings`, where surfaces cover its far stroke, stretched or not;
-  - the fillets curving into a solid bar's stroke at either end of an opening, only up to their curve (`OutsideShadow.fillets`, from the opening's `startFillet`/`endFillet`: `SurfaceContext.opening`, in whole pixels so the fillet's cap and the stroke don't each half-cover one). That covers a pill joined to the stroke at its end, and a popout standing on the stroke, whose attach-side fillets are at both ends of its cover (`AttachedSurface.coverStartFillet`/`coverEndFillet`). Without them the bar's shadow was cut across each fillet's whole square, a hard seam where the opening ended;
-  - the solid bars its ends make way for, whose stroke its window overlaps;
-  - past a pill's or island's end squared for a surface running flush on from it, beside the wall and under the surface (`_flushEnds`).
-- Where a wall runs on from one surface into another, each casts as if it carried on, then gives way to the other at the line where they meet: [Shadows › Walls that run on](../popouts/shadows.md#walls-that-run-on-into-another-surface-unbacked).
+- A surface the backing window can't place or show (Top-layer chrome under a fullscreen window, a window not placed within `LayerOrigin`'s timeout, a `FreeMenu` while it scales) casts none: it fills and strokes itself only.
 - More on shadow looks: [Shadows](../popouts/shadows.md).
 
 ### Strokes left open under surfaces
-- Where a joined surface's stroke meets the one it stands on, the stroke it stands on is left open (while backed, by the copy's `HoledCopy`; unbacked, by the host's own `HoledItem`, `BorderPanel` pieces and corner hiding):
+- Where a joined surface's stroke meets the one it stands on, the stroke it stands on is left open by the backing window's copy (`HoledCopy`; an unbacked surface draws its stroke whole):
   - a pill's or island's far stroke under a popout (`PillStretch.opening` → `BarContainer.setRequest`);
-  - a popout's side under a submenu (`BarPopouts.submenuHole`, `AttachedSurface.strokeHoles`), drawn through `reusable/HoledItem`;
+  - a popout's side under a submenu (`BarPopouts.submenuHole`, `AttachedSurface.strokeHoles`);
   - a dock joined to the border opens it as edge popouts do.
 - An opening spans only what's drawn over it (`AttachedSurface.coverStart`/`coverEnd`):
   - the box while it slides;
@@ -94,19 +86,17 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
   - `SurfaceManager.setBorderOpening`, through a `hosts/popout/BorderOpening`, which takes it back as it goes;
   - in screen px along the edge; its edge coordinates start at `ScreenEdgeManager.reservedWithMenusOn(startSide)`;
   - on whole pixels (see Strokes left open under backed surfaces).
-- `BorderPanel` leaves its stroke and the fill of the stroke's row open there (`Utils.subtractSpans`).
-  - It nudges its window (`FrameNudge`) only when its own openings changed: `SurfaceManager.borderOpenings` is a new array whenever any opening on any screen moves.
-  - A strip's own offset along its edge (`screenOffset`) is read through `LayerOrigin`. Until then it's taken as half what the edges across it reserve.
+- The backing window's copy of the frame cuts the stroke there (`BorderPanel.screenStrokePieces`, the corner windows' `covered`); `BorderPanel` itself draws its stroke and its row whole.
 - The same goes for strokes a surface is joined over. An opening is cut in every mode, opaque too (the backing window's copies cut the stroke), so no fill shows a line through it.
 - Pills publish theirs too (`BarContainer.borderOpening`, from the bar's place on screen).
 
 ### Joins on a perpendicular edge
-- Any surface joined to a perpendicular edge opens that edge's stroke down to its join's fillet (`EdgeAttach.joinOpening`, `AttachedSurface.joinShown`: as much as is out past its edge), and `RoundedBorders` leaves the corner piece out there.
+- Any surface joined to a perpendicular edge opens that edge's stroke down to its join's fillet (`EdgeAttach.joinOpening`, `AttachedSurface.joinShown`: as much as is out past its edge), and `RoundedBorders`' `strokeHoles` take the corner piece's box there (`FrameOutline.cornerCovered`).
   - Such surfaces: a pill, a bar popout, an edge popout or dock running the whole edge (on a pill bar's edge too).
 - Bar popouts merged into the bar, or on a solid bar's inner edge, do the same.
 
 ### Border off: the solid bar's inner stroke
-- With the border off, a solid bar draws its own inner stroke, left open through the openings in its `BarContainer.setRequest`s, in every mode.
+- With the border off, a solid bar draws its own inner stroke as the one rect (the openings in its `BarContainer.setRequest`s are cut by the backing window's copies, no host cutter).
 - Bar popouts set their openings directly.
 - Edge popouts and docks (and bar popouts' joined ends) route the same screen-px spans through `hosts/popout/StrokeOpening`:
   - the stretch they stand on, a joined submenu's, and their joined ends' with their fillet;
@@ -118,7 +108,6 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - The parent's fillet on that side is opened under it (`AttachedSurface.attachFilletHole`).
 
 ### Timing
-- Every window drawing an opening (the bar, the border strips and corners, a popout under its submenu's hole) bursts a `FrameNudge` when it changes, since the change comes from another window sliding.
+- Every window drawing an opening (the bar, a popout under its submenu's hole) bursts a `FrameNudge` when it changes, since the change comes from another window sliding.
 - A tiled (hollow) menu publishes no opening (`EdgePlacement._hollow`, `PillBarJoin.hollow`): the line runs on under its tiles, in every mode. A joined submenu of it publishes its own.
-- `HoledItem` keeps its layer while translucent (`keepLayer`), so its first hole is cut from its first frame.
 - A fillet's part of an opening leads the slide by a stroke's width (`AttachedSurface._filletHidden`), as the window drawing it commits a frame or so later.

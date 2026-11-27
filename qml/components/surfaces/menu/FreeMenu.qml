@@ -442,9 +442,8 @@ PopoutWrapperBase {
       // Fades in place, or scales as it does; slides from its edge
       fade: root.animation !== "slide"
       animationDuration: root.popped ? 0 : Appearance.animNormal
-      // While the blur window backs surfaces, once it knows where this
-      // one is, so it never shows unbacked beside them
-      active: root.isOpen && root.claimed && panel.visible && (!BlurManager.backingOn(root.screen) || placeOnScreen.settled)
+      // Once it knows where this one is
+      active: root.isOpen && root.claimed && panel.visible && placeOnScreen.settled
       boxWidth: root.boxWidth
       boxHeight: root.boxHeight + root._stretchTop + root._stretchBottom
       fillColor: root.colors.fill

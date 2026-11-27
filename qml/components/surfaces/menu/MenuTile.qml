@@ -10,8 +10,8 @@ import qs.components.hosts.popout
 // the card in MenuBody: the menu's fill at the card's shape, with the
 // shadow the menu's box would cast. While the blur window backs the menu
 // (`tiles.backed`) it draws the tile there instead (a BlurShape), which
-// blurs behind it and casts its shadow; otherwise it fills itself, its
-// shadow kept outside it (OutsideShadow). Drawn out of the body's
+// blurs behind it and casts its shadow; otherwise it fills itself, with no
+// shadow. Drawn out of the body's
 // scrolling view, so the shadow isn't cut at its edge: placed from the
 // card's rect in the grid (`card`), scrolled by `scroll` and cut to
 // `viewSize` (MenuTiles.shown), its growing eased as the card's slot is.
@@ -56,23 +56,6 @@ Item {
   y: root._shown?.y ?? 0
   width: root._shown?.width ?? 0
   height: root._shown?.height ?? 0
-
-  // Its shadow, filled itself, from a copy of its shape (hidden: drawn
-  // for the shadow alone, and not at all without one)
-  OutsideShadow {
-    id: ownShadow
-    target: shape
-    hideTarget: true
-    active: !root.backed
-    look: root.tiles?.look ?? BarStyle.look
-  }
-  Rectangle {
-    id: shape
-    anchors.fill: parent
-    visible: ownShadow.active
-    radius: root.radius
-    color: "black" // style-exempt: mask
-  }
 
   Rectangle {
     id: fill

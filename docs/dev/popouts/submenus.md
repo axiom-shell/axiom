@@ -16,7 +16,7 @@ Every popout host can open one submenu beside its box. This doc covers how the s
 - **The parent's `SubmenuHost`** (the submenu's `slot`):
   - **What it exposes:** what the submenu attaches to, namely `attachBox`, the side's free and join ends, and `popupScreenOrigin`/`Placed`.
   - **What it takes back from the submenu:**
-    - `submenuHole` and `submenuBox`, which the parent's `EdgeSurface` reads.
+    - `submenuHole`, which the parent's `EdgeSurface` reads.
     - `submenuJoinSpan`, which the parent's `EdgePlacement` reads as `joinSpan`, together with `wall` and `hidden`, in its own coordinates.
     - Its `FrameNudge`, in the parent's `window`, redraws the hole as the submenu slides.
   - **What it asks back for:** `parentStretch`, drawn as `shownStretchTop`/`Bottom`.
@@ -84,5 +84,4 @@ Every popout host can open one submenu beside its box. This doc covers how the s
   - Without this, the parent's glow showed there as a dash.
 - **Shadow:**
   - A submenu casts its parent's shadow look (`host.popupSurface`).
-  - Unbacked, a parent's own shadow leaves out its submenu's box (`AttachedSurface.shadowHoles`, from `SubPopout`'s `submenuBox`).
   - See [Shadows](shadows.md).

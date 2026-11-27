@@ -1,7 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Effects
-import QtQuick.Shapes
 import Quickshell
 import Quickshell.Wayland
 import qs.config
@@ -85,16 +83,11 @@ Item {
       "strokeWidth": root.strokeWidth
     })
   readonly property var _openings: SurfaceManager.borderOpenings.filter(o => o.screen === (root.screen?.name ?? ""))
-  // The stroke's inner side, round the corner pieces' arcs, as an SVG
-  // subpath in a window of w × h over the screen (FrameOutline.innerPath)
-  function innerPath(w, h) {
-    return FrameOutline.innerPath(root._spec, w, h);
-  }
   // Its fill as blur region pieces in a window of w × h over the screen (FrameOutline.blurRegion)
   function blurPieces(w, h) {
     return FrameOutline.blurRegion(root._spec, w, h);
   }
-  // The frame, filled odd-even, to innerPath (FrameOutline.framePath)
+  // The frame, filled odd-even (FrameOutline.framePath)
   function framePath(w, h, fromMenus) {
     return FrameOutline.framePath(root._spec, w, h, fromMenus);
   }
@@ -107,7 +100,7 @@ Item {
     paintRank: PaintOrder.rankOf("frame")
     screen: root.screen?.name ?? ""
     shown: root.backed
-    // Cast evenly, inward, by the blur window in place of shadowWindow's
+    // Cast evenly, inward, by the blur window
     shadow: BarStyle.look
   }
 
@@ -137,151 +130,6 @@ Item {
       endFillColor: root.backed ? "transparent" : root.frameColor
       innerStrokeColor: root.backed ? "transparent" : root.innerStrokeColor
       strokeWidth: root.strokeWidth
-    }
-  }
-
-  // The border's shadow (the BarStyle section's, as the bars
-  // cast): the frame's shape blurred and kept only inside it, so it falls
-  // on the windows all the way round. One window over the whole screen,
-  // so it runs unbroken past the strips and corners. Its layer rule
-  // (`order = 11`) stacks it under every other axiom surface, the overlay
-  // backdrop included, so bars inside the border stay clear of it.
-  PanelWindow {
-    id: shadowWindow
-
-    readonly property var look: BarStyle.look
-
-    // Backed, the blur window casts it, with the surfaces joined to the
-    // frame (BlurShape.shadow): this one keeps its place at a pixel, no
-    // buffer, drawing nothing.
-    // Hyprland puts a layer mapped while a fullscreen window is shown over
-    // it (CLayerSurface::onMap), and a fullscreen window is what unbacks it.
-    // Held where the compositor stacks by map order alone: turning the
-    // shadow on would otherwise map it after everything ordered under it
-    // (the backdrop, the bars, the border, docks), which all map again
-    // then (docs/dev/compositor/layer-arrangement.md). Idle, it's a pixel
-    // drawing nothing.
-    readonly property bool _casting: !shadowSlot.idle && !root.backed
-    visible: shadowSlot.shown
-    LayerSlot {
-      id: shadowSlot
-      window: shadowWindow
-      namespace: "axiom-border-shadow"
-      wanted: shadowWindow.look.shadow
-      held: true
-    }
-    screen: root.screen
-    anchors {
-      left: true
-      right: shadowWindow._casting
-      top: true
-      bottom: shadowWindow._casting
-    }
-    implicitWidth: 1
-    implicitHeight: 1
-    exclusionMode: ExclusionMode.Ignore
-    color: "transparent"
-    mask: Region {}
-    aboveWindows: true
-    WlrLayershell.namespace: "axiom-border-shadow"
-
-    // Surfaces joined to the frame's stroke (SurfaceManager.borderOpenings)
-    // as rects it casts nothing on, from the frame line in: their
-    // translucent fill would show (and blur) it. A fillet at either end
-    // (`startFillet`/`endFillet`) is left out only as far as its curve, not the square it
-    // sits in: past the curve the shadow runs on round it (as a solid
-    // bar's, BarContainer._shadowHoles). Each an SVG subpath.
-    readonly property var holes: SurfaceManager.borderOpenings.filter(o => o.screen === (root.screen?.name ?? "")).map(o => shadowWindow._holePath(o))
-    function _holePath(o) {
-      const reach = look.shadowSize * 2;
-      const vertical = o.edge === "left" || o.edge === "right";
-      // Across: the frame line (past integrated menus' strips as the frame
-      // is), and which way is in from it
-      const line = o.edge === "top" ? root.innerTop : o.edge === "bottom" ? height - root.innerBottom : o.edge === "left" ? root.innerLeft : width - root.innerRight;
-      const inward = o.edge === "top" || o.edge === "left" ? 1 : -1;
-      const fs = o.startFillet ?? 0, fe = o.endFillet ?? 0;
-      const from = o.start + fs, to = o.end - fe;
-      // (along, across) to x, y
-      const pt = (u, v) => vertical ? `${v} ${u}` : `${u} ${v}`;
-      let d = "";
-      if (to > from)
-        d += ` M ${pt(from, line)} L ${pt(to, line)} L ${pt(to, line + inward * reach)} L ${pt(from, line + inward * reach)} Z`;
-      // The corner where a surface's wall meets the stroke, filled out to
-      // the quarter circle round the opposite one
-      const corner = (at, f, atEnd) => {
-        const toward = atEnd ? 1 : -1;
-        const ax = at + toward * f, bv = line + inward * f;
-        // Sweep from A (on the stroke) to B (on the wall) round the centre
-        // (each from the centre, in x, y)
-        const a = vertical ? [-inward * f, 0] : [0, -inward * f];
-        const b = vertical ? [0, -toward * f] : [-toward * f, 0];
-        const sweep = a[0] * b[1] - a[1] * b[0] > 0 ? 1 : 0;
-        return ` M ${pt(at, line)} L ${pt(ax, line)} A ${f} ${f} 0 0 ${sweep} ${pt(at, bv)} Z`;
-      };
-      if (fs > 0)
-        d += corner(o.start + fs, fs, false);
-      if (fe > 0)
-        d += corner(o.end - fe, fe, true);
-      return d;
-    }
-
-    // The inside of the frame, but for the holes (each its own subpath,
-    // left empty by the odd-even fill)
-    Item {
-      id: interior
-      anchors.fill: parent
-      visible: false
-      layer.enabled: shadowWindow._casting // style-exempt: no text
-
-      Shape {
-        anchors.fill: parent
-        preferredRendererType: Shape.CurveRenderer
-
-        ShapePath {
-          fillColor: "black" // style-exempt: mask
-          fillRule: ShapePath.OddEvenFill
-          strokeColor: "transparent"
-          strokeWidth: 0
-
-          PathSvg {
-            path: root.innerPath(shadowWindow.width, shadowWindow.height) + shadowWindow.holes.join("")
-          }
-        }
-      }
-    }
-
-    Item {
-      anchors.fill: parent
-      visible: shadowWindow._casting
-      layer.enabled: visible // style-exempt: no text
-      layer.effect: MultiEffect { // style-exempt: no text
-        maskEnabled: true
-        maskSource: interior
-      }
-
-      // The frame, casting the shadow inward (it's cut away above)
-      Shape {
-        anchors.fill: parent
-        preferredRendererType: Shape.CurveRenderer
-        layer.enabled: true // style-exempt: no text
-        layer.effect: MultiEffect { // style-exempt: no text
-          shadowEnabled: true
-          shadowColor: Style.shadowColor(shadowWindow.look)
-          shadowBlur: 1
-          blurMax: shadowWindow.look.shadowSize
-        }
-
-        ShapePath {
-          fillColor: "black" // style-exempt: mask
-          fillRule: ShapePath.OddEvenFill
-          strokeColor: "transparent"
-          strokeWidth: 0
-
-          PathSvg {
-            path: root.framePath(shadowWindow.width, shadowWindow.height, false)
-          }
-        }
-      }
     }
   }
 
@@ -350,16 +198,10 @@ Item {
       // Its box as the compositor shows it, on whole device px
       readonly property rect screenBox: FrameOutline.windowPixels(Qt.rect(corner._x, corner._y, root.cornerSize, root.cornerSize), corner.devicePixelRatio)
       // A surface joined to the stroke runs into the perpendicular edge over
-      // it (a pill joined to it, SurfaceManager.borderOpenings): the corner
-      // is left open there as the strips are, its fill no longer hiding it
+      // it (a pill joined to it, SurfaceManager.borderOpenings): the backing
+      // window's copy leaves the corner out there (this piece draws whole)
       readonly property bool covered: FrameOutline.cornerCovered(root._spec, root._openings, corner.isLeft, corner.isTop)
-      onCoveredChanged: cornerNudge.burst()
-      FrameNudge {
-        id: cornerNudge
-      }
-
       CornerPiece {
-        visible: !corner.covered
         borderRadius: root.innerBorderRadius
         fillColor: root.backed ? "transparent" : root.frameColor
         strokeColor: root.backed ? "transparent" : root.innerStrokeColor

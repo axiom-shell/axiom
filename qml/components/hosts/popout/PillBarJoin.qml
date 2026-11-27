@@ -38,7 +38,7 @@ PillStretch {
   // How far in from the surface's screen edge its joined end reaches the
   // pill bar's far stroke at its far wall (AttachedSurface.joinSide from
   // that edge), at rest; and how much of the surface is still behind its
-  // edge, sliding, less the lead it keeps (EdgePlacement._slideLead)
+  // edge, sliding
   property real joinReach: 0
   property real hidden: 0
 
@@ -83,8 +83,7 @@ PillStretch {
   // Where its surface's joined end is drawn from across this bar, in screen
   // px (EdgePlacement), or null
   property var drawnStart: null
-  // Its far stroke left open under the surface (and its fillet, which the
-  // bar's shadow then follows round, BarContainer._shadowHoles; or inside
+  // Its far stroke left open under the surface (and its fillet; or inside
   // the wall, whose stroke carries on into the pill's there): opaque or
   // not, as the two are separate windows whose stacking isn't the bar's to
   // choose. Whole pixels (SurfaceContext.opening), as every opening.
@@ -92,14 +91,9 @@ PillStretch {
     if (root._reach === null || root.hollow)
       return null;
     if (!root.filleted)
-      return Object.assign(SurfaceContext.opening(root._atStart ? 0 : root._reach + Appearance.borderWidth / 2, root._atStart ? root._reach - Appearance.borderWidth / 2 : root._panel.container.length), root.drawnStart === null ? {
-        "keepFill": true
-      } : {
-        "keepFill": true,
+      return Object.assign(SurfaceContext.opening(root._atStart ? 0 : root._reach + Appearance.borderWidth / 2, root._atStart ? root._reach - Appearance.borderWidth / 2 : root._panel.container.length), root.drawnStart === null ? {} : {
         "coverStart": root.drawnStart - (root._vertical ? root._panel.container.blurOrigin.y : root._panel.container.blurOrigin.x)
       });
-    return Object.assign(SurfaceContext.opening(root._atStart ? 0 : root._reach, root._atStart ? root._reach : root._panel.container.length, root._atStart ? 0 : root._radius, root._atStart ? root._radius : 0), {
-      "keepFill": true
-    });
+    return SurfaceContext.opening(root._atStart ? 0 : root._reach, root._atStart ? root._reach : root._panel.container.length, root._atStart ? 0 : root._radius, root._atStart ? root._radius : 0);
   }
 }

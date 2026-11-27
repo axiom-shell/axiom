@@ -130,7 +130,7 @@ for f in "${changed[@]}"; do
   scripts/check_sizes.py) script_tests+=(CheckSizes) ;;
   scripts/dev/new_names.py) script_tests+=(NewNames) ;;
   scripts/check_icons.py) script_tests+=(CheckIcons) ;;
-  scripts/check_structure.py | scripts/quickshell-io-allowlist.json | scripts/bar-widget-exceptions.json) script_tests+=(CheckStructure CheckStyle) ;;
+  scripts/check_structure.py | scripts/quickshell-io-allowlist.json | scripts/chrome-drawing-allowlist.json | scripts/bar-widget-exceptions.json) script_tests+=(CheckStructure CheckStyle) ;;
   scripts/qml_modules.py) script_tests+=(CheckStructure CheckStyle Ratchet CheckQmllint CheckEngines) ;;
   scripts/check_engines.py) script_tests+=(CheckEngines GenDocsEngines) ;;
   docs/dev/core/engines.md | scripts/engines.json | scripts/engines-baseline.json | scripts/engines-exceptions.json) script_tests+=(CheckEngines) ;;

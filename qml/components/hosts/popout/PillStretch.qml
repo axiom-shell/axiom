@@ -32,10 +32,6 @@ QtObject {
   // Unique per surface on a bar (a bar has one popout host, and any number
   // of edge popouts on its edge)
   required property string owner
-  // Whether its surface is out over the stroke it stands on, sent with the
-  // stretch (`covered`, BarContainer._flushEnds). Kept apart from `stretch`:
-  // it follows the slide, which waits on `ready`, which reads `stretch`
-  property bool covered: true
   // The stretch follows its surface along a slide by itself (a submenu's
   // pill reach, sent as its outer wall is drawn): shown as sent, at once
   property bool tracks: false
@@ -128,8 +124,7 @@ QtObject {
     const rest = rects[BarLayout.pillIndex(rects, shown)] ?? null;
     return EdgeAttach.progressStretch(rest, Object.assign({}, shown, {
       "start": root._shownStart,
-      "end": root._shownEnd,
-      "covered": root.covered
+      "end": root._shownEnd
     }), root.progress);
   }
 

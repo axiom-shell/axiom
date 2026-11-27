@@ -29,6 +29,11 @@ running anything:
   - only the files in scripts/quickshell-io-allowlist.json use Process,
     FileView, Socket or Quickshell.execDetached directly, and
     the list only shrinks (these move to the axiom daemon)
+  - the deleted chrome-drawing constructs stay deleted: no HoledItem or
+    shadowHoles in qml/; HoledCopy, OutsideShadow and Appearance.translucent
+    only in the files scripts/chrome-drawing-allowlist.json lists for each
+    (an entry no longer used is an error); every BlurShape's `shown:` reads
+    `backed`
   - no Repeater model or acquire() request in the UI reads a polled
     service's member (one owning a ConsumerRegistry or DeadlineTicker),
     in the expression or through a property of the file; a model may
@@ -119,6 +124,17 @@ IO_KINDS = {
     "Socket": re.compile(r"(?<![\w.])Socket\s*\{"),
     "execDetached": re.compile(r"\bQuickshell\.execDetached\("),
 }
+
+# The chrome-drawing constructs the one chrome path replaced, frozen to the
+# files that use them now (path -> the kinds it may use)
+CHROME_ALLOWLIST = ROOT / "scripts" / "chrome-drawing-allowlist.json"
+CHROME_KINDS = {
+    "HoledCopy": re.compile(r"\bHoledCopy\s*\{"),
+    "OutsideShadow": re.compile(r"\bOutsideShadow\s*\{"),
+    "translucent": re.compile(r"\bAppearance\.translucent\b"),
+}
+# Deleted outright: not even a word of it, comments included
+CHROME_GONE = re.compile(r"\b(?:HoledItem|shadowHoles)\b")
 
 # Bar widgets allowed to break a rule of the bar widget template, each with
 # its reason; an entry no longer needed is an error
@@ -496,6 +512,35 @@ def main():
         for kind in kinds:
             if kind not in used.get(path, []):
                 errors.append(f"{rel(IO_ALLOWLIST)}: {path} no longer uses {kind}: remove it from the list (it only shrinks)")
+
+    # The chrome-drawing constructs the one chrome path replaced stay
+    # deleted (HoledItem, shadowHoles) or stay in the files
+    # chrome-drawing-allowlist.json lists (HoledCopy, OutsideShadow,
+    # Appearance.translucent; an entry no longer used is an error), and a
+    # BlurShape blurs only while its host is `backed`
+    chrome_allowed = json.loads(CHROME_ALLOWLIST.read_text())["files"]
+    chrome_used = {}
+    for path, text in sources.items():
+        if path.startswith("tests/"):
+            continue
+        for n, line in enumerate(text.split("\n"), 1):
+            if CHROME_GONE.search(line):
+                errors.append(f"{path}:{n}: HoledItem or shadowHoles: deleted, the one chrome path draws the shape: see docs/dev/theming/blur-window-openings.md")
+        code = re.sub(r"//[^\n]*", "", text)
+        for kind, pattern in CHROME_KINDS.items():
+            if pattern.search(code):
+                chrome_used.setdefault(path, []).append(kind)
+        for start, body in qml_blocks(code, "BlurShape"):
+            if not re.search(r"\bshown:[^\n]*\bbacked\b", body):
+                errors.append(f"{path}:{code.count(chr(10), 0, start) + 1}: a BlurShape whose `shown:` doesn't read `backed`")
+    for path, kinds in sorted(chrome_used.items()):
+        for kind in kinds:
+            if kind not in chrome_allowed.get(path, []):
+                errors.append(f"{path}: uses {kind} (only the files in {rel(CHROME_ALLOWLIST)} may)")
+    for path, kinds in sorted(chrome_allowed.items()):
+        for kind in kinds:
+            if kind not in chrome_used.get(path, []):
+                errors.append(f"{rel(CHROME_ALLOWLIST)}: {path} no longer uses {kind}: remove it from the list")
 
     # The config UI and the onboarding build no hover tint, key handler,
     # sunken box, hand-set row click or `first:` literal, no loose

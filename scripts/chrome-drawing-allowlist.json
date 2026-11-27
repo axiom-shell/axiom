@@ -1,0 +1,20 @@
+{
+  "_comment": "Files allowed each chrome-drawing construct (HoledCopy, OutsideShadow, Appearance.translucent) after the popout geometry rework: the one chrome path draws every shape, so these stay where they are and the list only shrinks. scripts/check_structure.py fails on a use not listed here and on an entry no longer used.",
+  "files": {
+    "qml/components/hosts/popout/AttachedSurface.qml": [
+      "HoledCopy"
+    ],
+    "qml/components/hosts/popout/Copies.qml": [
+      "HoledCopy"
+    ],
+    "qml/components/hosts/popout/ShapeShadow.qml": [
+      "OutsideShadow"
+    ],
+    "qml/services/ui/ScreenEdgeManager.qml": [
+      "translucent"
+    ],
+    "qml/services/ui/WallpaperToneManager.qml": [
+      "translucent"
+    ]
+  }
+}

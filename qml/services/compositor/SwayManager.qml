@@ -71,7 +71,6 @@ Singleton {
     "switcher": true,
     "windowGeometry": true,
     "outputCapture": true,
-    "layerFrameSync": true,
     "layerRestack": true,
     "windowBorders": true,
     "windowShape": true,

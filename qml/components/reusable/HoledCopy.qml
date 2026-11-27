@@ -11,8 +11,7 @@ import qs.components.methods
 // stroke's coverage; each is an `Item` that clips, no layer. With no holes,
 // `strokeOnly` once, unclipped. Pieces are kept across changes of the hole
 // count (see `_outsideSlots`). The area is its rect grown on every side, so
-// nothing its drawing reaches past its rect is lost. (HoledItem is the same
-// job for a host, cutting all of its children.)
+// nothing its drawing reaches past its rect is lost.
 Item {
   id: root
 
