@@ -100,7 +100,7 @@ for f in "${changed[@]}"; do
   esac
   case "$f" in
   # (`*` crosses `/`: a domain helper under methods/<domain>/ matches too)
-  qml/components/methods/*.qml)
+  qml/components/methods/*.qml | qml/services/core/*.qml)
     name="$(basename "$f" .qml)"
     [[ -f "tests/tst_$name.qml" ]] && tests+=("$name")
     ;;

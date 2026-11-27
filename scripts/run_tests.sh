@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Run the QML unit tests (tests/tst_*.qml) with qmltestrunner, outside qs.
 #
-# The tests cover qml/components/methods/ (pure by the layering rule), imported
-# from a module tree of the shell's Quickshell-free files
+# The tests cover qml/components/methods/ (pure by the layering rule) and the
+# services/core parts that import only QtQuick (loaded from their files), with
+# imports from a module tree of the shell's Quickshell-free files
 # (scripts/qml_modules.py --pure). tests-layout/ holds the layout harness: the
 # pieces (reusable/, forms/) at scale, font and density settings, over stubs
 # for what imports Quickshell or the services (scripts/qml_modules.py
