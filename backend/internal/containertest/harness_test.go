@@ -35,7 +35,7 @@ import (
 func Require(t *testing.T) {
 	t.Helper()
 	if os.Getenv("AXIOM_CONTAINER") != "1" {
-		t.Skip("container tests run only in scripts/dev/container-test.sh")
+		t.Skip("container tests run only in scripts/dev/container_test.sh")
 	}
 	if _, err := os.Stat("/.dockerenv"); err != nil {
 		t.Fatal("AXIOM_CONTAINER is set but this isn't a container (no /.dockerenv): refusing to run")

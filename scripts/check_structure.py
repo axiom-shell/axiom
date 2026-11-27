@@ -42,7 +42,7 @@ running anything:
     handler, sunken box, `onRowClicked`, `first:` literal or kept pushed
     `text`, and no SegmentButton outside a SegmentRow, SegmentTabs or
     StyledToggle (views, content, surfaces), unless the file is listed in
-    scripts/ui-local-pieces.json with a reason (special drawing); the list
+    scripts/ui-local-exceptions.json with a reason (special drawing); the list
     only shrinks
   - nothing formats a date with Qt.formatDateTime / formatDate /
     formatTime (I18n.formatDate follows the language), and only General
@@ -182,7 +182,7 @@ CHROME_GONE = re.compile(r"\b(?:HoledItem|shadowHoles)\b")
 # Bar widgets allowed to break a rule of the bar widget template, each with
 # its reason; an entry no longer needed is an error
 WIDGET_EXCEPTIONS = ROOT / "scripts" / "bar-widget-exceptions.json"
-LOCAL_PIECES = ROOT / "scripts" / "ui-local-pieces.json"
+LOCAL_EXCEPTIONS = ROOT / "scripts" / "ui-local-exceptions.json"
 # Hand-built versions of what a shared piece does, in the config UI and the
 # onboarding (rule name -> pattern on a line without comments)
 LOCAL_PIECE_RULES = {
@@ -192,6 +192,7 @@ LOCAL_PIECE_RULES = {
     "onRowClicked": (re.compile(r"\bonRowClicked\s*:"), "a hand-set row click: give the row `activates`"),
     "first-literal": (re.compile(r"^\s*first\s*:\s*(?:true|false)\b"), "a `first:` literal: the row's column decides"),
 }
+LOCAL_RULES = set(LOCAL_PIECE_RULES) | {"SegmentButton", "restore-text"}
 LOCAL_PIECE_SCOPES = ("qml/components/views/", "qml/components/surfaces/onboarding/")
 SEGMENT_ROW_SCOPES = ("qml/components/views/", "qml/components/content/", "qml/components/surfaces/")
 SEGMENT_HOSTS = ("SegmentRow", "SegmentTabs", "StyledToggle")
@@ -762,10 +763,11 @@ def main():
     # sunken box, hand-set row click or `first:` literal, no loose
     # SegmentButton and no pushed `text` that keeps its value: each is a
     # shared piece's job (docs/dev/core/shared-ui-pieces.md > When a page may
-    # own a local piece). A file is listed in scripts/ui-local-pieces.json
+    # own a local piece). A file is listed in scripts/ui-local-exceptions.json
     # per rule with a reason (special drawing); an entry whose rule no
     # longer hits is an error
-    local = json.loads(LOCAL_PIECES.read_text())["files"]
+    local, local_errors = qml_modules.load_exceptions(LOCAL_EXCEPTIONS, LOCAL_RULES, section="files")
+    errors.extend(local_errors)
     local_hits = {}
     for path, text in sorted(sources.items()):
         in_ui = path.startswith(LOCAL_PIECE_SCOPES)
@@ -795,13 +797,11 @@ def main():
                     local_hits.setdefault((path, "SegmentButton"), (n, "a SegmentButton outside a SegmentRow or SegmentTabs: a toggle is a ToggleChip, a choice a SegmentRow"))
     for (path, name), (n, advice) in sorted(local_hits.items()):
         if name not in local.get(path, {}).get("rules", []):
-            errors.append(f"{path}:{n}: {name}: {advice} (special drawing only: list the file in {rel(LOCAL_PIECES)} with a reason)")
+            errors.append(f"{path}:{n}: {name}: {advice} (special drawing only: list the file in {rel(LOCAL_EXCEPTIONS)} with a reason)")
     for path, entry in sorted(local.items()):
-        if not entry.get("reason"):
-            errors.append(f"{rel(LOCAL_PIECES)}: {path} has no reason")
         for name in entry.get("rules", []):
             if (path, name) not in local_hits:
-                errors.append(f"{rel(LOCAL_PIECES)}: {path} no longer breaks {name}: remove it from the list (it only shrinks)")
+                errors.append(f"{rel(LOCAL_EXCEPTIONS)}: {path} no longer breaks {name}: remove it from the list (it only shrinks)")
 
     # Services live in their group's folder (.claude/rules/services.md › Folders):
     # one directly in services/ would escape the singleton checks below,

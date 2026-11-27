@@ -11,7 +11,7 @@ import qs.services.ui
 
 /*
  * The emoji the launcher searches (";" or /emoji), while Launcher.emoji is on.
- * `entries()` is config/json/emoji.json (built by scripts/generate_emoji.py
+ * `entries()` is config/json/emoji.json (built by scripts/gen_emoji.py
  * from Unicode's emoji-test.txt and CLDR's keywords), read the first time
  * it's asked for: [{ e: emoji, n: name, g: group, k: [keywords] }], in
  * Unicode's order. `copy` puts one on the clipboard and counts it in
@@ -43,7 +43,7 @@ QtObject {
         root._entries = [];
       }
       if (root._entries.length === 0)
-        console.warn("[EmojiManager] No emoji: run scripts/generate_emoji.py");
+        console.warn("[EmojiManager] No emoji: run scripts/gen_emoji.py");
     }
     return root._entries;
   }

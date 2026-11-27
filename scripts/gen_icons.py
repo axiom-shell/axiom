@@ -16,7 +16,7 @@ licence) at a pinned commit of google/material-design-icons and writes:
 The results are committed: nothing downloads at runtime. Needs fonttools
 (`pip install fonttools` / python-fonttools), only to run this.
 
-  scripts/generate_icons.py [--commit <sha>]
+  scripts/gen_icons.py [--commit <sha>]
 """
 import argparse
 import collections

@@ -1063,7 +1063,6 @@
     "Image from {0}": "{0} の画像",
     "HTML": "HTML",
     "No emoji list": "絵文字リストがありません",
-    "Run scripts/generate_emoji.py": "scripts/generate_emoji.py を実行してください",
     "Search emoji by name or keyword": "名前やキーワードで絵文字を検索",
     "Shift+Enter types it": "Shift+Enter で入力",
     "Calculator in the launcher": "ランチャーの電卓",
@@ -1664,7 +1663,6 @@
     "Flags": "旗",
     "Search emoji": "絵文字を検索",
     "Most used": "よく使う",
-    "No emoji list: run scripts/generate_emoji.py": "絵文字リストがありません: scripts/generate_emoji.py を実行してください",
     "Copied {0}": "{0} をコピーしました",
     "Click to copy": "クリックでコピー",
     "Emoji you copy show up here": "コピーした絵文字がここに表示されます",
@@ -4717,6 +4715,8 @@
     "Reduce effects over fullscreen": "",
     "On a monitor with a fullscreen window, the overlay fades in instead of sliding, switches pages without sliding, and draws no blur or shadow.": "",
     "Start on": "",
-    "The workspace every monitor starts on: the middle of its workspaces (the middle cell of a grid), or its first.": ""
+    "The workspace every monitor starts on: the middle of its workspaces (the middle cell of a grid), or its first.": "",
+    "No emoji list: run scripts/gen_emoji.py": "",
+    "Run scripts/gen_emoji.py": ""
   }
 }

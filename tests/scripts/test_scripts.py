@@ -474,7 +474,7 @@ class CheckStructure(unittest.TestCase):
         ("qml/components/surfaces/osd/systems/Spook/schema.yaml", "label: Spook\n", None),
         ("qml/components/surfaces/osd/systems/Spook/Helper.qml", qml(imports="import qs.services.ui"),
          "systems/Spook/Helper.qml: reads services: only an OSD system's <Type>Watch.qml"),
-        # The config UI's local pieces (scripts/ui-local-pieces.json)
+        # The config UI's local pieces (scripts/ui-local-exceptions.json)
         ("qml/components/views/Local/Tint.qml", qml("StateLayer {}"), "views/Local/Tint.qml:6: StateLayer"),
         ("qml/components/views/Local/Space.qml", qml("Keys.onSpacePressed: x()"), "views/Local/Space.qml:6: Keys.onSpacePressed"),
         ("qml/components/views/Local/Well.qml", qml('Surface { tone: "sunken" }'), "views/Local/Well.qml:6: tone-sunken"),
@@ -537,8 +537,9 @@ class CheckStructure(unittest.TestCase):
         "tool page Keybinds isn't in the Overlay.items default",
         "schema gates on supports.ghostCapability, which docs/dev/compositor/contract.md › Capabilities doesn't list",
         "qml/services/core/Gone.qml no longer uses Socket",
-        "ui-local-pieces.json: qml/components/views/Gone.qml no longer breaks StateLayer",
-        "ui-local-pieces.json: qml/components/views/NoReason.qml has no reason",
+        "ui-local-exceptions.json: qml/components/views/Gone.qml no longer breaks StateLayer",
+        "ui-local-exceptions.json: qml/components/views/NoReason.qml has no reason",
+        "ui-local-exceptions.json: qml/components/views/Unruled.qml names Ghost, not a rule",
         "qml/components/surfaces/osd/systems/Ghost/: an OSD system without GhostWatch.qml",
         "qml/components/surfaces/osd/systems/Ghost/: an OSD system without schema.yaml",
         "DevMode/: T4 ghostColor is a colour field of DevMode that nothing uses",
@@ -581,9 +582,10 @@ class CheckStructure(unittest.TestCase):
             edit_json(root / "qml/config/json/config.schema.json", schema)
             edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["Socket"]}))
             edit_json(root / "scripts/chrome-drawing-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["HoledCopy"]}))
-            edit_json(root / "scripts/ui-local-pieces.json", lambda a: a["files"].update({
+            edit_json(root / "scripts/ui-local-exceptions.json", lambda a: a["files"].update({
                 "qml/components/views/Gone.qml": {"rules": ["StateLayer"], "reason": "planted"},
-                "qml/components/views/NoReason.qml": {"rules": [], "reason": ""}}))
+                "qml/components/views/NoReason.qml": {"rules": [], "reason": ""},
+                "qml/components/views/Unruled.qml": {"rules": ["Ghost"], "reason": "planted"}}))
             edit_json(root / "scripts/bar-widget-exceptions.json", lambda a: a["types"].update({
                 "Button": {"reason": "planted", "rules": ["T8"]},
                 "Spacer": {"reason": "", "rules": ["T5"]},
@@ -1666,6 +1668,24 @@ class CheckNames(unittest.TestCase):
                  "EdgeMenuBody", "EdgeMenuSync", "StyledRectButton"}
         self.assertEqual(check_names.retired_sites() & moved, set())
         self.assertNotIn("Bar", check_names.retired_sites())
+
+    @staticmethod
+    def misnamed_scripts(scripts):
+        """The files under `scripts` that break its naming: a `.py` named `generate_*`, a `.sh` not snake_case,
+        a `.json` directly in it not kebab-case."""
+        bad = [p for p in scripts.rglob("*.py") if p.name.startswith("generate_")]
+        bad += [p for p in scripts.rglob("*.sh") if not re.fullmatch(r"[a-z0-9_]+\.sh", p.name)]
+        bad += [p for p in scripts.glob("*.json") if not re.fullmatch(r"[a-z0-9-]+\.json", p.name)]
+        return sorted(str(p.relative_to(scripts)) for p in bad)
+
+    def test_scripts_folder_names(self):
+        self.assertEqual(self.misnamed_scripts(SCRIPTS), [])
+        with tempfile.TemporaryDirectory() as tmp:
+            scripts = Path(tmp) / "scripts"
+            (scripts / "dev").mkdir(parents=True)
+            for name in ("generate_x.py", "dev/a-b.sh", "My_Exceptions.json", "ok_name.sh", "ok-name.json"):
+                (scripts / name).write_text("")
+            self.assertEqual(self.misnamed_scripts(scripts), ["My_Exceptions.json", "dev/a-b.sh", "generate_x.py"])
 
 
 class GenDocsEngines(unittest.TestCase):

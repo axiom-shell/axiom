@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# What runs in the container (scripts/dev/container-test.sh): builds the
+# What runs in the container (scripts/dev/container_test.sh): builds the
 # tree's axiom and runs the container tests against it.
 set -euo pipefail
 

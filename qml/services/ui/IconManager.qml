@@ -9,7 +9,7 @@ import qs.services.core
  * The Material Symbols the bundled icon font draws (Appearance.iconFamily),
  * for icon pickers (SchemaField's icon field). The catalog is
  * config/json/material-symbols.json (built with the font by
- * scripts/generate_icons.py): [name, "search words"], most popular first.
+ * scripts/gen_icons.py): [name, "search words"], most popular first.
  * `search(query, limit)` ranks names (Search.rankIcons), reading the
  * catalog then if it's not read yet (a picker opened or typed in).
  * `isKnown(name)` says whether the font has it: until the catalog is read,
@@ -55,7 +55,7 @@ QtObject {
       console.warn("[IconManager] Could not parse material-symbols.json:", e);
     }
     if (entries.length === 0)
-      console.warn("[IconManager] No icon catalog: run scripts/generate_icons.py");
+      console.warn("[IconManager] No icon catalog: run scripts/gen_icons.py");
     root._entries = entries;
     const names = Object.create(null);
     entries.forEach(entry => names[entry[0]] = true);

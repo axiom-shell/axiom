@@ -1,6 +1,6 @@
 # Icons
 
-> **Files:** `qml/assets/fonts/MaterialSymbolsRounded.ttf`, `qml/assets/fonts/VERSION`, `qml/config/json/material-symbols.json`, `scripts/generate_icons.py`, `qml/config/Appearance.qml`, `qml/components/reusable/StyledIcon.qml`, `qml/services/ui/IconManager.qml`, `qml/components/methods/Search.qml`, `qml/components/reusable/StyledComboEntry.qml`, `qml/components/forms/SchemaField.qml`, `scripts/check_icons.py`
+> **Files:** `qml/assets/fonts/MaterialSymbolsRounded.ttf`, `qml/assets/fonts/VERSION`, `qml/config/json/material-symbols.json`, `scripts/gen_icons.py`, `qml/config/Appearance.qml`, `qml/components/reusable/StyledIcon.qml`, `qml/services/ui/IconManager.qml`, `qml/components/methods/Search.qml`, `qml/components/reusable/StyledComboEntry.qml`, `qml/components/forms/SchemaField.qml`, `scripts/check_icons.py`
 > **Config:** none of its own; `x-control: "icon"` on a string setting makes it an icon field
 > **Related:** [Shared UI pieces](shared-ui-pieces.md), [Schema annotations](schema-annotations.md), [Testing](../testing.md)
 
@@ -14,7 +14,7 @@ Every icon is a Material Symbols name (`"wifi"`, `"battery_full"`) that `StyledI
 - `StyledIcon` draws text that isn't a name (a pasted Nerd Font glyph, a word with capitals) in the text font instead.
 
 ### Updating it
-- `scripts/generate_icons.py` downloads the font, its codepoints and its licence at the commit pinned in its `COMMIT` (or `--commit <sha>`) from `google/material-design-icons`. It then writes the cut-down font, `LICENSE`, `VERSION` and the catalog.
+- `scripts/gen_icons.py` downloads the font, its codepoints and its licence at the commit pinned in its `COMMIT` (or `--commit <sha>`) from `google/material-design-icons`. It then writes the cut-down font, `LICENSE`, `VERSION` and the catalog.
 - It needs `fonttools` (Arch `python-fonttools`), only to run it. The results are committed and nothing downloads at runtime.
 - After a bump, run `scripts/check_icons.py`: Google sometimes renames or drops an icon.
 

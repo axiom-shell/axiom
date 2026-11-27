@@ -590,7 +590,7 @@ QtObject {
   // EmojiManager.search: most used first with no text, else by name
   function _emojiRows(query) {
     if (EmojiManager.entries().length === 0)
-      return [_infoRow(I18n.tr("No emoji list"), I18n.tr("Run scripts/generate_emoji.py"))];
+      return [_infoRow(I18n.tr("No emoji list"), I18n.tr("Run scripts/gen_emoji.py"))];
     const matches = EmojiManager.search(query, _searchLimit);
     return matches.length > 0 ? matches.map(e => _emojiRow(e)) : [_infoRow(I18n.tr("No matches"), I18n.tr("Search emoji by name or keyword"))];
   }

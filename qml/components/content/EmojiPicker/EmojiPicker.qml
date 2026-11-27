@@ -259,7 +259,7 @@ Panel {
         maxWidth: parent.width
         availableHeight: parent.height
         icon: "search_off"
-        text: root.noList ? I18n.tr("No emoji list: run scripts/generate_emoji.py") : I18n.tr("No matches")
+        text: root.noList ? I18n.tr("No emoji list: run scripts/gen_emoji.py") : I18n.tr("No matches")
       }
     }
   }

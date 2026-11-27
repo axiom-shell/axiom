@@ -159,7 +159,7 @@ def check_qml(known):
 
 def main():
     if not CATALOG.exists():
-        print(f"error    {CATALOG.relative_to(ROOT)}: missing: run scripts/generate_icons.py")
+        print(f"error    {CATALOG.relative_to(ROOT)}: missing: run scripts/gen_icons.py")
         return 1
     known = {entry[0] for entry in json.loads(CATALOG.read_text())}
     check_schema(known)

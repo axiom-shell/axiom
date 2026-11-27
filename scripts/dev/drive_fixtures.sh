@@ -11,11 +11,11 @@
 #   luks.img    LUKS2 holding ext4 (AXLUKS), passphrase "axiom-test"
 #               (needs cryptsetup)
 #
-#   scripts/dev/drive-fixtures.sh images   build the images (again)
-#   scripts/dev/drive-fixtures.sh up       build missing images, set each up
-#   scripts/dev/drive-fixtures.sh down     unmount, lock and delete their loop devices
-#   scripts/dev/drive-fixtures.sh status   list their loop devices
-#   scripts/dev/drive-fixtures.sh clean    down, then delete the images
+#   scripts/dev/drive_fixtures.sh images   build the images (again)
+#   scripts/dev/drive_fixtures.sh up       build missing images, set each up
+#   scripts/dev/drive_fixtures.sh down     unmount, lock and delete their loop devices
+#   scripts/dev/drive_fixtures.sh status   list their loop devices
+#   scripts/dev/drive_fixtures.sh clean    down, then delete the images
 #
 # The images live in $AXIOM_DRIVE_FIXTURES (default
 # ~/.cache/axiom-drive-fixtures).

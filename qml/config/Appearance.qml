@@ -79,7 +79,7 @@ QtObject {
   }
   // Icons are Material Symbols names drawn in this font (StyledIcon), so
   // they don't depend on the text font: the copy axiom bundles
-  // (assets/fonts, built by scripts/generate_icons.py), renamed so a system
+  // (assets/fonts, built by scripts/gen_icons.py), renamed so a system
   // copy is never drawn in its place. Loaded here, not by a service: every
   // icon reads this, in the shell and the greeter alike, so the font is
   // there wherever one is drawn

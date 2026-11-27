@@ -3,7 +3,7 @@
 # shell, run in a docker container (docs/dev/testing.md › Container tests).
 # Dev-only; never run on CI or inside a container.
 #
-#   scripts/dev/container-test.sh [--rebuild] [--keep] [--shell] [-update] [-run REGEX]
+#   scripts/dev/container_test.sh [--rebuild] [--keep] [--shell] [-update] [-run REGEX]
 #
 #   --rebuild  build the image again
 #   --keep     keep the snapshot of the tree
@@ -24,7 +24,7 @@ while [ $# -gt 0 ]; do
 	--shell) shell=1 ;;
 	-update) update=1 ;;
 	-run)
-		[ $# -ge 2 ] || { echo "container-test: -run needs a regex" >&2; exit 2; }
+		[ $# -ge 2 ] || { echo "container_test: -run needs a regex" >&2; exit 2; }
 		run=$2
 		shift
 		;;
@@ -33,7 +33,7 @@ while [ $# -gt 0 ]; do
 		exit 0
 		;;
 	*)
-		echo "container-test: unknown argument $1" >&2
+		echo "container_test: unknown argument $1" >&2
 		exit 2
 		;;
 	esac
@@ -41,10 +41,10 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -e /.dockerenv ]; then
-	echo "container-test: refusing to run inside a container" >&2
+	echo "container_test: refusing to run inside a container" >&2
 	exit 2
 fi
-command -v docker >/dev/null || { echo "container-test: docker isn't installed" >&2; exit 2; }
+command -v docker >/dev/null || { echo "container_test: docker isn't installed" >&2; exit 2; }
 
 dockerfile=$root/scripts/dev/container/Dockerfile
 image=axiom-ctr:$(sha256sum "$dockerfile" | cut -c1-12)
@@ -57,11 +57,11 @@ out=$snap.out
 mkdir -p "$out"
 cleanup() {
 	if [ "$keep" = 1 ]; then
-		echo "container-test: snapshot kept in $snap"
+		echo "container_test: snapshot kept in $snap"
 	else
 		rm -rf "$snap"
 	fi
-	echo "container-test: logs in $out"
+	echo "container_test: logs in $out"
 }
 trap cleanup EXIT
 
