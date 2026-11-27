@@ -35,8 +35,8 @@ running anything:
     (an entry no longer used is an error); every BlurShape's `shown:` reads
     `backed`
   - no Repeater model or acquire() request in the UI reads a polled
-    service's member (one owning an OwnerRegistry or DeadlineTicker),
-    in the expression or through a property of the file; a model may
+    service's member (one owning an OwnerRegistry or DeadlineTicker), a
+    model also not a push service's array rebuilt per push, in the expression or through a property of the file; a model may
     count one (`.length`, `.count`)
   - the config UI and onboarding build no hover tint (StateLayer), key
     handler, sunken box, `onRowClicked`, `first:` literal or kept pushed
@@ -1120,10 +1120,18 @@ def main():
     # pushed qs past 25 GB. Live means a member of a polled service (one
     # polling through an OwnerRegistry or DeadlineTicker, not
     # BackendManager's or NotesManager's acquire()), read in the expression
-    # or through one property of the same file. A model may count one
+    # or through one property of the same file; a model's live set also
+    # holds the arrays a push service (one calling BackendManager.listen)
+    # assigns per push. A model may count one
     # (`.length`, `.count`: an int notifies only when it changes); a request
     # may not read one at all
     polled = {f.stem for f in QML_ROOT.glob("services/*/*.qml") if re.search(r"\b(?:OwnerRegistry|DeadlineTicker)\s*\{", f.read_text())}
+    pushed = {}
+    for f in QML_ROOT.glob("services/*/*.qml"):
+        code = re.sub(r"//[^\n]*", "", f.read_text())
+        if "BackendManager.listen(" in code:
+            pushed[f.stem] = {m for m in re.findall(r"\bproperty\s+(?:var|list<[^>]*>)\s+(\w+)", code)
+                              if re.search(rf"(?<![\w.])(?<!let )(?<!const )(?<!var )(?:root\.)?{m}\s*=(?![=>])", code)}
     chain = re.compile(r"(?<![\w.])(?:root\.)?([A-Za-z_]\w*)((?:\??\.\w+)*)")
 
     def live_reads(expr, props, counts, depth=0):
@@ -1133,6 +1141,8 @@ def main():
             if (expr[m.end():m.end() + 1] == "(" and len(members) < 2) or (counts and members[-1:] in (["length"], ["count"])):
                 continue
             if name in polled and members and members[0] not in ("acquire", "release"):
+                found.append(f"{name}.{members[0]}")
+            elif counts and members[:1] and members[0] in pushed.get(name, ()):
                 found.append(f"{name}.{members[0]}")
             elif name in props and not depth:
                 found += [f"{name} → {r}" for r in live_reads(props[name], props, counts, 1)]
