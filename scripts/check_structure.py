@@ -997,7 +997,9 @@ def main():
         j = start - 1
         while j >= 0 and not lines[j].strip():
             j -= 1
-        if j < 0 or not (lines[j].startswith("//") or lines[j].rstrip().endswith("*/")):
+        if j >= 0 and lines[j].rstrip().endswith("*/"):
+            errors.append(f"{path}: a /* */ purpose comment: write it as // lines")
+        elif j < 0 or not lines[j].startswith("//"):
             errors.append(f"{path}: no purpose comment above its root object")
 
     # Popout names -> content files

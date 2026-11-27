@@ -422,6 +422,7 @@ class CheckStructure(unittest.TestCase):
          "qml/shell/OnClash.qml:7: property onBattery beside `battery`"),
         ("qml/shell/OnInherited.qml", qml("readonly property bool onWidth: true"), "qml/shell/OnInherited.qml:6: property onWidth beside `width`"),
         ("qml/shell/NoPurpose.qml", qml(purpose=""), "qml/shell/NoPurpose.qml: no purpose comment"),
+        ("qml/shell/BlockPurpose.qml", qml(purpose="/** A fixture. */"), "qml/shell/BlockPurpose.qml: a /* */ purpose comment"),
         ("qml/shell/Popout.qml", qml('PopoutAnchor { popoutName: "Ghost" }'), 'popoutName "Ghost" has no qml/components/content/Ghost/Ghost.qml'),
         ("qml/components/content/Unused/Unused.qml", qml(), "qml/components/content/Unused/: not an overlay module"),
         ("qml/components/widgets/Old.qml", qml(), "qml/components/widgets/Old.qml: lives under retired"),
