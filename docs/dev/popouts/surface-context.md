@@ -29,7 +29,7 @@ Every surface that grows out of a screen edge asks one pure helper what each of 
   - `filletMargin` / `endRoom`: the room an unjoined end keeps, for its fillet and, while the border is on, past the frame's rounded inner corner.
   - `detached`: the one rule for a box of its own. It is detached when held, past a transparent bar, or on a floating bar showing no islands.
   - `shadow`: how it casts its shadow, taken from what it grows out of. See [Shadows](shadows.md).
-  - `opening`: a stroke opening on whole pixels.
+  - `opening`: a stroke opening on whole pixels; `openingOrNull`, the same or null when nothing is left of it.
   - `submenuJoin`: how a submenu joined at its parent's bar side meets the stroke there, fillet or straight, and the parent's pill stretched for it. See [Submenus](submenus.md#what-the-submenu-hands-back).
   - `submenuPlace`: where a submenu goes along its parent's side. See [Submenus](submenus.md#placement-along-the-parents-side).
 

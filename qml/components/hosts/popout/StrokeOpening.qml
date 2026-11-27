@@ -38,8 +38,8 @@ QtObject {
     opening: {
       if (root.sink !== "border" || !Appearance.translucent || !root.span)
         return null;
-      const o = SurfaceContext.opening(root.span.start, root.span.end, root.span.startFillet ?? 0, root.span.endFillet ?? 0);
-      return o.end > o.start ? Object.assign({}, root.span, o) : null;
+      const o = SurfaceContext.openingOrNull(root.span.start, root.span.end, root.span.startFillet ?? 0, root.span.endFillet ?? 0);
+      return o ? Object.assign({}, root.span, o) : null;
     }
   }
   readonly property var _solid: PillStretch {
@@ -51,8 +51,7 @@ QtObject {
       if (!origin)
         return null;
       const along = root.span.edge === "left" || root.span.edge === "right" ? origin.y : origin.x;
-      const o = SurfaceContext.opening(root.span.start - along, root.span.end - along, root.span.startFillet ?? 0, root.span.endFillet ?? 0);
-      return o.end > o.start ? o : null;
+      return SurfaceContext.openingOrNull(root.span.start - along, root.span.end - along, root.span.startFillet ?? 0, root.span.endFillet ?? 0);
     }
   }
 }

@@ -44,6 +44,35 @@ TestCase {
     compare(EdgeAttach.filletMargin(2, 28), 27);
     // Too tight a radius for a fillet
     compare(EdgeAttach.filletMargin(2, 0), 0);
+    // Rounded up to a whole pixel with an odd stroke
+    compare(EdgeAttach.filletMargin(1, 26), 26);
+    compare(EdgeAttach.filletMargin(3, 10), 9);
+    compare(EdgeAttach.filletMargin(1, 0.4), 0);
+  }
+
+  function test_place_whole_pixels_odd_stroke() {
+    const r = EdgeAttach.place(spec({
+      "stroke": 1,
+      "radius": 26,
+      "aligned": 300,
+      "length": 100
+    }));
+    compare(r.surfaceStart, 274);
+    compare(r.surfaceLength, 152);
+    verify(Number.isInteger(r.surfaceStart) && Number.isInteger(r.surfaceLength));
+    const p = EdgeAttach.place(spec({
+      "stroke": 1,
+      "radius": 26,
+      "pills": [pill(200, 150)],
+      "centre": 260,
+      "aligned": 210,
+      "length": 100,
+      "pillGrows": true
+    }));
+    compare(p.surfaceStart, 184);
+    compare(p.surfaceLength, 152);
+    compare(p.stretch.start, 158);
+    compare(p.stretch.end, 362);
   }
 
   function grow(extra) {

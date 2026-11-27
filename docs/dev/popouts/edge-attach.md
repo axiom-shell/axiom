@@ -20,6 +20,7 @@
   - the box's `start`/`end`
   - the content's `contentStart`/`contentOffset`
   - joined and flush ends, and fillet margins
+    - a fillet's room (`EdgeAttach.filletMargin`) is rounded up to a whole pixel, so the surface's item, its fillet ends and its walls sit on whole pixels with its content (an odd stroke or a fitted radius would leave them on a half pixel, resampled in a layer and cut by the pill's mask: a light seam). The arc keeps its place; a straight run of under a pixel leads into it
   - the surface's span
   - the pill or island `stretch`
 

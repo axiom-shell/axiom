@@ -63,6 +63,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - An opening spans only what's drawn over it (`AttachedSurface.coverStart`/`coverLength`):
   - the box while it slides;
   - its fillets too once it's out. Until then they're behind the edge it slides from, and an opened stroke showed as a dark gap at each corner.
+- Every opening is published on whole pixels (`SurfaceContext.opening`, ceil start, floor end): the pill's (`EdgePlacement`'s stretch and submenu openings, a pill bar's `PillBarJoin`, `CornerMerge`) and the border's (`BarContainer.borderOpening`/`joinOpening`) as `StrokeOpening`'s, so the thresholded mask cuts no pixel the wall covers less than half, and one is re-sent once per pixel, not every frame.
 - A submenu's popup takes no compositor adjustment: its window reaches past the parent's, and a nudge left its blur and the parent's opening behind.
 
 ### Where a window is (LayerOrigin)
@@ -78,7 +79,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - A surface joined to the border's stroke (`EdgePopout`) publishes the stretch it covers:
   - `SurfaceManager.setBorderOpening`, through a `hosts/popout/BorderOpening`, which takes it back as it goes;
   - in screen px along the edge; its edge coordinates start at `ScreenEdgeManager.reservedWithMenusOn(startSide)`;
-  - on whole pixels (`StrokeOpening` rounds it through `SurfaceContext.opening`), so a surface easing its size (an OSD's parts) re-sends it once per pixel, not every frame.
+  - on whole pixels (see Strokes left open under backed surfaces).
 - `BorderPanel` leaves its stroke and the fill of the stroke's row open there (`Utils.subtractSpans`).
   - It nudges its window (`FrameNudge`) only when its own openings changed: `SurfaceManager.borderOpenings` is a new array whenever any opening on any screen moves.
   - A strip's own offset along its edge (`screenOffset`) is read through `LayerOrigin`. Until then it's taken as half what the edges across it reserve.
@@ -95,7 +96,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - Bar popouts set their openings directly.
 - Edge popouts and docks (and bar popouts' joined ends) route the same screen-px spans through `hosts/popout/StrokeOpening`:
   - the stretch they stand on, a joined submenu's, and their joined ends' with their fillet;
-  - it puts them on that bar's container (a `PillStretch`), on whole pixels (`SurfaceContext.opening`).
+  - it puts them on that bar's container (a `PillStretch`), on whole pixels (as every opening, above).
 
 ### Submenu joins
 - A submenu joined to its parent's bar side reports the stretch its end covers (`SubPopout.joinSpan` → `submenuJoinSpan`).
