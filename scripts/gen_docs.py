@@ -101,7 +101,7 @@ def first_sentence(text, limit=220):
 
 # ---------------------------------------------------------------- QML parsing
 
-ROOT_OBJECT = re.compile(r"^[A-Z][\w.]*\s*\{")
+ROOT_OBJECT = re.compile(r"^([A-Z][\w.]*)\s*\{", re.M)
 
 
 def parse_qml(path):

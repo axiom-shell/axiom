@@ -1,0 +1,7 @@
+{
+  "_comment": "Files and folders allowed to break a naming or structure rule, each with its reason. scripts/check_structure.py fails on an entry that waives nothing.",
+  "qml/components/content/parts/notes": {
+    "rules": ["folder-case"],
+    "reason": "the Notes feature's own name, as `NotesManager`; not a plural of a kind"
+  }
+}

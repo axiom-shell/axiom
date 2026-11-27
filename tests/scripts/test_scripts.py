@@ -613,6 +613,92 @@ class CheckStructure(unittest.TestCase):
             code, out = run_check(root, "check_structure.py", files=[self.LAYER_GOOD])
             self.assertEqual([line for line in out.splitlines() if "layer-" in line], [], out)
 
+    # What a fixture of the naming rules copies: the layer contract the older rules read, and the tests the baseline lists
+    NAMING_PATHS = ("docs/dev/compositor/contract.md", "tests", "tests-layout")
+
+    @staticmethod
+    def plain(body, head="pragma ComponentBehavior: Bound\nimport QtQuick"):
+        """A fixture file whose members sit at the root's two-space indent."""
+        return f"{head}\n// A fixture.\nItem {{\n{body}\n}}\n"
+
+    def test_naming_rules(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, *self.NAMING_PATHS)
+            files = [
+                ("qml/shell/Reach.qml", self.plain('  property var claim: null\n  property var _own: null\n  function f() { claim._state = "open"; claim._own = 1; root._other = 2 }\n  property var host: null\n  function g() { const o = {"_k": 1}; return o._k + host?._drawn }\n  Timer {\n    id: _soon\n  }')),
+                ("qml/shell/RootId.qml", self.plain("  id: copies")),
+                ("qml/shell/RootOk.qml", self.plain("  id: root")),
+                ("qml/shell/WorkspaceCell.qml", self.plain("")),
+                ("qml/shell/FooPanel.qml", self.plain("")),
+                ("qml/shell/Tip.qml", "import Quickshell\n// A fixture.\nPopupWindow {\n}\n"),
+                ("qml/shell/Edge.qml", "import Quickshell\n// A fixture.\nPanelWindow {\n}\n"),
+                ("qml/shell/GoodPanel.qml", "pragma ComponentBehavior: Bound\nimport QtQuick\n// A fixture.\nPanel {\n}\n"),
+                ("qml/components/surfaces/widgets/Keep.qml", self.plain("")),
+                ("tests/tst_TypePickr.qml", self.plain("  function test_camelCase() {}\n  function test_snake_case() {}")),
+                ("qml/services/core/Tick.qml", self.plain("  Timer {}\n  Timer {}\n  PersistentProperties {}\n  property Timer _t: Timer {}", head="pragma Singleton\nimport QtQuick")),
+            ]
+            code, out = run_check(root, "check_structure.py", "--base", base, files=files)
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, [
+            "qml/shell/Reach.qml: private-reach f:claim._state: not in the baseline",
+            "qml/shell/Reach.qml: private-reach g:host._drawn: not in the baseline",
+            "qml/shell/Reach.qml: private-reach Reach:id _soon: not in the baseline",
+            "qml/shell/Edge.qml: suffix-rules Edge:Window: not in the baseline",
+            "qml/shell/RootId.qml: root-id RootId:copies: not in the baseline",
+            "qml/shell/WorkspaceCell.qml: stem-unique stem:WorkspaceCell: not in the baseline",
+            "qml/shell/FooPanel.qml: suffix-rules FooPanel:Panel: not in the baseline",
+            "qml/components/surfaces/widgets: folder-case folder:widgets: not in the baseline",
+            "tests/tst_TypePickr.qml: test-names file:tst_TypePickr: not in the baseline",
+            "tests/tst_TypePickr.qml: test-names test_camelCase: not in the baseline",
+            "qml/services/core/Tick.qml: singleton-children Timer: not in the baseline",
+            "qml/services/core/Tick.qml: singleton-children Timer#2: not in the baseline",
+        ]), [], out)
+        for quiet in ("Reach.qml: private-reach f:claim._own", "root._other", "o._k", "Tip.qml: suffix-rules", "RootOk", "GoodPanel", "tst_TypePickr.qml: test-names test_snake_case",
+                      "singleton-children PersistentProperties", "singleton-children _t"):
+            self.assertEqual([l for l in out.splitlines() if quiet in l], [], quiet + "\n" + out)
+        sys.path.insert(0, str(SCRIPTS))
+        import check_structure
+        lines = out.splitlines()
+        for rule, statement in check_structure.RULES.items():
+            self.assertEqual(lines.count(f"error    {rule}: {statement}"), 1, rule + "\n" + out)
+
+    def test_naming_baseline_and_new_rules(self):
+        def without_root_id(root):
+            path = root / "scripts/check_structure.py"
+            path.write_text("".join(l for l in path.read_text().splitlines(keepends=True) if not l.startswith('    "root-id": "')))
+        entry = {"qml/shell/RootId.qml": {"root-id": ["RootId:copies"]}}
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, *self.NAMING_PATHS)
+            edit_json(root / "scripts/structure-baseline.json", lambda data: data.update(entry))
+            code, out = run_check(root, "check_structure.py", "--base", base, files=[("qml/shell/RootId.qml", self.plain("  id: copies"))])
+            self.assertEqual(code, 1)
+            self.assertIn("qml/shell/RootId.qml: root-id RootId:copies: added to the baseline since", out)
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, *self.NAMING_PATHS, plant=without_root_id)
+            shutil.copy2(ROOT / "scripts/check_structure.py", root / "scripts/check_structure.py")
+            edit_json(root / "scripts/structure-baseline.json", lambda data: data.update(entry))
+            code, out = run_check(root, "check_structure.py", "--base", base, files=[("qml/shell/RootId.qml", self.plain("  id: copies"))])
+            self.assertEqual(code, 0, out)
+            self.assertEqual(out, "structure ok\n")
+            (root / "scripts/structure-baseline.json").write_text("{}")
+            code, out = run_check(root, "check_structure.py", "--base", base, "--update-baseline")
+            self.assertEqual(code, 0, out)
+            data = json.loads((root / "scripts/structure-baseline.json").read_text())
+            self.assertEqual(data["qml/shell/RootId.qml"], {"root-id": ["RootId:copies"]})
+            self.assertTrue(all(isinstance(syms, list) and all(isinstance(x, str) for x in syms)
+                                for rules in data.values() for syms in rules.values()), data)
+
+    def test_naming_exceptions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, *self.NAMING_PATHS)
+            edit_json(root / "scripts/structure-exceptions.json", lambda data: data.update({
+                "qml/shell/FooPanel.qml": {"rules": ["suffix-rules"], "reason": "fixture"},
+                "qml/nowhere/*.qml": {"rules": ["root-id"], "reason": "fixture"}}))
+            code, out = run_check(root, "check_structure.py", "--base", base, files=[("qml/shell/FooPanel.qml", self.plain(""))])
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, ["scripts/structure-exceptions.json: qml/nowhere/*.qml lists root-id, which no file under it hits"]), [], out)
+        self.assertEqual([l for l in out.splitlines() if "FooPanel" in l], [], out)
+
     def test_live_tree_passes(self):
         # The real widgets break no template rule, so each plant above is what fails
         with tempfile.TemporaryDirectory() as tmp:
