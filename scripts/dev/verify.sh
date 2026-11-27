@@ -99,6 +99,8 @@ for f in "${changed[@]}"; do
   tests/Shared.qml | tests/RepoFiles.qml | scripts/dev/fixtures.py | scripts/generate.sh) go=1 fixtures=1 tests+=(Shared) ;;
   esac
   case "$f" in
+  # Files tst_EngineTrace loads besides its own
+  qml/services/core/IpcTarget.qml | tests-layout/stubs/qs/services/core/BackendManager.qml) tests+=(EngineTrace) ;;&
   # (`*` crosses `/`: a domain helper under methods/<domain>/ matches too)
   qml/components/methods/*.qml | qml/services/core/*.qml)
     name="$(basename "$f" .qml)"

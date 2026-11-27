@@ -156,7 +156,7 @@ A producer's name never reuses a member name another file uses for a different q
 ## Errors and logging
 Engines never throw or log. An inconsistent input gives a safe result plus `problems`; the owner logs `console.warn("[<Facade>] <code> <key>: <detail>")` once per `(code, key)` until it clears. Each `code` has a contract row.
 
-To explain why a value came out, an adapter calls `EngineTrace.record({engine, stage, id, input, output})` while `EngineTrace.tracing` is on, and `EngineTrace.forget({engine, id})` when its item goes. The store keeps the last record per stage and id and notifies nothing, so a record may be made from a binding; `recordsOf(engine, id)` and `idsOf(engine)` read it (`check_engines` › `trace` limits who calls `record`, `forget` and `tracing`).
+To explain why a value came out, an adapter calls `EngineTrace.record({engine, stage, id, input, output})` while `EngineTrace.tracing` is on, and `EngineTrace.forget({engine, id})` when its item goes. The store keeps the last record per stage and id and notifies nothing, so a record may be made from a binding; `recordsOf(engine, id)` and `idsOf(engine)` read it (`check_engines` › `trace` limits who calls `record`, `forget` and `tracing`). From outside the shell, `axiom ipc engines explain <engine> <id>`, `list <engine>`, `enable`, `disable`, `toggle` and `status` read the store and turn tracing on or off (docs/usage.md › IPC targets).
 
 ## Tests
 | Kind | Files | Mechanism |

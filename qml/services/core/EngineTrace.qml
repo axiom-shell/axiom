@@ -6,7 +6,7 @@ import QtQuick
 // decision can be explained afterwards. Recording notifies nothing, so an adapter may call it from a
 // binding; reading `tracing` makes a recording binding re-run when it toggles, so turning it on fills the
 // trace at once. Outside this file and the tests only `.record(`, `.forget(` and `.tracing` are used
-// (check_engines › trace).
+// (check_engines › trace); `axiom ipc engines …` reads the store and toggles tracing.
 QtObject {
   id: root
 
@@ -60,5 +60,34 @@ QtObject {
   // A plain setter: no owner argument, unlike a registry's acquire(owner)/release(owner)
   function setTracing(on) {
     root._tracing = on;
+  }
+
+  // axiom ipc engines explain <engine> <id> | list <engine> | enable | disable | toggle | status
+  property IpcTarget _ipc: IpcTarget {
+    target: "engines"
+
+    function explain(engine: string, id: string): string {
+      return JSON.stringify(root.recordsOf(engine, id));
+    }
+
+    function list(engine: string): string {
+      return JSON.stringify(root.idsOf(engine));
+    }
+
+    function toggle(): void {
+      root.setTracing(!root.tracing);
+    }
+
+    function enable(): void {
+      root.setTracing(true);
+    }
+
+    function disable(): void {
+      root.setTracing(false);
+    }
+
+    function status(): bool {
+      return root.tracing;
+    }
   }
 }
