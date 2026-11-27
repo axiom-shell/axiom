@@ -1,6 +1,6 @@
 # Fix list
 
-Filled by: the lead, as `fix-<source>-<n>.md` in the state folder (inline in the brief without one), from confirmed findings and architect rulings.
+Filled by: the gate's architect for `gate<g>` (`.claude/skills/keep-order/SKILL.md` › gate); the lead for `review<r>`, `ci<c>` and a later ruling in the same round. Its one home is `fix-<source>-<n>.md` in the state folder (`.claude/skills/orchestrate/SKILL.md` › State); without a state folder, the lead puts it inline in the brief.
 
 ```
 # Fix list: <source> <n>

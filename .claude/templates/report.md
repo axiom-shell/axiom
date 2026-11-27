@@ -13,7 +13,7 @@ Push: <branch>; after a stack rebase, lines 6–7 of `stacks.md` › The stack r
 ## Changed pieces                 piece: every user and the check that covered it
 ## Rulings                        each ruling and default taken, in plain technical terms: no R/D ids, step, plan or question ids, no plan quotes
 ## Questions                      word for word; or none
-## Outside the branch             also written to the follow-ups file when CLAUDE.local.md names one
+## Outside the branch             each item and the file it was filed in
 ```
 
 - One line per bullet; a section with nothing says `none`.
