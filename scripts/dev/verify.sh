@@ -102,7 +102,7 @@ for f in "${changed[@]}"; do
   # (`*` crosses `/`: a domain helper under methods/<domain>/ matches too)
   qml/components/methods/*.qml | qml/services/core/*.qml)
     name="$(basename "$f" .qml)"
-    [[ -f "tests/tst_$name.qml" ]] && tests+=("$name")
+    [[ -f "tests/tst_$name.qml" || -f "tests-layout/tst_$name.qml" ]] && tests+=("$name")
     ;;
   # The row runner: its own test, and OSDSystems, which uses its compare
   tests/EngineRows.qml) tests+=(EngineRows OSDSystems) ;;
@@ -111,7 +111,7 @@ for f in "${changed[@]}"; do
     name="$(basename "$f" .js)"
     [[ -f "tests/tst_$name.qml" ]] && tests+=("$name")
     ;;
-  tests/tst_*.qml)
+  tests/tst_*.qml | tests-layout/tst_*.qml)
     name="$(basename "$f" .qml)"
     [[ -f "$f" ]] && tests+=("${name#tst_}")
     ;;
