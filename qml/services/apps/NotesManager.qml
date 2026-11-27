@@ -33,7 +33,7 @@ QtObject {
   signal moved(string from, string to)
   signal removed(string path)
 
-  // --- Paths ---
+  // -- Paths --
 
   // A clean relative path, or "" when it's empty or tries to leave the
   // folder (absolute, "..", ".")
@@ -69,7 +69,7 @@ QtObject {
     return folder === "" || path === folder || path.startsWith(folder + "/");
   }
 
-  // --- Documents ---
+  // -- Documents --
 
   property var _docs: ({})
 
@@ -107,7 +107,7 @@ QtObject {
     Object.keys(root._docs).forEach(path => root._docs[path].flush());
   }
 
-  // --- Search ---
+  // -- Search --
 
   // The last search's answer ({ query, results }), for the launcher
   property var lastSearch: ({
@@ -176,7 +176,7 @@ QtObject {
     return "…" + text.slice(start, start + 100) + (start + 100 < text.length ? "…" : "");
   }
 
-  // --- Opening a note elsewhere (the launcher) ---
+  // -- Opening a note elsewhere (the launcher) --
 
   // A note (and 0-based line, or -1) to show in the Notes module at a
   // place ("overlay", "menu:<id>" or "desktop:<screen>", a module's
@@ -226,7 +226,7 @@ QtObject {
     return Date.now() - pending.at < 5000 ? pending : null;
   }
 
-  // --- The last note each module showed ---
+  // -- The last note each module showed --
 
   property var _state: StateManager.createStateHandler("notes-modules")
   property var _lastOpened: ({})
@@ -246,7 +246,7 @@ QtObject {
     });
   }
 
-  // --- Files and folders ---
+  // -- Files and folders --
 
   // Calls back with the new note's path. `name` may be empty ("Untitled"),
   // a taken name gets a number

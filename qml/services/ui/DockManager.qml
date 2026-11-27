@@ -95,7 +95,7 @@ QtObject {
     item.windows.forEach(w => CompositorManager.closeWindow(w.id));
   }
 
-  // --- Pinning (saved at once) ---
+  // -- Pinning (saved at once) --
 
   // Changes the pinned apps of a dock ([key] → [key]): its own with
   // pinnedOwn, else the shared Apps.pinned
@@ -130,7 +130,7 @@ QtObject {
     root._editPinned(dockId, list => list.filter(k => k !== key));
   }
 
-  // --- Reserved space ---
+  // -- Reserved space --
 
   // What each shown dock reserves, by "<screen>:<edge>:<dock id>" (edge
   // "top" | "bottom" | "left" | "right"): EdgePopouts (the OSD, edge
@@ -155,7 +155,7 @@ QtObject {
     return Object.keys(root.zones).filter(key => key.startsWith(prefix)).reduce((sum, key) => sum + root.zones[key], 0);
   }
 
-  // --- Showing and hiding ---
+  // -- Showing and hiding --
 
   // The space reserved on each side of a screen, [left, top, right,
   // bottom]: where its work area starts (the output's `reserved`)
@@ -238,7 +238,7 @@ QtObject {
     });
   }
 
-  // --- Preview (the settings card's Show) ---
+  // -- Preview (the settings card's Show) --
 
   // A dock as its card edits it (a DockEntry, saved or not), which
   // shell/Dock slides in over the overlay for a moment on `previewScreen`

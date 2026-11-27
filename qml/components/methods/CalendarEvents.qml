@@ -148,7 +148,7 @@ QtObject {
     };
   }
 
-  // --- Editing ---
+  // -- Editing --
 
   // A new event on `key`: on today, at the next whole hour; another day at
   // 9:00. `duration` and `reminder` in minutes (reminder -1: none).

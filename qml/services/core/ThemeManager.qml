@@ -26,9 +26,7 @@ import qs.services.system
 QtObject {
   id: root
 
-  //=========================================================================
-  // Public Models & State
-  //=========================================================================
+  // -- Public Models & State --
   // One entry per theme, a dark/light pair being one theme:
   // [{ label, dark, light, darkPreview, lightPreview, shared, generated,
   // community }] (ThemeFamilies.build), where dark/light are Appearance.theme
@@ -129,9 +127,7 @@ QtObject {
       "key": "theme-failed"
     })
 
-  //=========================================================================
-  // Public Functions
-  //=========================================================================
+  // -- Public Functions --
 
   // `themeName` as Appearance.theme names it (generated ones "generated/…").
   // A choice by hand outlasts the schedule's variant until its next edge.
@@ -377,9 +373,7 @@ QtObject {
       root.themeIntegrations(root.activeTheme, added);
   }
 
-  //=========================================================================
-  // Private Implementation
-  //=========================================================================
+  // -- Private Implementation --
   Component.onCompleted: {
     // What the initializer loaded, so the first change check is a no-op
     root._themeContent = FileManager.read(root._themeUrl(root._themeName)) ?? "";
@@ -396,7 +390,7 @@ QtObject {
     Qt.callLater(root.syncGeneratedTheme);
   }
 
-  // --- What's showing ---
+  // -- What's showing --
   // state/look.json: { theme: { for, name } (the schedule's variant of the
   // chosen theme, or null), rotated: { wallpaper, wallpapers },
   // lastRotated, shuffle: [urls] (the shuffle's round, shuffleBag) }. The
@@ -441,7 +435,7 @@ QtObject {
   readonly property string _shownKey: Paths.greeter ? "" : JSON.stringify([root.shownWallpapers, General.primaryMonitor, General.outputs.map(screen => screen.name)])
   on_ShownKeyChanged: Qt.callLater(root.syncGeneratedTheme)
 
-  // --- Active theme ---
+  // -- Active theme --
   // Loaded eagerly so config/Theme never sees an empty theme
   property var _defaults: _readDefaults()
   property var _theme: _parseTheme(FileManager.read(_themeUrl(root.activeTheme)), root.activeTheme)
@@ -550,7 +544,7 @@ QtObject {
   // The theme folders' themes, combined once any folder has been scanned
   property var _families: []
 
-  // --- Integrations ---
+  // -- Integrations --
 
   // The ThemeIntegrations switches, in schema order (the daemon's
   // theme.integrate has one integration each)
@@ -570,7 +564,7 @@ QtObject {
     return ConfigManager.configSchema.properties.ThemeIntegrations.properties[key]?.["x-commands"] ?? [key];
   }
 
-  // --- Theme List Loading ---
+  // -- Theme List Loading --
 
   // Rescans the theme folders, after a generation; each rebuilds the
   // families when it's read

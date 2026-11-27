@@ -111,7 +111,7 @@ QtObject {
   // picker's frame is in they stay, so it holds them
   readonly property bool popupsHidden: modalShown && captureWindows.every(w => w.frozen)
 
-  // --- Screen layouts' required fields ---
+  // -- Screen layouts' required fields --
 
   // Which screen layout surfaces (the lock screen's, the greeter's, by the
   // key their host gives their modules) show their required field: the

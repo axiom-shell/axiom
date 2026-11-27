@@ -21,7 +21,7 @@ QtObject {
   // The least contrast of a dimmed (muted) mark
   readonly property real mutedContrast: 3
 
-  // ---- colors ----
+  // -- colors --
 
   // `a` mixed `t` (0-1) of the way to `b`, every channel
   function mix(a, b, t) {
@@ -171,7 +171,7 @@ QtObject {
     return Math.min(1, Math.ceil(Math.round(high * 1000) / 10) / 100);
   }
 
-  // ---- plain [r, g, b] arrays (0-1, opaque) ----
+  // -- plain [r, g, b] arrays (0-1, opaque) --
 
   function rgb(color) {
     const c = Qt.color(color);

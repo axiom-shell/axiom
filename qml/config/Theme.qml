@@ -22,7 +22,7 @@ QtObject {
     return root[key] ?? key;
   }
 
-  // --- Base16 colors ---
+  // -- Base16 colors --
   readonly property color base00: _themeData.colors?.base00 ?? _defaultColors.base00
   readonly property color base01: _themeData.colors?.base01 ?? _defaultColors.base01
   readonly property color base02: _themeData.colors?.base02 ?? _defaultColors.base02
@@ -40,7 +40,7 @@ QtObject {
   readonly property color base0E: _themeData.colors?.base0E ?? _defaultColors.base0E
   readonly property color base0F: _themeData.colors?.base0F ?? _defaultColors.base0F
 
-  // --- Semantic colors ---
+  // -- Semantic colors --
   readonly property color background: _semantic("background")
   readonly property color backgroundAlt: _semantic("backgroundAlt")
   readonly property color backgroundHighlight: _semantic("backgroundHighlight")
@@ -119,7 +119,7 @@ QtObject {
       "fg1": fg1
     })
 
-  // --- Metadata ---
+  // -- Metadata --
   readonly property string name: _themeData.name ?? "Unknown"
 
   // The 16 base colors offered by color pickers (`x-options: "colors"`)

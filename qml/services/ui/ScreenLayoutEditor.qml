@@ -226,7 +226,7 @@ QtObject {
     root.rebase();
   }
 
-  // --- Preview ---
+  // -- Preview --
 
   // The draft shown on the target screen in a plain window, with every
   // field and action inert

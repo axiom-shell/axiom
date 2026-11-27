@@ -9,7 +9,7 @@ QtObject {
 
   readonly property var _c: ConfigManager.live.Appearance
 
-  // --- Theme (UI-owned, set on the overlay's Themes page) ---
+  // -- Theme (UI-owned, set on the overlay's Themes page) --
   readonly property string theme: _c.theme.name
   // From the active theme, not config: a theme is dark or light
   readonly property bool darkMode: ThemeManager.currentTheme.variant !== "light"
@@ -60,12 +60,12 @@ QtObject {
   readonly property string darkWallpaper: _c.wallpaper.variants.dark
   readonly property string lightWallpaper: _c.wallpaper.variants.light
 
-  // --- Light/dark by time of day (WallpaperManager) ---
+  // -- Light/dark by time of day (WallpaperManager) --
   readonly property bool themeScheduled: _c.theme.schedule.enabled
   readonly property string lightAt: _c.theme.schedule.lightAt
   readonly property string darkAt: _c.theme.schedule.darkAt
 
-  // --- Font ---
+  // -- Font --
   readonly property string fontFamily: _c.font.family
   // At the Content size (Widget.contentSize / 100); bars size their text from
   // baseFontSize, the setting itself
@@ -90,7 +90,7 @@ QtObject {
       console.warn("[Appearance] Could not load the bundled icon font (assets/fonts): icons will show as words")
   }
 
-  // --- Shape ---
+  // -- Shape --
   readonly property int borderRadius: _c.shape.radius
   // The radius of what sits inside something (cards, controls, rows, bar
   // widgets; Widget.radius): null in the config follows the main radius
@@ -104,7 +104,7 @@ QtObject {
   // draw the stroke over the screen edge); without a frame it's just a gap
   readonly property int screenMargin: screenBorder ? Math.max(borderWidth, _c.shape.screenMargin) : _c.shape.screenMargin
 
-  // --- Translucency ---
+  // -- Translucency --
   // How solid the shell's surfaces are (0.6–1). Every surface fill goes
   // through Style (edgeFill, fill*), outer and nested alike, so nested fills
   // stack: a card on a 60% panel reads about 84%.
@@ -143,7 +143,7 @@ QtObject {
   // a window it doesn't blur casts them (BlurBacking).
   readonly property real shadowAlphaMax: blur ? 0.45 : 1
 
-  // --- Motion ---
+  // -- Motion --
   // Every animation in the shell uses one of these durations, so the
   // single speed setting (and the on/off switch) applies uniformly.
   // Use `duration: Appearance.animNormal` — never a literal.

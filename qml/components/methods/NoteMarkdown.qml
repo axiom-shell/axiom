@@ -240,7 +240,7 @@ QtObject {
     };
   }
 
-  // --- Edits ---
+  // -- Edits --
 
   function _copy(doc) {
     return {

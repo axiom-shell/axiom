@@ -96,7 +96,7 @@ PanelWindow {
     item: root.revealed ? barSlot : edgeStrip
   }
 
-  // --- Auto-hide (BarRevealManager) ---
+  // -- Auto-hide (BarRevealManager) --
 
   // Shown: always unless it auto-hides; hidden, it slides out of its
   // window toward its edge, behind the bars outside it, keeping its slot

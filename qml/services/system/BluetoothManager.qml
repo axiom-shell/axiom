@@ -276,7 +276,7 @@ QtObject {
   property var _devices: []
   readonly property bool _inert: Paths.greeter
 
-  // --- The pairing agent ---
+  // -- The pairing agent --
 
   // The agent's requests shown: the daemon's id -> PromptManager's id
   property var _agentPrompts: ({})

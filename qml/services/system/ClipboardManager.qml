@@ -146,7 +146,7 @@ Singleton {
     _call("clipboard.clear", {});
   }
 
-  // --- The daemon's history ---
+  // -- The daemon's history --
 
   function _show(state) {
     root.entries = (state?.entries ?? []).map(e => e.format ? Object.assign({}, e, {
@@ -176,7 +176,7 @@ Singleton {
     }
   }
 
-  // --- Pins ---
+  // -- Pins --
 
   property var _pinState: StateManager.createStateHandler("clipboardPins")
 

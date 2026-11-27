@@ -95,7 +95,7 @@ Singleton {
     root._setHistory([]);
   }
 
-  // --- Private ---
+  // -- Private --
 
   property var _history: []
   readonly property var _session: StateManager.createSessionHandler("calculator")

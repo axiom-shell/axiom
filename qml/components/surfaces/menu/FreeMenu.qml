@@ -295,7 +295,7 @@ PopoutWrapperBase {
     readonly property var submenuJoin: null
   }
 
-  // ---- Its submenu (SubPopout, through its SubmenuHost) ----
+  // -- Its submenu (SubPopout, through its SubmenuHost) --
   // Opened by a Submenu row in it, beside its box: towards the screen's
   // nearer half (SubmenuSide); one longer than the box stretches it
   // past its top or bottom

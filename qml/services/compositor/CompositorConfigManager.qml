@@ -41,7 +41,7 @@ Singleton {
   readonly property bool modeFromDaemon: ConfigManager.savesBlocked && (_state.mode ?? "") !== ""
   readonly property string mode: modeFromDaemon ? _state.mode : CompositorConfig.mode
 
-  // --- What the daemon pushes (compositor.state) ---
+  // -- What the daemon pushes (compositor.state) --
 
   property var _state: ({})
   // Why the chosen mode isn't in effect, or ""
@@ -85,8 +85,8 @@ Singleton {
   // draft with unsaved edits)
   signal bindsMerged(var binds)
 
-  // --- The files and lines (for the settings page, the onboarding and
-  // IntegrationHookupManager) ---
+  // -- The files and lines (for the settings page, the onboarding and
+  // IntegrationHookupManager) --
 
   readonly property var _files: _state.files ?? ({})
   readonly property string configDir: _files.configDir ?? ""
@@ -120,7 +120,7 @@ Singleton {
 
   property var _complete: ({})
 
-  // --- What only the shell knows of the layer (compositor.inputs) ---
+  // -- What only the shell knows of the layer (compositor.inputs) --
   // The daemon reads the rest (binds, profiles, strips, the look's and
   // input's settings, the session, the options) from the config, with the
   // unsaved edits of those sections the shell sends
@@ -293,7 +293,7 @@ Singleton {
       _sendSoon.restart();
   }
 
-  // --- Asking the daemon ---
+  // -- Asking the daemon --
 
   // `callback` (optional) gets managedCheck once known
   function checkManaged(callback) {
@@ -332,7 +332,7 @@ Singleton {
     }, (err, report) => callback(err ? null : report));
   }
 
-  // --- For the settings page ---
+  // -- For the settings page --
 
   // Adds the autostart line to the user's config (the autostart hookup,
   // with a backup); it takes effect with the next session, so no reload
@@ -367,7 +367,7 @@ Singleton {
     }
   }
 
-  // --- Notifications (once per session, outliving a reload of the shell) ---
+  // -- Notifications (once per session, outliving a reload of the shell) --
 
   function _notifyApproval() {
     _notifyOnce("approvalAsked", I18n.tr("{0} config needs your approval", CompositorManager.displayName), I18n.tr("axiom's Managed mode would take over {0}, moving your config to {1}. Until you allow it, axiom applies its settings at runtime.", Paths.shortenHome(root.managedPath), Paths.shortenHome(root.userDir)), [["allow", I18n.tr("Allow takeover"), () => root.allowTakeover()]]);

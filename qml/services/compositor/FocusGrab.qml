@@ -93,7 +93,7 @@ Scope {
     }
   }
 
-  // --- Without a native grab: watch keyboard focus ---
+  // -- Without a native grab: watch keyboard focus --
   FocusLeave {
     windows: root.windows
     active: !root._native && root.active

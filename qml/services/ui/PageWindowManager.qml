@@ -137,7 +137,7 @@ Singleton {
     });
   }
 
-  // --- Private ---
+  // -- Private --
 
   function _setOpen(windows) {
     _kept.open = JSON.stringify(windows);

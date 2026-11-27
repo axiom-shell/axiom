@@ -62,7 +62,7 @@ Item {
       requestDismiss();
   }
 
-  // ---- Centralized dismiss logic ----
+  // -- Centralized dismiss logic --
   // Content just exposes `hovered` (optionally folding in its own extra
   // "keep me alive" conditions, e.g. an active drag or an open submenu).
   // Timing and dismissal live here, once, for every popout type.
@@ -169,7 +169,7 @@ Item {
     parkTimer.stop();
     closePopout();
   }
-  // ---- end centralized dismiss logic ----
+  // -- end centralized dismiss logic --
 
   function closePopout() {
     if (isClosing)

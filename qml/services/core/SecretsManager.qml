@@ -56,7 +56,7 @@ QtObject {
     root.clearSecret("provider", provider.id);
   }
 
-  // --- Any scope ---
+  // -- Any scope --
 
   // "keyring" | "file" | "none", or "" while it's being looked up
   function secretStatus(scope, id) {

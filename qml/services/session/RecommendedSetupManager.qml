@@ -38,7 +38,7 @@ import qs.services.ui
 Singleton {
   id: root
 
-  // --- What the list has ---
+  // -- What the list has --
 
   readonly property var entries: RecommendedSetup.entries(ConfigManager.configSchema)
   // The entries' ids, which never change: a Repeater's model (the rows
@@ -120,7 +120,7 @@ Singleton {
     return result;
   }
 
-  // --- The host's hooks and the user's ticks ---
+  // -- The host's hooks and the user's ticks --
 
   // Called by a host as it shows (the list): forgets ticks and the last
   // run unless one is running, keeps the host's `later` paths (rows
@@ -166,7 +166,7 @@ Singleton {
     _persist.offered = false;
   }
 
-  // --- The run ---
+  // -- The run --
 
   // `options` ({ later, choose }, optional) are the caller's own, as
   // begin's: another host's begin since can't make this Apply commit or

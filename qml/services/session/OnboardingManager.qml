@@ -101,7 +101,7 @@ Singleton {
   readonly property string pageId: pages[step]?.id ?? ""
   readonly property bool isLast: step === pages.length - 1
 
-  // --- The compositor ---
+  // -- The compositor --
 
   // Whether axiom can set the compositor up (an older Hyprland can't), why
   // not ("" when it can or that isn't known), and what the user's config in
@@ -181,7 +181,7 @@ Singleton {
     CompositorManager.withSetupCheck(setup => root._setup = setup);
   }
 
-  // --- Navigation ---
+  // -- Navigation --
 
   function open() {
     _run.shown = true;
@@ -260,7 +260,7 @@ Singleton {
     property bool closedOnce: false
   }
 
-  // --- The detached nudge ---
+  // -- The detached nudge --
 
   readonly property bool _nudgeDue: BackendManager.ready && DetachedNudge.shouldNudge({
     "mode": CompositorConfig.mode,

@@ -23,7 +23,7 @@ import qs.services.session
 QtObject {
   id: root
 
-  // --- The compositor's keyboard ---
+  // -- The compositor's keyboard --
 
   // Its layouts' codes (["us", "de"]) and the active one's index
   property var layouts: []
@@ -34,7 +34,7 @@ QtObject {
   readonly property var registry: _registry
   property var _registry: null
 
-  // --- The framework (the daemon's inputMethod.state) ---
+  // -- The framework (the daemon's inputMethod.state) --
 
   // axiom manages the input method (Input.keyboard.method.enabled, as shown):
   // off, the engine sources are left out everywhere
@@ -60,7 +60,7 @@ QtObject {
     return !root.detected || InputSources.groupMatches(root.detectedFramework, sources, root.registry, root._im);
   }
 
-  // --- The sources ---
+  // -- The sources --
 
   // Every source to switch between ({ id, kind, layout, variant, engine
   // }, of _counted); on the login screen, and while axiom doesn't manage
@@ -201,7 +201,7 @@ QtObject {
     }, root._registry);
   }
 
-  // --- Internals ---
+  // -- Internals --
 
   // Every source the compositor's xkb list is written from (InputSources.
   // effective: the compositor's own layouts while axiom doesn't set the

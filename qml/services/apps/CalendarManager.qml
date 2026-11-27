@@ -453,7 +453,7 @@ QtObject {
     root._scheduleAlarm();
   }
 
-  // --- Reminders ---
+  // -- Reminders --
 
   property Timer _alarmTimer: Timer {
     onTriggered: root._fireDue()

@@ -266,7 +266,7 @@ Panel {
     }
   }
 
-  // --- No player ---
+  // -- No player --
   Item {
     visible: !root.hasPlayer
     Layout.fillWidth: true
@@ -281,7 +281,7 @@ Panel {
     }
   }
 
-  // --- A strip: art, track and buttons in a row ---
+  // -- A strip: art, track and buttons in a row --
   Loader {
     active: root.hasPlayer && root.mini
     visible: active
@@ -361,7 +361,7 @@ Panel {
     }
   }
 
-  // --- Art and info (and, wide, the controls) ---
+  // -- Art and info (and, wide, the controls) --
   Loader {
     active: root.hasPlayer && !root.mini
     visible: active
@@ -415,7 +415,7 @@ Panel {
     }
   }
 
-  // --- Popout: the controls beneath ---
+  // -- Popout: the controls beneath --
   Loader {
     active: root.hasPlayer && !root.embedded && root.properties.showControls
     visible: active

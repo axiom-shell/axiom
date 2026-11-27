@@ -164,7 +164,7 @@ QtObject {
     root.editor.updateLayoutField("enabled", enabled);
   }
 
-  // --- Room ---
+  // -- Room --
 
   // The screen a target is laid out on: its monitor, else the primary
   // monitor (for all monitors, and a monitor that isn't plugged in)

@@ -17,7 +17,7 @@ import qs.components.methods
 QtObject {
   id: root
 
-  // --- Public ---
+  // -- Public --
   readonly property var config: _config
   readonly property var configSchema: _configSchema
   // axiom handed this shell a config (false: started by hand)
@@ -188,7 +188,7 @@ QtObject {
     });
   }
 
-  // --- Private Implementation ---
+  // -- Private Implementation --
   Component.onCompleted: {
     if (root.greeter)
       console.log("[ConfigManager] Greeter config from the", root.greeterSource || "defaults");

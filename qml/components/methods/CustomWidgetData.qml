@@ -1821,7 +1821,7 @@ QtObject {
     return Math.max(0.05, Math.min(1, width / w, height / h));
   }
 
-  // --- Screens (module.views) ---
+  // -- Screens (module.views) --
 
   // The module's elements in every layer: the base, then each screen's
   // (the lattice and the design size cover all of them)
@@ -2021,7 +2021,7 @@ QtObject {
     return out;
   }
 
-  // --- Named actions ---
+  // -- Named actions --
 
   // The action of `def` (`actions.items`) that `ref` names: by id, else by
   // name (the IPC takes either); null for "" or none
@@ -2164,7 +2164,7 @@ QtObject {
     return !(refused ?? []).includes(String(id));
   }
 
-  // --- Samples ---
+  // -- Samples --
 
   // The UTF-8 byte length of `text` (a lone surrogate counts as 3, as it
   // would be written as U+FFFD)
@@ -2251,7 +2251,7 @@ QtObject {
     return liveFields && root.pickView(definition?.module, liveFields).index === index ? liveFields.sample : null;
   }
 
-  // --- The editor's pure parts (docs/dev/features/custom-widgets.md › The page) ---
+  // -- The editor's pure parts (docs/dev/features/custom-widgets.md › The page) --
 
   // `list` with the item at `from` moved to `to` (a new list; the same
   // when either is out of range or they are equal)

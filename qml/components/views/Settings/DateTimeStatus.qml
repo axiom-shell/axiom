@@ -59,7 +59,7 @@ IntroColumn {
 
   readonly property string statusTone: !DateTimeManager.available ? "neutral" : DateTimeManager.ntp ? (DateTimeManager.ntpSynchronized ? "success" : "warning") : "accent"
 
-  // --- Now ---
+  // -- Now --
 
   ColumnLayout {
     Layout.fillWidth: true
@@ -85,7 +85,7 @@ IntroColumn {
     overflow: "wrap"
   }
 
-  // --- Time zone ---
+  // -- Time zone --
 
   ColumnLayout {
     visible: DateTimeManager.available
@@ -118,7 +118,7 @@ IntroColumn {
     }
   }
 
-  // --- Network time ---
+  // -- Network time --
 
   // Follows timedated's answer, not the click
   FormColumn {
@@ -139,7 +139,7 @@ IntroColumn {
     }
   }
 
-  // --- By hand, while network time is off ---
+  // -- By hand, while network time is off --
 
   ColumnLayout {
     visible: DateTimeManager.available && !DateTimeManager.ntp

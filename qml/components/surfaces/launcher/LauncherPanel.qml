@@ -171,7 +171,7 @@ FocusScope {
     return root._order.reduce((sum, block) => sum + (block.visible ? block.height : 0), 0);
   }
 
-  // --- Search field ---
+  // -- Search field --
   RowLayout {
     id: searchRow
     y: root._offset(root._order.indexOf(searchRow))
@@ -290,7 +290,7 @@ FocusScope {
     visible: list.count > 0 || empty.visible
   }
 
-  // --- Results ---
+  // -- Results --
   ColumnLayout {
     id: body
     y: root._offset(root._order.indexOf(body))
@@ -394,7 +394,7 @@ FocusScope {
     }
   }
 
-  // --- Controls hint ---
+  // -- Controls hint --
   StyledSeparator {
     id: hintLine
     backTone: "page"

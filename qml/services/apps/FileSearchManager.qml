@@ -37,7 +37,7 @@ QtObject {
       "error": ""
     })
 
-  // --- Searching ---
+  // -- Searching --
 
   // The three calls only read: one cut off by a lost connection (a
   // re-exec) is sent again, as the text it answers is still shown
@@ -113,7 +113,7 @@ QtObject {
     });
   }
 
-  // --- Acting on a file ---
+  // -- Acting on a file --
 
   // Opens it with its default app, and remembers it (its rank, the recent
   // files)
@@ -142,7 +142,7 @@ QtObject {
     ClipboardManager.copyText(path);
   }
 
-  // --- Icons ---
+  // -- Icons --
 
   // An item's icon as a source the icon theme holds: its type's icons,
   // most specific first, then a folder's or a document's; "" with none
@@ -166,7 +166,7 @@ QtObject {
   // mime -> icon source; the theme doesn't change while the shell runs
   property var _icons: ({})
 
-  // --- Thumbnails ---
+  // -- Thumbnails --
 
   // key -> the thumbnail's url, "" when there's none. Replaced on each
   // answer, so bindings reading it follow
@@ -253,7 +253,7 @@ QtObject {
     root.thumbnails = next;
   }
 
-  // --- Private ---
+  // -- Private --
 
   // The newest call's id: answers to older ones are dropped
   property int _seq: 0

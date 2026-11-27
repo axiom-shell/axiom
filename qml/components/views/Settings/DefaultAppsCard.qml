@@ -56,7 +56,7 @@ PageCard {
     id: pickers
   }
 
-  // --- Any other type ---
+  // -- Any other type --
 
   FoldFormRow {
     id: other

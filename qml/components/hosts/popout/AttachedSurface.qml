@@ -201,7 +201,7 @@ Item {
   readonly property bool attachTop: edge === ScreenEdge.Top
   readonly property bool attachBottom: edge === ScreenEdge.Bottom
 
-  // ---- Geometry, in edge-local coordinates ----
+  // -- Geometry, in edge-local coordinates --
   // u runs along the attach edge, v away from it (v = 0 is the attach
   // edge). Everything below is laid out as if attached to the Top edge,
   // then mapped onto the real edge (SurfaceOutline.toItem).

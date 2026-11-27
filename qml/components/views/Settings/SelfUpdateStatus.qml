@@ -113,7 +113,7 @@ IntroColumn {
     Layout.fillWidth: true
   }
 
-  // --- What's new ---
+  // -- What's new --
 
   ColumnLayout {
     visible: SelfUpdateManager.notes !== "" && SelfUpdateManager.state === "available"

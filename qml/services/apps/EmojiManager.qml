@@ -103,7 +103,7 @@ QtObject {
     _typeLater.restart();
   }
 
-  // --- Private ---
+  // -- Private --
 
   property var _entries: null
   property string _typing: ""

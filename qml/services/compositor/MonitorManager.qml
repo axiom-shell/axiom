@@ -37,7 +37,7 @@ Singleton {
   property var outputs: []
   readonly property var enabledOutputs: outputs.filter(monitor => !monitor.disabled)
 
-  // --- The draft ---
+  // -- The draft --
 
   property ConfigDraft _draft: ConfigDraft {
     id: draft
@@ -176,7 +176,7 @@ Singleton {
     return result;
   }
 
-  // --- Editing ---
+  // -- Editing --
 
   // The selected profile's rule for an output, in the draft, or undefined
   function _ruleOf(output) {
@@ -256,7 +256,7 @@ Singleton {
     draft.changed();
   }
 
-  // --- Checks ---
+  // -- Checks --
 
   // Outputs laid out on their own (not disabled, not mirroring)
   readonly property var placedRules: rules.filter(rule => !rule.disabled && !rule.mirror)
@@ -315,7 +315,7 @@ Singleton {
     return monitor?.name || rule?.label || String(rule?.output ?? "").replace(/^desc:/, "");
   }
 
-  // --- Apply, keep, revert ---
+  // -- Apply, keep, revert --
 
   // Waiting for keep()/revert() after Apply
   readonly property bool pending: _trial.state !== ""
@@ -423,7 +423,7 @@ Singleton {
     }
   }
 
-  // --- Identify ---
+  // -- Identify --
 
   // Each screen shows its name for a moment
   property bool identifying: false
@@ -438,13 +438,13 @@ Singleton {
     onTriggered: root.identifying = false
   }
 
-  // --- Primary ---
+  // -- Primary --
 
   function setPrimary(name) {
     SettingsManager.commitValue("General.primaryMonitor", name);
   }
 
-  // --- Reading the monitors ---
+  // -- Reading the monitors --
 
   function refresh() {
     if (_reading || !CompositorManager.supports.monitors)
@@ -470,7 +470,7 @@ Singleton {
   // a hotplug
   property bool _read: false
 
-  // --- Monitors coming and going ---
+  // -- Monitors coming and going --
 
   // The last monitor connected or removed, for the OSD's Monitors system
   // (its `monitor` key): { kind: "added" | "removed", name, description, width,
@@ -525,7 +525,7 @@ Singleton {
     onTriggered: root.refresh()
   }
 
-  // --- First run ---
+  // -- First run --
 
   // Hyprland's example config scales monitors "auto", often a fractional
   // 1.25 or 1.5 on a laptop, which blurs and misaligns the shell. The

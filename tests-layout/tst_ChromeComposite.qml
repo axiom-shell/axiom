@@ -396,7 +396,7 @@ TestCase {
     }
   }
 
-  // ---- the composite's values (Why it holds both ways) ----
+  // -- the composite's values (Why it holds both ways) --
 
   // A stroke pixel inside one shape (over its own fill), fill alpha 0.8, stroke alpha 1 and 0.5
   function test_stroke_over_own_fill_data() {
@@ -556,7 +556,7 @@ TestCase {
     } : a.px(60, 20), "the card's border");
   }
 
-  // ---- the stroke holes (D-3.18) ----
+  // -- the stroke holes (D-3.18) --
 
   // The far stroke of a popout copy (the attached surface's box 60 deep, its
   // far wall's stroke at y 59, in its coordinates)
@@ -720,7 +720,7 @@ TestCase {
     root.near(cut.px(45, 34), bare.px(45, 34), "the hole at half opacity");
   }
 
-  // ---- tiled menus: no copy, no hole (D-3.19) ----
+  // -- tiled menus: no copy, no hole (D-3.19) --
 
   function test_tiles_leave_the_line_whole_data() {
     return [
@@ -769,7 +769,7 @@ TestCase {
     root.near(tiled.px(40, 64), root.filled(root.solid), "under a tile, the tile's value");
   }
 
-  // ---- the must-not rows: no gap, line or break may show where a popout joins the bar or border ----
+  // -- the must-not rows: no gap, line or break may show where a popout joins the bar or border --
 
   // A real AttachedSurface placed at (x, y) in the scene, as its host would
   function placed(props, x, y) {
@@ -1434,7 +1434,7 @@ TestCase {
     verify(Math.abs(alone.px(65, 9).a - alone.px(65, 50).a) > 0.05 || Math.abs(alone.px(65, 9).r - alone.px(65, 50).r) > 0.05, "the frame's stroke shows");
   }
 
-  // ---- a surface cut to its window (EdgePopout and the dock: blurClip) ----
+  // -- a surface cut to its window (EdgePopout and the dock: blurClip) --
 
   // A dock-like box whose copy is cut 20 px short of its end (its window's
   // edge): past the cut every pixel is the frame's alone (fill and stroke),
@@ -1469,7 +1469,7 @@ TestCase {
     root.eachPixel(Qt.rect(0, 0, dock.x + 39, 60), (x, y) => root.near(cut.px(x, y), whole.px(x, y), `inside the cut, as uncut at ${x},${y}`));
   }
 
-  // ---- the frame's corner arcs (FrameOutline) ----
+  // -- the frame's corner arcs (FrameOutline) --
 
   // Every device pixel whose centre falls in `box` (logical px)
   function eachDevicePixel(box, visit) {
@@ -1700,7 +1700,7 @@ TestCase {
     }
   }
 
-  // ---- a fill's anti-aliased edge, and a non-whole logical size ----
+  // -- a fill's anti-aliased edge, and a non-whole logical size --
 
   // A fill's edge half covering a pixel (c_f 0.5) over a lower fill: both
   // captures read the mean of the two fills' values
@@ -1928,7 +1928,7 @@ TestCase {
     }
   }
 
-  // ---- a detached box (diag-live-1 F11) ----
+  // -- a detached box (diag-live-1 F11) --
 
   // A detached box (a free menu, a detached popout) in the real copy: its
   // box keeps its own rect inside the surface at any offset. Four stroke runs
@@ -2030,7 +2030,7 @@ TestCase {
     root.near(cut.px(box.x + 1, Math.floor(box.y + box.height / 2)), line, "the left run");
   }
 
-  // ---- a box sliding in over the bars: drawn by itself over them, by the backing window past them ----
+  // -- a box sliding in over the bars: drawn by itself over them, by the backing window past them --
 
   // A surface over a backdrop that reads as black or white (its grab's
   // premultiplied colour and alpha, as the scene's two captures are read)
@@ -2144,7 +2144,7 @@ TestCase {
     }
   }
 
-  // ---- a copy reads its source's paths ----
+  // -- a copy reads its source's paths --
 
   function test_copy_paths_are_the_sources_data() {
     return [

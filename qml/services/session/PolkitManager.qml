@@ -145,7 +145,7 @@ Singleton {
     }, null, true);
   }
 
-  // --- Other agents ---
+  // -- Other agents --
 
   // Registering takes a D-Bus round trip; still not registered by now, it
   // failed

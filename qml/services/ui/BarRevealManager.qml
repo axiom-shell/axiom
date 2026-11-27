@@ -159,7 +159,7 @@ QtObject {
     root._schedule();
   }
 
-  // --- The one timer ---
+  // -- The one timer --
 
   function _schedule() {
     const deadlines = Object.values(root._until).concat(Object.values(root._pendingHover).map(p => p.at));
@@ -203,7 +203,7 @@ QtObject {
     onTriggered: root._due()
   }
 
-  // --- Workspace changes (revealOnWorkspace) ---
+  // -- Workspace changes (revealOnWorkspace) --
 
   // Each output's active and special workspace as last seen ({ name:
   // "id/special", `OutputWindows.workspaceKey` }); the first look only
@@ -243,7 +243,7 @@ QtObject {
     }
   }
 
-  // --- Hidden by a window rule ---
+  // -- Hidden by a window rule --
 
   // The ids of the bars hidden by a window rule, as last seen
   property var _ruleHidden: ({})
@@ -271,7 +271,7 @@ QtObject {
     root._checkRuleHidden();
   }
 
-  // --- IPC (`axiom ipc bar …`; the keybind action `bar`) ---
+  // -- IPC (`axiom ipc bar …`; the keybind action `bar`) --
 
   // The running auto-hiding bars a call means: a bar's config id (on
   // every monitor it's on), or "" / "focused", those on the focused

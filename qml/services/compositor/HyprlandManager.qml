@@ -19,7 +19,7 @@ import qs.services.core
 Singleton {
   id: root
 
-  // --- Backend state (docs/dev/compositor/contract.md) ---
+  // -- Backend state (docs/dev/compositor/contract.md) --
 
   // The windows (HyprState.window), from j/clients
   property var windows: []
@@ -113,7 +113,7 @@ Singleton {
     root._debounce.restart();
   }
 
-  // --- Events, from Hyprland's event socket ---
+  // -- Events, from Hyprland's event socket --
 
   // A layer surface opened or closed (openlayer / closelayer)
   signal layersChanged
@@ -140,7 +140,7 @@ Singleton {
   readonly property string _switcherSubmap: "axiom_switcher"
   readonly property string _switcherEvent: "axiom-switcher:"
 
-  // --- Actions ---
+  // -- Actions --
 
   // The Lua window selector for a window id (its "0x…" address).
   // Dispatchers take it as `window`; without one they act on the focused
@@ -355,8 +355,8 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
     });
   }
 
-  // --- For the other services: what they need from the compositor, in
-  // shapes that don't depend on it (HyprState) ---
+  // -- For the other services: what they need from the compositor, in
+  // shapes that don't depend on it (HyprState) --
 
   // Calls back with the main keyboard's layouts ({ layouts, index, keymap },
   // HyprState.keyboard), or null. Hyprland reports the codes itself, so
@@ -470,7 +470,7 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
     return null;
   }
 
-  // --- Workspaces (the layout is CompositorManager's) ---
+  // -- Workspaces (the layout is CompositorManager's) --
 
   // Sends the focused window to workspace `id`, staying put
   function sendWindowToWorkspace(id) {
@@ -648,7 +648,7 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
     return [`if hl.get_monitor(${name}) then`].concat(stay ? [lead] : [lead, `run(function() return hl.dsp.focus({ workspace = ${workspace} }) end)`], ["end"]);
   }
 
-  // --- Dynamic workspaces (dynamicByLayout) ---
+  // -- Dynamic workspaces (dynamicByLayout) --
 
   // Closes the gaps a workspace left empty in the middle leaves
   // (DynamicWorkspaces.compaction), once things have settled: after a
@@ -830,9 +830,9 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
     onTriggered: root._fetch()
   }
 
-  // --- Hyprland's request socket, through axiom (hypr.request): what
+  // -- Hyprland's request socket, through axiom (hypr.request): what
   // Quickshell.Hyprland doesn't cover (options, Lua evals, binds, devices,
-  // layers, the cursor), as hyprctl asks it but without a process each ---
+  // layers, the cursor), as hyprctl asks it but without a process each --
 
   // Sends `command` as hyprctl would ("j/clients", "switchxkblayout all
   // next") and calls back with the reply, or null when Hyprland didn't

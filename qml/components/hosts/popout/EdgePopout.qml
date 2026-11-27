@@ -379,7 +379,7 @@ PopoutWrapperBase {
       Qt.callLater(() => root.settled = root._shown);
   }
 
-  // ---- Its submenu (SubPopout, through its SubmenuHost) ----
+  // -- Its submenu (SubPopout, through its SubmenuHost) --
   // Opened by a PopoutAnchor in its content (an edge menu's modules), on
   // the side of its box: away from a side edge, else towards the screen's
   // nearer half. On a top or bottom edge one with no room for its fillet
@@ -405,7 +405,7 @@ PopoutWrapperBase {
   // submenu (across a top or bottom one, away from its edge)
   readonly property real _stretchAlongTop: root.vertical ? slot.shownStretchTop : 0
   readonly property real _stretchAlongBottom: root.vertical ? slot.shownStretchBottom : 0
-  // ---- end submenu ----
+  // -- end submenu --
   keepAlive: surface.hovered || trigger.containsMouse || (focusGrab.active && wantsKeyboardFocus)
 
   EdgeTrigger {

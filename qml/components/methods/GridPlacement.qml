@@ -869,7 +869,7 @@ QtObject {
     };
   }
 
-  // --- Edge menus on their screen ---
+  // -- Edge menus on their screen --
 
   // A menu's lattice along its edge, `edgeLength` px long (menuLattice,
   // moved by `menu.gridOffset`), `gap` px between its cards
@@ -1012,7 +1012,7 @@ QtObject {
     return place.frame.reserves ? place.across + place.depth + place.frame.after : place.frame.before;
   }
 
-  // --- The layouts editor's canvas ---
+  // -- The layouts editor's canvas --
 
   // The grid the editor draws for modules reaching `bounds`: `lead` units
   // before them and `trail` after (at least 8 × 4 units), or with a screen

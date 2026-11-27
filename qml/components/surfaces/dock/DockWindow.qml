@@ -36,14 +36,14 @@ Scope {
   readonly property bool vertical: root.edge === ScreenEdge.Left || root.edge === ScreenEdge.Right
   readonly property string mode: root.dock.visibility
 
-  // --- Sizes ---
+  // -- Sizes --
   readonly property real base: root.dock.iconSize
   readonly property real peak: root.dock.magnify.enabled ? Math.max(root.dock.magnify.size, root.base) : root.base
   readonly property real pad: root.dock.padding
   readonly property real spacing: root.dock.spacing
   readonly property real thickness: root.base + root.pad * 2
 
-  // --- Attaching to the edge ---
+  // -- Attaching to the edge --
   // As an edge popout does (EdgePlacement): held off the edge, a plain box
   // `distance` across the free screen from its edge (at 0 its automatic
   // gaps from the frame lines there and at its ends), sliding or fading
@@ -87,7 +87,7 @@ Scope {
   // casts, SurfaceShadow)
   readonly property real depth: root.boxOffset + root.thickness + Math.max(root.peak - root.base, (root.attached ? root.connectorGap / 2 : 0) + surface.shadowReach) + 2
 
-  // --- Items ---
+  // -- Items --
   // Re-read on every window change; delegates are keyed by the joined
   // keys, so they only rebuild when the set of apps changes
   readonly property var items: DockManager.itemsFor(root.dock, root.screen)
@@ -99,7 +99,7 @@ Scope {
   readonly property real lineWidth: Math.max(1, Appearance.borderWidth)
   readonly property real separatorLength: root.separator ? root.spacing + root.lineWidth : 0
 
-  // --- Along the dock ---
+  // -- Along the dock --
   // In edge coordinates, as EdgePopout's: 0 at the perpendicular edges'
   // inner side. The window reaches onto their strokes where an end may
   // join one (EdgePlacement): where edge coordinates start in it, at each
@@ -185,7 +185,7 @@ Scope {
   }
   readonly property real grown: Math.max(0, ...root.sizes) - root.base
 
-  // --- Across the dock ---
+  // -- Across the dock --
   // How far it has slid in (0 hidden, 1 shown): once its pill has grown
   // out to carry it
   property real shown: root.wantShown && placement.stretchReady ? 1 : 0
@@ -210,7 +210,7 @@ Scope {
     return fromEdge - root.slide;
   }
 
-  // --- Showing and hiding ---
+  // -- Showing and hiding --
   readonly property bool hiddenByHand: !!DockManager.hidden[root.dock.id]
   // Opened by the trigger (after openDelay), a reveal, or the pointer on
   // the shown dock, until the pointer has been gone for closeDelay. Only
@@ -371,7 +371,7 @@ Scope {
     }
   }
 
-  // --- Menus (hover: names and windows; right click: everything) ---
+  // -- Menus (hover: names and windows; right click: everything) --
   property string menuKey: ""
   property bool menuFull: false
   readonly property int menuIndex: root.keys.indexOf(root.menuKey)

@@ -17,7 +17,7 @@ import qs.components.methods
 FieldFrame {
   id: root
 
-  // --- Public API ---
+  // -- Public API --
   property string text: ""
   property alias placeholderText: textField.placeholderText
   property alias input: textField
@@ -95,7 +95,7 @@ FieldFrame {
       }
     }
 
-    // --- Core Properties ---
+    // -- Core Properties --
     color: root.ink.text
     font.family: Appearance.fontFamily
     font.pixelSize: Style.typeBody
@@ -110,7 +110,7 @@ FieldFrame {
     passwordCharacter: "•"
     passwordMaskDelay: 0
 
-    // --- Placeholder Properties ---
+    // -- Placeholder Properties --
     placeholderTextColor: root.ink.faint
 
     onAccepted: root.accepted()

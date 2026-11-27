@@ -42,7 +42,7 @@ Item {
     anchors.fill: parent
     preferredRendererType: Shape.CurveRenderer
 
-    // --- FILL ---
+    // -- FILL --
     ShapePath {
       fillColor: Style.edgeFill(root.fillColor, false)
       strokeColor: "transparent"
@@ -76,7 +76,7 @@ Item {
       }
     }
 
-    // --- STROKE ---
+    // -- STROKE --
     ShapePath {
       fillColor: "transparent"
       strokeColor: root.strokeColor

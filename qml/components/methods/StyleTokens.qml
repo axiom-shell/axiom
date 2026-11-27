@@ -10,7 +10,7 @@ import QtQuick
 QtObject {
   id: root
 
-  // ---- constants (tokens.md names each; the reference is tokens_reference.py) ----
+  // -- constants (tokens.md names each; the reference is tokens_reference.py) --
 
   // targets are derived at min + margin (steps at min + margin / 2), so
   // rounding a colour to 8 bits never drops a pair under its minimum
@@ -102,7 +102,7 @@ QtObject {
   readonly property real washDark: 0.16
   readonly property real washLight: 0.14
 
-  // ---- theme ----
+  // -- theme --
 
   // A theme's resolved colours: { dark, semantic: { <name>: color }, names }.
   // Every name of defaults.semantic[variant] plus the theme's own extras
@@ -176,7 +176,7 @@ QtObject {
     return out;
   }
 
-  // ---- shape rules ----
+  // -- shape rules --
 
   // The radius of a highlight inset `inset` inside something of radius
   // `outer`, never under `min`
@@ -206,7 +206,7 @@ QtObject {
     return Math.max(Math.round((base + n) * scale), Math.min(Math.round(base * scale), Math.round(9 * scale)));
   }
 
-  // ---- derivation ----
+  // -- derivation --
 
   // Every colour of tokens.md for `theme` (theme()'s result): one flat
   // object of the roles as colors, the alpha numbers, `alphaFloor`, `series`

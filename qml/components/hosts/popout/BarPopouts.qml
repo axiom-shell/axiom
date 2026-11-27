@@ -62,7 +62,7 @@ PopoutWrapperBase {
   // Granted (or closing after it was, PopoutClaim.held)
   readonly property bool claimed: root.claim.held
 
-  // ---- Its submenu (SubPopout, through its SubmenuHost) ----
+  // -- Its submenu (SubPopout, through its SubmenuHost) --
   // Opened by a PopoutAnchor in its content (mainPopup.popoutHost): the
   // tray's submenus, any other content's. What it meets on the box's side
   // is the stroke the box grows from on a horizontal bar: a solid bar's, a
@@ -84,7 +84,7 @@ PopoutWrapperBase {
     windowShift: mainPopup.alongShift
     zoom: root.zoom
   }
-  // ---- end submenu ----
+  // -- end submenu --
 
   // content/<name>/<name>.qml (Paths.contentUrl), loaded by URL like bar
   // widgets and overlay modules: a new popout is just a type folder there
@@ -151,7 +151,7 @@ PopoutWrapperBase {
       item.forceLayout();
   }
 
-  // ---- Its Size ----
+  // -- Its Size --
   // The popout is laid out at its content's own size and drawn zoomed
   // (PopoutsConfig.layoutFor: its widget's `popout.sizing`, from the
   // payload, shrunk to fit its screen), the box drawn around that. The
@@ -169,7 +169,7 @@ PopoutWrapperBase {
   readonly property real zoom: root._layout.zoom
   // The card size content laid out in cards lays out at (CustomWidget)
   readonly property real cardUnit: root._layout.unit
-  // ---- end its size ----
+  // -- end its size --
 
   // Where the anchor widget was when it opened, in bar-window coordinates
   // (from currentData.anchorItem; the anchorX/anchorY snapshot in the
@@ -203,7 +203,7 @@ PopoutWrapperBase {
     _loadContent();
   }
 
-  // ---- Switching in place ----
+  // -- Switching in place --
   // A widget under the box, or within a connector gap of it, along the bar
   canSwitchTo: (anchor, data) => {
     const item = data?.anchorItem;
@@ -217,7 +217,7 @@ PopoutWrapperBase {
   // The old content held as a still where it is along the bar
   // (SwitchStill), then the new payload opened under it
   prepareSwitch: done => still.prepare(root.currentItem, done)
-  // ---- end switching in place ----
+  // -- end switching in place --
 
   // Where the box goes along the bar and everything that follows from what
   // it meets there (EdgePlacement, shared with edge popouts and docks), in
@@ -328,7 +328,7 @@ PopoutWrapperBase {
       root._peakAcross = 0;
   }
 
-  // ---- Growing while open ----
+  // -- Growing while open --
   // Which way the box grows as its content does, so the controls on the
   // side it grows from stay put (EdgeAttach.growth): away from the bar,
   // or along a vertical one from where it opened. Content reads it
@@ -351,7 +351,7 @@ PopoutWrapperBase {
     "hi": placement.hi
   })
   readonly property string growth: root._growth.direction
-  // ---- end growing while open ----
+  // -- end growing while open --
   // The room past the drawn box, on the side away from the bar: the
   // window's depth stays put while the box animates within it
   // (and room for the shadow the surface casts, see SurfaceShadow)

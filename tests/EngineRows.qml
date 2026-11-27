@@ -154,7 +154,7 @@ QtObject {
     }
   }
 
-  // ---- the compare ----
+  // -- the compare --
 
   function _difference(actual, expected, path) {
     if (root._isObject(expected)) {
@@ -234,7 +234,7 @@ QtObject {
     return actual === undefined;
   }
 
-  // ---- the grammar ----
+  // -- the grammar --
 
   // "" when `row` is a well-formed row, else what is wrong with it
   function _grammarError(row) {
@@ -407,7 +407,7 @@ QtObject {
       found.literal = true;
   }
 
-  // ---- building and calling ----
+  // -- building and calling --
 
   // `base` with `patch` merged over it: objects by key, recursively; arrays
   // and scalars replace. Builds new objects, never touches `base`, and keeps

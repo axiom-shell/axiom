@@ -568,7 +568,7 @@ QtObject {
     return [];
   }
 
-  // --- Setting single values from outside the page (the launcher's /config) ---
+  // -- Setting single values from outside the page (the launcher's /config) --
 
   // Never offered, whatever the schema says: the bar and overlay editors
   // own these

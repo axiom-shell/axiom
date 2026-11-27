@@ -18,17 +18,17 @@ QtObject {
 
   property var activePlayer: null
 
-  // --- Properties we can pass through ---
+  // -- Properties we can pass through --
   readonly property bool hasActivePlayer: activePlayer !== null
   readonly property bool isPlaying: playbackState === MprisPlaybackState.Playing
   readonly property int playbackState: activePlayer ? activePlayer.playbackState : MprisPlaybackState.Stopped
 
-  // --- Properties we fully control to be explicit, partially due to a bug with YT Music ---
+  // -- Properties we fully control to be explicit, partially due to a bug with YT Music --
   property real position: 0
   property real length: 0
   readonly property real progress: length > 0 ? (position / length) : 0
 
-  // --- Everything else ---
+  // -- Everything else --
   readonly property string identity: activePlayer ? activePlayer.identity : ""
   readonly property string trackTitle: activePlayer ? activePlayer.trackTitle : ""
   readonly property string trackArtist: activePlayer ? activePlayer.trackArtist : ""
@@ -93,7 +93,7 @@ QtObject {
     });
   }
 
-  // --- Public ---
+  // -- Public --
 
   function updateAllMetadata() {
     if (!hasActivePlayer) {
@@ -200,7 +200,7 @@ QtObject {
     root._consumers.drop(owner);
   }
 
-  // --- Helper Functions ---
+  // -- Helper Functions --
 
   function formatTime(seconds) {
     if (!seconds || seconds < 0)
@@ -210,7 +210,7 @@ QtObject {
     return mins + ":" + (secs < 10 ? "0" : "") + secs;
   }
 
-  // --- Private Logic, Timers, and Workers ---
+  // -- Private Logic, Timers, and Workers --
 
   property OwnerRegistry _consumers: OwnerRegistry {}
 

@@ -219,7 +219,7 @@ QtObject {
       root._sequence();
   }
 
-  // --- Corrections from the compositor's own list ---
+  // -- Corrections from the compositor's own list --
 
   // owner -> { dx, dy, dw, dh, rule }: how far the compositor's rect of each
   // mapped window differs from the computed one (LayerArrange.correctionsOf),
@@ -266,7 +266,7 @@ QtObject {
     }
   }
 
-  // --- Mapping in order (LayerSlot) ---
+  // -- Mapping in order (LayerSlot) --
 
   // Every slot's state, by owner (the LayerSlot): { outputName, namespace,
   // rank, rankGroup, wanted, held, mapped }

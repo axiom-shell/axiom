@@ -185,7 +185,7 @@ QtObject {
     return o.end > o.start ? o : null;
   }
 
-  // ---- One surface on an edge, whoever hosts it ----
+  // -- One surface on an edge, whoever hosts it --
   // Everything below is in screen px along the edge (0 at its start: the
   // top or left screen edge), across it in px from the screen edge, so a
   // bar popout, an edge popout and a dock at the same place get the same

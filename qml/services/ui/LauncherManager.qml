@@ -35,7 +35,7 @@ import qs.services.apps
 QtObject {
   id: root
 
-  // --- Public Properties ---
+  // -- Public Properties --
   property var results: []
   // What the search text is: "apps" | "commands" | "calc" | "run" | "web" |
   // "chat" | "clipboard" | "emoji" | "files"
@@ -57,7 +57,7 @@ QtObject {
     return times;
   }, {})
 
-  // --- Public Methods ---
+  // -- Public Methods --
 
   function query(text) {
     root.text = text;
@@ -155,7 +155,7 @@ QtObject {
     }
   }
 
-  // --- Apps & windows ---
+  // -- Apps & windows --
 
   readonly property int _searchLimit: 50
 
@@ -258,7 +258,7 @@ QtObject {
     return frequentIds().slice(0, LauncherConfig.maxResults).map(id => _appRow(DesktopEntries.byId(id)));
   }
 
-  // --- Files ---
+  // -- Files --
 
   property LauncherFiles _files: LauncherFiles {
     active: root.shown && root.mode === "files"
@@ -277,7 +277,7 @@ QtObject {
       root._afterClose = [];
   }
 
-  // --- Commands ---
+  // -- Commands --
 
   property LauncherCommands _commands: LauncherCommands {}
   // A command waiting for its confirming second Enter
@@ -406,7 +406,7 @@ QtObject {
     return true;
   }
 
-  // --- Calculator ---
+  // -- Calculator --
 
   readonly property bool _qalc: CalculatorManager.qalc === true
   // The expression the search wants answered
@@ -458,7 +458,7 @@ QtObject {
     }
   }
 
-  // --- Run & web ---
+  // -- Run & web --
 
   function _runRow(command) {
     return {
@@ -513,7 +513,7 @@ QtObject {
     };
   }
 
-  // --- Clipboard ---
+  // -- Clipboard --
 
   function _clipboardRows(query) {
     if (ClipboardManager.unsupported)
@@ -585,7 +585,7 @@ QtObject {
     }
   }
 
-  // --- Emoji ---
+  // -- Emoji --
 
   // EmojiManager.search: most used first with no text, else by name
   function _emojiRows(query) {
@@ -622,7 +622,7 @@ QtObject {
     }
   }
 
-  // --- After close ---
+  // -- After close --
 
   // Runs fn once no launcher window is mapped (at once if none is): the
   // close slide outlasts `shown`, and until the windows unmap they hold the
@@ -635,7 +635,7 @@ QtObject {
       fn();
   }
 
-  // --- Private ---
+  // -- Private --
 
   readonly property bool _mapped: SurfaceManager.surfaceWindows.some(e => e.kind === "launcher" && e.window?.visible)
   property var _afterClose: []

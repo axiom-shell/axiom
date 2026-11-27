@@ -35,7 +35,7 @@ QtObject {
     return root._entries.length === 0 || root._names[String(name ?? "").trim()] === true;
   }
 
-  // --- Private ---
+  // -- Private --
 
   property bool _loaded: false
   property var _entries: []

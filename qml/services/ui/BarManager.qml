@@ -312,7 +312,7 @@ QtObject {
     return [].concat(...BarsConfig.sectionNames.map(section => bar?.widgets?.[section] ?? []));
   }
 
-  // --- Bars ---
+  // -- Bars --
 
   function addBar() {
     // Every other field comes from the Bar schema's defaults
@@ -461,7 +461,7 @@ QtObject {
     applyChanges();
   }
 
-  // --- A bar's own style ---
+  // -- A bar's own style --
   // A bar's `style` holds a BarStyle whose keys it leaves null take the
   // shared one's (Bars.style). The editor switches whole groups
   // (BarsConfig.styleGroups' keys): owned, each key holds a value of the bar's
@@ -543,7 +543,7 @@ QtObject {
     return shared !== null ? shared : SettingsManager.inheritedValue(ConfigManager.configSchema.definitions.BarStyle.properties[key]);
   }
 
-  // --- Widgets ---
+  // -- Widgets --
 
   function selectWidget(zone, index) {
     root.selectedWidget = {

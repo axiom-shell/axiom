@@ -128,7 +128,7 @@ QtObject {
     return OverlayConfig.minSize(type).map(n => Math.min(GridPlacement.maxSpan, n * root.sizeScale));
   }
 
-  // --- Selection ---
+  // -- Selection --
 
   function select(index) {
     root._group = [];
@@ -174,7 +174,7 @@ QtObject {
     return root.module(root.selected);
   }
 
-  // --- Reading ---
+  // -- Reading --
 
   function _modules() {
     return root.modulesOf() ?? null;
@@ -379,7 +379,7 @@ QtObject {
     return !!place && root.planResize(index, root._place(place.x, place.y, w, h)).valid;
   }
 
-  // --- History ---
+  // -- History --
 
   // Snapshots of the edited modules (plus the owner's `snapshotExtra()`)
   // before each edit
@@ -430,7 +430,7 @@ QtObject {
     root._history.clear();
   }
 
-  // --- Editing ---
+  // -- Editing --
 
   // Runs an edit. `edit` returns the module to select, false for no
   // change, or undefined to keep the selection on its module. Then

@@ -1458,7 +1458,7 @@ TestCase {
     compare(CustomWidgetData.previewZoom(sizes, 450, 100000, 900, 400, 20), Math.min(0.3, 900 * 0.22 / GridPlacement.span(4, 450)), "wide page: height only");
   }
 
-  // --- Screens ---
+  // -- Screens --
 
   function test_allElements() {
     compare(CustomWidgetData.allElements(null).length, 0, "none");
@@ -1819,7 +1819,7 @@ TestCase {
     compare(CustomWidgetData.series([1, Infinity, NaN, 3], 240), [1, 3], "non-finite dropped");
   }
 
-  // --- Named actions ---
+  // -- Named actions --
 
   function test_actionOf() {
     const def = {
@@ -2091,7 +2091,7 @@ TestCase {
     compare(CustomWidgetData.builtinAllowed("poweroff", undefined), true, "nothing refused");
   }
 
-  // --- Samples ---
+  // -- Samples --
 
   function test_viewKey() {
     const module = {

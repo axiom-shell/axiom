@@ -94,7 +94,7 @@ TestCase {
     }, over);
   }
 
-  // ---- Adapters: the only part of this file a later stage changes ----
+  // -- Adapters: the only part of this file a later stage changes --
 
   // The shared BarStyle a raw look stands for (its shadow an object)
   function sectionOf(raw) {
@@ -206,7 +206,7 @@ TestCase {
     return BarTabs.tab(radius, thickness, fillet, outerStart, limits);
   }
 
-  // ---- Inputs ----
+  // -- Inputs --
 
   // The BarStyle keys, from the built schema
   property var styleKeys: []

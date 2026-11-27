@@ -58,7 +58,7 @@ Singleton {
     root.setActive(!root.active);
   }
 
-  // --- Private ---
+  // -- Private --
 
   PersistentProperties {
     id: _run

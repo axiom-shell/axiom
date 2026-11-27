@@ -160,7 +160,7 @@ Singleton {
     root.pick(next.url, "", "");
   }
 
-  // --- The wallpaper folder (the onboarding's Look page) ---
+  // -- The wallpaper folder (the onboarding's Look page) --
 
   // Images in Appearance.wallpaperPath: -1 until checked (or while
   // checking), -2 when the folder doesn't exist
@@ -212,7 +212,7 @@ Singleton {
     onTriggered: root.checkFolder()
   }
 
-  // --- The wallpapers to pick from ---
+  // -- The wallpapers to pick from --
 
   // The images of the folder's collection (Appearance.wallpaper.collection,
   // the folder itself when empty), with every folder under it when
@@ -304,7 +304,7 @@ Singleton {
     });
   }
 
-  // --- Rotation ---
+  // -- Rotation --
   onModeChanged: if (root.mode === "rotate")
     ThemeManager.setLastRotated(Date.now())
 
@@ -326,7 +326,7 @@ Singleton {
     onTriggered: root._rotateIfDue()
   }
 
-  // --- Light and dark by time ---
+  // -- Light and dark by time --
   property var _pendingLight: null
 
   function _setLight(light) {

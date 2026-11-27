@@ -101,7 +101,7 @@ QtObject {
     }, blur, Backdrop.greyOf(Style.surfacePage));
   }
 
-  // ---- the edge floor ----
+  // -- the edge floor --
 
   // Over every bar that draws a fill (the ones with no surface get a shade
   // instead): its band's bare backs and the ink its text colour is, from
@@ -140,7 +140,7 @@ QtObject {
     return floor;
   }
 
-  // ---- the grids ----
+  // -- the grids --
 
   // path -> { state: "pending" | "ready" | "failed", grid }, mutated in place
   property var _grids: ({})

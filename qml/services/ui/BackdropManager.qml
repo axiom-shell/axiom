@@ -51,7 +51,7 @@ QtObject {
     return best;
   }
 
-  // --- Catching clicks for a focus grab the compositor doesn't have ---
+  // -- Catching clicks for a focus grab the compositor doesn't have --
 
   // Every FocusGrab active now, native grab or not (uids, oldest first),
   // but one a click ended under a newer native grab (FocusGrab)

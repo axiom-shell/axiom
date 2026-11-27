@@ -15,7 +15,7 @@ QtObject {
   // Arranged first: a surface on a higher layer reserves before any below
   readonly property var layerNames: ["overlay", "top", "bottom", "background"]
 
-  // --- arrange ---
+  // -- arrange --
 
   // The edge a surface reserves its zone on: anchored to it, not to the
   // opposite edge, and to both or neither of the edges beside it; "" when
@@ -254,7 +254,7 @@ QtObject {
     return result;
   }
 
-  // --- match ---
+  // -- match --
 
   // Rule: within an output and namespace, the pairs nearest in place and
   // size first, each rect of the compositor's taken once
@@ -305,7 +305,7 @@ QtObject {
     return result;
   }
 
-  // --- correctionsOf ---
+  // -- correctionsOf --
 
   // Rule: a mapped window whose rect differs from the compositor's is
   // corrected by the difference
@@ -407,7 +407,7 @@ QtObject {
     };
   }
 
-  // --- sequence ---
+  // -- sequence --
 
   // Whether `e` shows, wants a place in the stack: wanted, or held
   function _wants(e) {

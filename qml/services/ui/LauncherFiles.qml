@@ -69,7 +69,7 @@ QtObject {
     root._mainItems = [];
   }
 
-  // --- "~" mode ---
+  // -- "~" mode --
 
   // What the rows show: the text asked for, and its answer { request,
   // phase (the index's when asked), browsed (the folder's own entries),
@@ -157,13 +157,13 @@ QtObject {
     return rows;
   }
 
-  // --- The main search ---
+  // -- The main search --
 
   // The query asked for, and the newest answer's items
   property string _mainQ: ""
   property var _mainItems: []
 
-  // --- Rows ---
+  // -- Rows --
 
   // A file or folder: Enter opens it, Shift+Enter shows it in its folder,
   // Tab types its path (a folder's lists it), Ctrl+C copies the path

@@ -11,7 +11,7 @@ import qs.components.methods
 FieldFrame {
   id: root
 
-  // --- Public API ---
+  // -- Public API --
   property string text: ""
   property alias placeholderText: textInput.placeholderText
   property alias input: textInput
@@ -101,7 +101,7 @@ FieldFrame {
         root.textEdited();
       }
 
-      // --- Core Properties ---
+      // -- Core Properties --
       color: root.ink.text
       font.family: Appearance.fontFamily
       font.pixelSize: Style.typeBody
@@ -119,7 +119,7 @@ FieldFrame {
           flickable.contentY = bottom - flickable.height;
       }
 
-      // --- Placeholder Properties ---
+      // -- Placeholder Properties --
       placeholderTextColor: root.ink.faint
 
       // Handle Enter/Return key
