@@ -8,7 +8,7 @@ A Quickshell desktop for Hyprland, niri and sway: `qml/` (run by `qs`, no build 
 - After every change run `scripts/dev/verify.sh` until `verify ok` (`--all` = CI, prints `all checks passed`; run it once, at the end). It formats QML and prints the shell's log; a clean reload is `Reloading configuration...` + `Configuration Loaded`; `console.warn` only for real problems.
 - Log `scripts/log.sh`, screenshots `scripts/dev/shot.sh`, a second shell only via `scripts/dev/nested.sh`, and only when absolutely necessary; a check no test or log can show becomes a `LIVE:` line in the PR (`docs/dev/testing.md`).
 - qs watches by inode: edit QML in place, never temp file + rename; after `sed -i` or `git checkout`, force a reload.
-- Read `docs/dev/core/qml-pitfalls.md` before writing QML and the area's doc before changing it; update it when behaviour changes. Which file does X: `grep -n '<word>' docs/dev/generated/files.md`. Recipes: `docs/recipes/`.
+- Read `docs/dev/core/qml-pitfalls.md` before writing QML and the area's doc before changing it. Which file does X: `grep -n '<word>' docs/dev/generated/files.md`. Recipes: `docs/recipes/`.
 - A problem outside the task: tell the user, don't fix it unasked.
 
 ## Never
@@ -65,4 +65,4 @@ A Quickshell desktop for Hyprland, niri and sway: `qml/` (run by `qs`, no build 
 
 ## Agents and skills
 
-Every change starts with `/orchestrate <request>`. It sizes the change into a tier (T0 Fix, T1 Improvement, T2 Feature, T3 Cross-system; every tier has a ledger), plans, builds in gated groups in a worktree, reviews, and stops with a report for the PR. It keeps its state in the plans folder (`.plans/<slug>/`, gitignored). `.claude/agents/`: **architect** (opus) specs, checks plans and judges findings; **implementer** (sonnet) builds; **reviewer** (sonnet) reviews; **checker** (haiku) runs checks. Every hand-off's layout is in `.claude/templates/`. Recipe skills (`/bar-widget`, `/setting`, `/engine-change`, …), `/keep-order` (plan, gate, audit), `/review-branch`, `/review-system`, `/align` and `/verify` run inside it.
+Every change starts with `/orchestrate <request>`. It sizes the change into a tier (T0 Fix, T1 Improvement, T2 Feature, T3 Cross-system; every tier has a ledger), plans, builds in gated groups in a worktree, reviews, and stops with a report for the PR. It keeps its state in the plans folder (`.plans/<slug>/`, gitignored). `.claude/agents/`: **architect** (opus) specs, checks plans and judges findings; **implementer** (sonnet) builds; **reviewer** (sonnet) reviews; **checker** (haiku) runs checks. Every hand-off's layout is in `.claude/templates/`. Recipe skills (`/bar-widget`, `/setting`, `/engine-change`, …), `/keep-order` (plan, gate, audit), `/review-branch`, `/align` and `/verify` run inside it.

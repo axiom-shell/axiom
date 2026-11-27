@@ -14,5 +14,4 @@ Fixes #
 
 - [ ] `scripts/dev/verify.sh` prints `verify ok`
 - [ ] `scripts/log.sh` shows no new warnings after a reload
-- [ ] The docs verify.sh lists still describe the change
 - [ ] Unrelated problems found along the way are reported as issues, not fixed here

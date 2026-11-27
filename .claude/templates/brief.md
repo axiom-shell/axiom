@@ -24,6 +24,5 @@ Report: <template path>; nothing it lists is dropped
 - Typed directly, with no `Tree:` or `Base:` in the task: Tree is `git rev-parse --show-toplevel` of the start folder, and Base is `git -C <tree> merge-base origin/main HEAD`.
 - Follow the recipe's Copy from, Steps and Watch out for.
 - Run its Check it steps (if it has none, the checks its Steps name), then verify until `verify ok`.
-- Update its Docs to update.
 - Stop on an open behaviour decision or a case the recipe doesn't cover, and name the question.
 - Report in `.claude/templates/implementer-report.md`, with **Names added**.

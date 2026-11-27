@@ -33,7 +33,7 @@ Before opening or updating a PR. Read state.md, then run `/review-branch "<purpo
 
 ## Fix round
 
-The one home of fixing, for `--fix` here and in `/review-branch` and `/review-system`.
+The one home of fixing, for `--fix` here and in `/review-branch`.
 - With a state folder: the fix list `<folder>/fix-<source>-<n>.md` (`.claude/templates/fix-list.md`, source `gate<g>`, `review<r>` or `ci<c>`) goes to a fresh `implementer` (never resumed), then a `checker` runs `scripts/dev/verify.sh` in the tree, then `gate --state`.
-- Without one (a hand-run `--fix`): the fix list goes inline in the brief, then the checker, then `gate --base <the review's --base; review-system: HEAD>` steps 1-2 only, with file rulings to an architect without a spec.
+- Without one (a hand-run `--fix`): the fix list goes inline in the brief, then the checker, then `gate --base <the review's --base>` steps 1-2 only, with file rulings to an architect without a spec.
 - A fix that changes behaviour users notice goes to the user instead.

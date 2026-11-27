@@ -12,7 +12,6 @@ Names added: new_names.py --base <Base> --files <files> output; each name `spec`
 Reused: job → piece (path:line)
 Removed: each symbol deleted or merged (path → where); `git -C <tree> add -A -N && git -C <tree> diff --shortstat HEAD` (a generated file's lines named, not counted); more lines added than deleted: why
 Changed pieces: each existing file or function edited, its users outside the change (grep count and paths), whether the ledger has a row
-Docs: verify's doc list, each updated, or unchanged with why
 Decided or skipped:
 Stopped: why, and what is needed
 ```

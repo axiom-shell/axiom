@@ -1,6 +1,6 @@
 ---
 name: review-branch
-description: Thorough review of everything the current branch changes against main (bugs, regressions, dead or repeated code, simplification, illogical choices, axiom rule breaks, stale docs). Use when the user says "review the branch", "review my changes", "code review", "is this branch ready", or runs /review-branch with a short description of what the branch is for.
+description: Thorough review of everything the current branch changes against main (bugs, regressions, dead or repeated code, simplification, illogical choices, axiom rule breaks). Use when the user says "review the branch", "review my changes", "code review", "is this branch ready", or runs /review-branch with a short description of what the branch is for.
 argument-hint: "<what the branch is for> [--tree <path>] [--base <ref>] [--since <sha>] [--size tiny|small|larger] [--state <folder>] [--fix]"
 ---
 
@@ -41,7 +41,7 @@ Slices (larger branches only): at most ~600 changed lines each. A file stays who
 Lenses (`lenses.md` next to this file): `bugs`, `regressions`, `cleanup`, `rules`, `design`, `consistency`. Bugs need close reading line by line, so they are sliced; duplicates, names, patterns, rules and design span files, so they are read over the whole branch, where a slice can't hide them.
 - **Each slice:** one reviewer, `bugs`+`regressions`.
 - **Code, whole branch:** one reviewer, `consistency`+`cleanup`+`rules`+`design` (code and schema), starting from `new_names.py --base <mb>`.
-- **Words, whole branch** (only when the branch changes docs, schema descriptions or `I18n.tr` strings): one reviewer, `consistency` › User strings and docs + `design` › Docs.
+- **Words, whole branch** (only when the branch changes docs, schema descriptions or `I18n.tr` strings): one reviewer, `consistency` › User strings and docs.
 - Plus one `checker` running `scripts/dev/verify.sh --all` in the tree (a failing check is a Blocker). In a stack, this run is a lower part's verify (`/orchestrate` `stacks.md` › The stack rebase rule).
 
 At most ~6 slice reviewers: past that, merge neighbouring slices. A ~3k-line branch is then about 5 + 2 reviewers, a checker and the judge; a small one is 1 reviewer, a checker and the judge.
