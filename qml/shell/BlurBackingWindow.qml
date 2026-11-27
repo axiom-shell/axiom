@@ -12,11 +12,12 @@ import qs.components.hosts.popout
 import qs.components.methods
 import qs.components.reusable
 
-// One blur window (BlurBacking): click-through, keeping a copy of each of
-// `shapes` (every BlurShape on its screen) and drawing those it `draws`
-// filled, at the surface opacity, with their shadows cast once per look
-// and kept outside every shape, its own and those the other blur window
-// draws. `part` keeps one of the two: where the compositor
+// One backing window (BlurBacking): click-through, keeping a copy of each
+// of `shapes` (every BlurShape on its screen) and drawing those it `draws`
+// filled, at the surface opacity, with their shadows cast once per look,
+// from the shapes' outlines (fill and stroke), and kept outside every
+// shape's outline, its own and those the other backing window draws.
+// `part` keeps one of the two: where the compositor
 // blurs every pixel that isn't clear, the shadows go to a window it
 // doesn't blur (BlurBacking).
 // The copies are keyed (KeyedModel): one coming or going adds or removes
@@ -33,9 +34,10 @@ PanelWindow {
   property bool over: false
   // The overlay is open on its screen (BlurManager.aboveOverlay)
   property bool aboveOverlay: false
-  // Whether it draws `shape` now (the other blur window on its screen draws
-  // the rest); its shadows are cut by the shapes the other one draws all
-  // the same: a shadow never falls on a surface joined to the one casting it
+  // Whether it draws `shape` now (the other backing window on its screen
+  // draws the rest); its shadows are cut by the shapes the other one draws
+  // all the same: a shadow never falls on a surface joined to the one
+  // casting it
   function draws(shape) {
     return backing.aboveOverlay ? shape.overlayLayer === backing.over : !backing.over;
   }
@@ -74,10 +76,12 @@ PanelWindow {
     held: backing.held
   }
 
-  // Its shapes as its blur region, where the compositor blurs only that
-  // (supports.blurRegion): each shape's pieces as drawn, at its place on
-  // the screen and cut to its clipRect; none while it draws nothing
-  readonly property bool regionBlur: CompositorManager.supports.blurRegion === true && backing.part !== "shadows" && backing.wanted
+  // Drawn whenever backed, blurred only where the compositor is asked
+  // (regionsOn). Its shapes as its blur region, where the compositor
+  // blurs only that (supports.blurRegion): each shape's pieces as drawn,
+  // at its place on the screen and cut to its clipRect; none while it
+  // draws nothing
+  readonly property bool regionBlur: CompositorManager.supports.blurRegion === true && backing.part !== "shadows" && backing.wanted && BlurManager.regionsOn(backing.screen)
   readonly property var regionPieces: backing.regionBlur ? [].concat(...backing.shapes.filter(shape => backing.draws(shape)).map(shape => backing._piecesOf(shape))) : []
 
   // reads: a shape's source (AttachedSurface, Rectangle, RoundedBorders)
@@ -87,8 +91,9 @@ PanelWindow {
       return [];
     // None while its fill is drawn under the blur threshold, fading or
     // faded out (an AttachedSurface's `fade`, a dock fading as it hides, a
-    // shape's `fade`, as a toast's or a menu tile's), as BoxBlurRegion and Hyprland's
-    // ignore_alpha compare it
+    // shape's `fade`, as a toast's or a menu tile's), or its fill's alpha,
+    // BlurShape.color (an attached surface's own fillColor): the alpha the
+    // copy draws, as BoxBlurRegion and Hyprland's ignore_alpha compare it
     if (Appearance.surfaceAlpha * shape.color.a * (shape.fade ?? 1) * (src.shownOpacity ?? 1) * (src.hostOpacity ?? 1) < Appearance.blurThreshold)
       return [];
     const clip = shape.clipRect ?? {
@@ -172,13 +177,14 @@ PanelWindow {
     visible: backing.part !== "fills"
   }
 
-  // Every shape drawn opaque (by shadow, in `groups`), then the surface
-  // opacity applied to them all at once, so where they overlap they
-  // don't stack (a layer of its own only once there are several)
+  // Each group's fills (its fill `Copies`, in `groups`), drawn where its
+  // shadow's capture was, at their own colour, then the surface opacity
+  // applied to them all at once, so where they overlap they don't stack
+  // (a layer of its own: one copy's own pieces overlap too)
   Item {
     id: fills
     anchors.fill: parent
-    layer.enabled: groups.count > 1 && visible // style-exempt: no text
+    layer.enabled: backing.shapes.length > 0 && visible // style-exempt: no text
     opacity: Style.edgeAlpha
     visible: backing.part !== "shadows"
   }
@@ -202,7 +208,8 @@ PanelWindow {
       // (none for a fills-only window, which never reads them)
       Copies {
         shapes: backing.part !== "fills" ? backing.shapes : []
-        draws: shape => backing.aboveOverlay && !backing.draws(shape)
+        draws: "outline"
+        drawsOnly: shape => backing.aboveOverlay && !backing.draws(shape)
         onChanged: nudge.burst()
       }
     }
@@ -220,9 +227,10 @@ PanelWindow {
     keys: backing.shapes.map(shape => backing.shadowKey(shape)).filter((key, i, all) => all.indexOf(key) === i)
   }
 
-  // The shapes casting one shadow: copied once, captured (a hidden
-  // layer isn't drawn, a capture with hideSource is), drawn into
-  // `fills` and `union` from the capture, and casting from it
+  // The shapes casting one shadow: their fills copied into `fills`, their
+  // outlines copied once and captured (a hidden layer isn't drawn, a
+  // capture with hideSource is), drawn into `union` from the capture, and
+  // casting from it
   Repeater {
     id: groups
     model: groupModel.model
@@ -240,7 +248,8 @@ PanelWindow {
 
         Copies {
           shapes: group.members
-          draws: shape => backing.draws(shape)
+          draws: "outline"
+          drawsOnly: shape => backing.draws(shape)
           onChanged: nudge.burst()
         }
       }
@@ -253,10 +262,13 @@ PanelWindow {
         hideSource: true
       }
 
-      ShaderEffect {
-        property var source: copied
+      // (none for a shadows-only window, which never shows `fills`)
+      Copies {
+        shapes: backing.part !== "shadows" ? group.members : []
+        draws: "fill"
+        drawsOnly: shape => backing.draws(shape)
         parent: fills
-        anchors.fill: parent
+        onChanged: nudge.burst()
       }
 
       ShaderEffect {
@@ -311,8 +323,12 @@ PanelWindow {
   component Copies: Item {
     id: copies
     required property var shapes
+    // What each copy draws: "fill", its fill in the colour it fills with,
+    // no stroke; "outline", its fill and stroke in opaque black, the shape
+    // a shadow casts from and is cut by
+    property string draws: "fill"
     // Which of `shapes` it draws now (a copy exists for each either way)
-    property var draws: shape => true
+    property var drawsOnly: shape => true
     // A copy moved, resized, showed or hid
     signal changed
     anchors.fill: parent
@@ -332,13 +348,15 @@ PanelWindow {
         // Fixed per key; null once it's gone, until its row goes
         readonly property var shape: BlurManager.shapeOf(Number(slot.key))
         readonly property var area: slot.shape?.clipRect ?? null
+        // What its copy fills with: black for the outline, else its colour
+        readonly property color fill: copies.draws === "outline" ? "black" : (slot.shape?.color ?? "transparent") // style-exempt: mask
         x: area ? area.x : 0
         y: area ? area.y : 0
         width: area ? area.width : copies.width
         height: area ? area.height : copies.height
         clip: !!area
         // (read rather than `visible`, which is false inside a hidden layer)
-        readonly property bool showing: (slot.shape?.shown ?? false) && !!slot.shape?.source && copies.draws(slot.shape)
+        readonly property bool showing: (slot.shape?.shown ?? false) && !!slot.shape?.source && copies.drawsOnly(slot.shape)
         visible: slot.showing
 
         // Where and how big its copy is, as drawn: on any change the
@@ -359,6 +377,8 @@ PanelWindow {
 
           AttachedSurfaceCopy {
             source: slot.shape?.source ?? null
+            fillColor: slot.fill
+            mirrorStroke: copies.draws === "outline" ? "black" : "transparent" // style-exempt: mask
           }
         }
 
@@ -377,7 +397,7 @@ PanelWindow {
             topRightRadius: src?.topRightRadius ?? 0
             bottomLeftRadius: src?.bottomLeftRadius ?? 0
             bottomRightRadius: src?.bottomRightRadius ?? 0
-            color: slot.shape?.color ?? "transparent"
+            color: slot.fill
             opacity: slot.shape?.fade ?? 1
           }
         }
@@ -395,7 +415,7 @@ PanelWindow {
             preferredRendererType: Shape.CurveRenderer
 
             ShapePath {
-              fillColor: slot.shape?.color ?? "transparent"
+              fillColor: slot.fill
               fillRule: ShapePath.OddEvenFill
               strokeColor: "transparent"
               strokeWidth: 0

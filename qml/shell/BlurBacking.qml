@@ -35,9 +35,9 @@ Scope {
   id: root
 
   Variants {
-    // On every compositor that blurs, drawing while BlurManager.backingOn its screen:
-    // kept mapped meanwhile (BlurBackingWindow.held), so it keeps its place
-    // where layers stack by map order
+    // On every compositor that blurs, drawing while BlurManager.backingOn
+    // its screen: kept mapped meanwhile (BlurBackingWindow.held), so it
+    // keeps its place where layers stack by map order
     model: CompositorManager.supports.blur === true && CompositorManager.surfacesReady ? General.outputs : []
 
     delegate: Scope {
@@ -45,12 +45,12 @@ Scope {
       required property ShellScreen modelData
       readonly property string screenName: perScreen.modelData?.name ?? ""
       readonly property var onScreen: BlurManager.shapes.filter(shape => shape.screen === perScreen.screenName)
-      // The overlay open here covers the blur window: the Overlay-layer
+      // The overlay open here covers the backing window: the Overlay-layer
       // surfaces' shapes go to the one over it
       readonly property bool aboveOverlay: BlurManager.aboveOverlay(perScreen.screenName)
       readonly property bool shadowsApart: BlurManager.shadowsApart
 
-      // Its blur windows: the fills and the shadows apart (in that order,
+      // Its backing windows: the fills and the shadows apart (in that order,
       // as SwayFX stacks by map order) or one drawing both. Below the
       // overlay: on Top, under the chrome; on Overlay (under every surface
       // there, by its order) while a fullscreen window hides the Top

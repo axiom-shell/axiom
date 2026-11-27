@@ -32,19 +32,19 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - The copies are a keyed `ListModel` (`KeyedModel`, by `BlurShape.uid` through `BlurManager.shapeOf`), so a shape coming or going adds or removes only its own.
 - Any copy moving, resizing or sliding nudges the window (`FrameNudge`).
 
-### Shadows in the blur window
-- Backed surfaces' shadows are cast there too, from the same copies.
+### Shadows in the backing window
+- Backed surfaces' shadows are cast there too, from the same copies' outlines (fill and stroke).
 - Each `BlurShape` names its `shadow` (a look: BarStyle's, or its bar's). An `AttachedSurface`'s follows `castShadow` and `shadowLook`.
 - The copies are grouped by look (`BlurBackingWindow.shadowKey`): its color and size.
 - Each group casts one `SurfaceShadow` cut by every shape on the screen:
   - a shadow runs unbroken round joined surfaces;
   - none falls on a surface joined to the one casting it (no holes needed).
 - Kept under the blur threshold, they aren't blurred.
-- Where the blur has no threshold (SwayFX's `blur_ignore_transparent` blurs every pixel that isn't clear; no `supports.blurThreshold`), it would frost the whole halo. So the blur windows draw only the fills (`BlurBackingWindow.part`), and a window beside each, in a namespace nothing blurs (`axiom-shadows`, `axiom-shadows-overlay`; `LayerStack.layers`), casts the shadows from its own copies (`BlurManager.shadowsApart`).
+- Where the blur has no threshold (SwayFX's `blur_ignore_transparent` blurs every pixel that isn't clear; no `supports.blurThreshold`), it would frost the whole halo. So the backing windows draw only the fills (`BlurBackingWindow.part`), and a window beside each, in a namespace nothing blurs (`axiom-shadows`, `axiom-shadows-overlay`; `LayerStack.layers`), casts the shadows from its own copies (`BlurManager.shadowsApart`).
 - Meanwhile the surfaces' own shadows (`OutsideShadow`, inactive while `backed`) and the border's shadow window stand down.
 
 ### Unbacked shadows
-- Unbacked (paused, solid, or a window not yet placed), each surface casts its own again, from a black copy of its shape kept off screen (`OutsideShadow.hideTarget`):
+- Unbacked (translucent with the blur off, solid for a fullscreen window, opaque chrome, a window not placed within `LayerOrigin`'s timeout, a `FreeMenu` while it scales), each surface casts its own again, from a black copy of its shape kept off screen (`OutsideShadow.hideTarget`):
   - `AttachedSurface`'s;
   - the bar's: each pill, island and solid fill puts its copy in `shadowShape` (pills an `AttachedSurfaceCopy`).
 - The bar shadow's holes:

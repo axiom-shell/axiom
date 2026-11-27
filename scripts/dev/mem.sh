@@ -4,7 +4,9 @@
 # AnonHugePages (/proc/<pid>/smaps_rollup), the JS heap at its last GC
 # (chunk memory, and what was live after the collection), and its threads,
 # with the render threads (one QSGRenderThread per window that has drawn)
-# counted apart. Baseline and how to run it: docs/dev/core/memory.md.
+# counted apart, and gpu: the window buffers, layers and captures the PID
+# holds in VRAM/GTT, which RSS doesn't see (a cost is rss + gpu). Baseline
+# and how to run it: docs/dev/core/memory.md.
 #
 # The JS heap is only known when the shell logs its collections: start it
 # with QT_LOGGING_RULES=qt.qml.gc.allocatorStats.debug=true in its
@@ -29,7 +31,7 @@ if [[ ! "$pid" =~ ^[0-9]+$ || ! -r "/proc/$pid/smaps_rollup" ]]; then
 fi
 
 if [[ $header -eq 1 ]]; then
-  printf '%6s %6s %6s %6s %6s %6s %5s %5s\n' rss dirty anon huge js js_live thr render
+  printf '%6s %6s %6s %6s %6s %6s %5s %5s %6s\n' rss dirty anon huge js js_live thr render gpu
 fi
 
 # smaps_rollup's kB values, as MB
@@ -55,4 +57,25 @@ read -r js live < <(qs log --pid "$pid" -r 'qt.qml.gc.allocatorStats.debug=true'
       else printf "%d %d\n", js / 1048576, live / 1048576
     }')
 
-printf '%6s %6s %6s %6s %6s %6s %5s %5s\n' "$rss" "$dirty" "$anon" "$huge" "$js" "$live" "$threads" "$render"
+# GPU memory (DRM fdinfo, kB as MB): per DRM descriptor drm-total-vram +
+# drm-total-gtt (amdgpu), or every drm-total-* region for a driver with
+# neither (i915/xe); a client's dup'd descriptors repeat its totals, so each
+# drm-pdev + drm-client-id counts once. "-" when the PID has no DRM descriptor.
+gpu=$({ cat /proc/"$pid"/fdinfo/* 2>/dev/null || true; } | awk '
+  function flush() {
+    if (drv != "" && !((pdev SUBSEP cid) in seen)) {
+      seen[pdev SUBSEP cid] = 1
+      found = 1
+      total += (hasvg ? vg : other)
+    }
+    drv = pdev = cid = ""; vg = other = hasvg = 0
+  }
+  /^pos:/ { flush() }
+  /^drm-driver:/ { drv = $2 }
+  /^drm-pdev:/ { pdev = $2 }
+  /^drm-client-id:/ { cid = $2 }
+  /^drm-total-(vram|gtt)/ { vg += $2; hasvg = 1 }
+  /^drm-total-/ { other += $2 }
+  END { flush(); if (found) printf "%d\n", total / 1024; else print "-" }')
+
+printf '%6s %6s %6s %6s %6s %6s %5s %5s %6s\n' "$rss" "$dirty" "$anon" "$huge" "$js" "$live" "$threads" "$render" "$gpu"
