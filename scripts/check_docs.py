@@ -62,7 +62,7 @@ def docs():
 def singletons():
     """{name: set of root member names} for every singleton file."""
     table = {}
-    for folder in ("services/*", "config", "components/methods"):
+    for folder in ("services/*", "config", "components/methods/**"):
         for path in QML_ROOT.glob(f"{folder}/*.qml"):
             _, members = parse_qml(path)
             text = path.read_text()

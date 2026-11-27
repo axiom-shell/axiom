@@ -137,11 +137,11 @@ QtObject {
   }
 
   function acquireScan(owner) {
-    _scanRegistry.acquire(owner, {});
+    _scanConsumers.set(owner, {});
   }
 
   function releaseScan(owner) {
-    _scanRegistry.release(owner);
+    _scanConsumers.drop(owner);
   }
 
   function isSecure(network) {
@@ -347,14 +347,14 @@ QtObject {
   }
 
   // -- Private --
-  property ConsumerRegistry _scanRegistry: ConsumerRegistry {}
+  property OwnerRegistry _scanConsumers: OwnerRegistry {}
 
   // Scan while anything wants it and the radio is on
   property Binding _scanner: Binding {
     when: root.wifiDevice !== null
     target: root.wifiDevice
     property: "scannerEnabled"
-    value: root._scanRegistry.active && root.wifiEnabled
+    value: root._scanConsumers.active && root.wifiEnabled
     restoreMode: Binding.RestoreNone
   }
 
@@ -382,7 +382,7 @@ QtObject {
 
   // The saved networks, read again as one is saved or forgotten while
   // something scans
-  readonly property string _savedKey: _scanRegistry.active ? networks.filter(n => n.known).map(n => n.name).join("\n") + "\n" : ""
+  readonly property string _savedKey: _scanConsumers.active ? networks.filter(n => n.known).map(n => n.name).join("\n") + "\n" : ""
   on_SavedKeyChanged: {
     if (_savedKey !== "")
       refreshSaved();
@@ -486,9 +486,9 @@ QtObject {
   function _askPassword(network) {
     const kind = root.securityKind(network);
     root.joinError = "";
-    if (root._scanRegistry.active || kind === "eap" || kind === "dynamic-wep") {
+    if (root._scanConsumers.active || kind === "eap" || kind === "dynamic-wep") {
       root.passwordFor = network;
-      if (!root._scanRegistry.active)
+      if (!root._scanConsumers.active)
         ShellManager.openModule(["WifiNetworks"]);
       return;
     }

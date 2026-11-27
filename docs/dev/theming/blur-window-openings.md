@@ -1,6 +1,6 @@
 # Blur window and openings
 
-> **Files:** `qml/shell/BlurBacking.qml`, `qml/shell/BlurBackingWindow.qml`, `qml/services/ui/BlurManager.qml`, `qml/components/hosts/popout/BlurShape.qml`, `qml/components/hosts/popout/Copies.qml`, `qml/components/hosts/popout/KeyedModel.qml`, `qml/components/hosts/popout/AttachedSurfaceCopy.qml`, `qml/components/hosts/popout/ChromeComposite.qml`, `qml/components/reusable/HoledCopy.qml`, `qml/components/methods/PaintOrder.qml`, `qml/components/hosts/popout/OutsideShadow.qml`, `qml/components/hosts/popout/LayerOrigin.qml`, `qml/components/hosts/popout/BorderOpening.qml`, `qml/components/hosts/popout/StrokeOpening.qml`, `qml/components/surfaces/border/BorderPanel.qml`, `qml/components/surfaces/border/RoundedBorders.qml`
+> **Files:** `qml/shell/BlurBacking.qml`, `qml/shell/BlurBackingWindow.qml`, `qml/services/ui/BlurManager.qml`, `qml/components/hosts/popout/BlurShape.qml`, `qml/components/hosts/popout/Copies.qml`, `qml/components/hosts/popout/KeyedModel.qml`, `qml/components/hosts/popout/AttachedSurfaceCopy.qml`, `qml/components/hosts/popout/ChromeComposite.qml`, `qml/components/reusable/HoledCopy.qml`, `qml/components/methods/PaintOrder.qml`, `qml/components/hosts/popout/OutsideShadow.qml`, `qml/components/hosts/window/LayerOrigin.qml`, `qml/components/hosts/popout/BorderOpening.qml`, `qml/components/hosts/popout/StrokeOpening.qml`, `qml/components/surfaces/border/BorderPanel.qml`, `qml/components/surfaces/border/RoundedBorders.qml`
 > **Config:** `Appearance.surface.*`
 > **Related:** [Translucency and blur](translucency-blur.md), [Shadows](../popouts/shadows.md), [Surface context](../popouts/surface-context.md), [Edge attach](../popouts/edge-attach.md), [Submenus](../popouts/submenus.md)
 
@@ -63,11 +63,11 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 
 ### Where a window is (LayerOrigin)
 - Layer windows don't know where they are, so axiom works it out on every compositor ([layer arrangement](../compositor/layer-arrangement.md)):
-  - each `hosts/popout/LayerOrigin` reports its window's anchors, margins, size, zone and when it mapped to `LayerManager`;
-  - `LayerManager` places them all with `methods/LayerArrange`, and each `LayerOrigin` reads its own window's rect back (`LayerManager.rectOf`).
+  - each `hosts/window/LayerOrigin` states its window's anchors, margins, size, zone and when it mapped to `LayerManager`;
+  - `LayerManager` places them all with `methods/layer/LayerArrange`, and each `LayerOrigin` reads its own window's rect back (`LayerManager.rectOf(owner)`).
 - A window that reserves nothing has its origin before it maps, where it will go, so it's backed from its first frame. A reserving window has one only while mapped.
 - On Hyprland the result is corrected from its layer list (`CompositorManager.withLayerRects`), so other apps' layers and reserved space count too; a difference is logged as `LayerManager: corrected from the compositor` (`scripts/log.sh --debug -g LayerManager`).
-- Until its origin is known, a surface fills itself. Two watchdogs say so when it goes wrong (`console.warn`, once): a `LayerOrigin` whose window drew its first frame with no origin while backed, and a backing window that has shapes but isn't shown a second after they came.
+- Until its origin is known, a surface fills itself. A watchdog says so when it goes wrong (`console.warn`, once): a `LayerOrigin` whose window drew its first frame with no origin while backed. No surface is backed while the backing window isn't shown (`backingOn` follows its slot), so that state has none.
 - A bar popout's and submenu's place follows from their bar's.
 
 ### Joins: openings in the border's stroke

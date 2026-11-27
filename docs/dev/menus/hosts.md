@@ -41,7 +41,7 @@ How a menu is put on screen: the shared body and sync, the lattice its modules s
 - Shared by all three hosts. Follows `MenuManager`, and tells it when the menu closes by itself. Unwanted, it calls `hide()` even while closing, so an open queued by a quick toggle is dropped.
 - Held/revealing state, `autoDismiss`, the trigger length, grab-partner registration (the hover strip's `triggerWindow` is optional: a free menu has none).
 - The reveal's cursor warp (`warpRequested`), each edge host warping into its own box. The free host doesn't warp (`warps: false`; [Free menus](free-menus.md) › Opening it).
-- The edge hosts centre their hover strip on the modules from config (`EdgeTrigger.centre`; the floating one through `EdgePopout.triggerCentre`), since the body only loads while open.
+- The edge hosts centre their hover strip on the modules from config (`EdgeTrigger.centre`; the floating one through `EdgePopout.triggerCentre`), since the body only loads while open. `EdgeTrigger` is its own `LayerSlot` (`axiom-edge-trigger`, last on Top): its host sets `slotWanted` where it used to set `visible`, and it maps while its host wants it.
 
 ### `edge`: `FloatingEdgeMenu`
 - An `EdgePopout` (`contentPadding`, `edgeOffset`, `fillColor` / `strokeColor`, defaulting to what the OSD uses).

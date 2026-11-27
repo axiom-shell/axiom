@@ -159,6 +159,8 @@ axiom talks to the compositor through one layer, so the bar, the overlay, the la
 
 <sub>¹ The login screen runs in a compositor of its own, whatever compositor you use: sway, or Hyprland when sway isn't installed.</sub>
 
+On sway the overlay stays open over a fullscreen window and the bars redraw once when that window closes with the overlay open; Hyprland and niri dim and blur over it as elsewhere.
+
 Your config moves between them as it is. Log in to another compositor and your bars, pages, menus, theme and keybinds are already there; whatever only one compositor understands waits quietly in the config until you're back on it. Settings a compositor can't use are left out of the settings page rather than shown and ignored. Running something else? The bar, launcher, notifications and most of the shell still work on any Wayland compositor with layer-shell; only the compositor-specific parts go missing.
 
 ## Installation

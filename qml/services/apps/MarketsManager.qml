@@ -29,17 +29,17 @@ QtObject {
   // Why no symbol has a price ("" while one has, or while loading)
   readonly property string error: _state?.error ?? ""
   // Whether the first prices are still on their way
-  readonly property bool loading: _state === null && _registry.active
+  readonly property bool loading: _state === null && _consumers.active
   // The holdings in MarketsConfig.baseCurrency (MarketMath.portfolio), or
   // null with none
   readonly property var portfolio: MarketMath.portfolio(MarketsConfig.symbols, root.quotes, root.fx, MarketsConfig.baseCurrency)
 
   function acquire(owner) {
-    _registry.acquire(owner, true);
+    _consumers.set(owner, true);
   }
 
   function release(owner) {
-    _registry.release(owner);
+    _consumers.drop(owner);
   }
 
   function quoteFor(item) {
@@ -89,13 +89,13 @@ QtObject {
   }
 
   // -- Private --
-  property ConsumerRegistry _registry: ConsumerRegistry {}
+  property OwnerRegistry _consumers: OwnerRegistry {}
 
   property var _state: null
 
   // Prices are wanted while shown, or while an alert waits
   readonly property bool _alertsWanted: !Paths.greeter && MarketsConfig.alerts && MarketMath.hasAlerts(MarketsConfig.symbols)
-  readonly property bool _wanted: _registry.active || _alertsWanted
+  readonly property bool _wanted: _consumers.active || _alertsWanted
 
   // The request as one string, so axiom is asked again only when it
   // really changes

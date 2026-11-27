@@ -2,6 +2,7 @@
 paths:
   - "qml/components/methods/**"
   - "tests/tst_*.qml"
+  - "tests/layer/**"
 ---
 
 # Pure helpers (`qml/components/methods/`)

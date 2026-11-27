@@ -76,26 +76,26 @@ QtObject {
   property string lastError: ""
 
   // Something has acquire()d it, so the state above is current
-  readonly property bool watched: _registry.active
+  readonly property bool watched: _consumers.active
   // A state came from axiom (the first follows an acquire())
   signal updated
 
   // Every consumer shares TailscaleConfig.interval: no request
   function acquire(owner) {
-    _registry.acquire(owner, {});
+    _consumers.set(owner, {});
   }
 
   function release(owner) {
-    _registry.release(owner);
+    _consumers.drop(owner);
   }
 
   // The prefs and accounts too (the popout and the module)
   function acquireDetails(owner) {
-    _detailsRegistry.acquire(owner, {});
+    _detailsConsumers.set(owner, {});
   }
 
   function releaseDetails(owner) {
-    _detailsRegistry.release(owner);
+    _detailsConsumers.drop(owner);
   }
 
   function refresh() {
@@ -157,14 +157,14 @@ QtObject {
   }
 
   // -- Private --
-  property ConsumerRegistry _registry: ConsumerRegistry {}
+  property OwnerRegistry _consumers: OwnerRegistry {}
   // The interval goes straight into the request, so the topic is never
   // asked with a half-evaluated one (an interval of 0)
-  readonly property var _request: _registry.active ? {
+  readonly property var _request: _consumers.active ? {
     "interval": TailscaleConfig.interval
   } : null
-  property ConsumerRegistry _detailsRegistry: ConsumerRegistry {}
-  readonly property var _detailsRequest: _detailsRegistry.active ? {
+  property OwnerRegistry _detailsConsumers: OwnerRegistry {}
+  readonly property var _detailsRequest: _detailsConsumers.active ? {
     "interval": TailscaleConfig.interval
   } : null
 

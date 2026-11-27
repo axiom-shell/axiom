@@ -3,7 +3,7 @@
 A service is a singleton that owns one domain's state and every side effect that goes with it: running commands, polling, writing files, answering IPC. The UI reads a service and never does those things itself. At the end you have `qml/services/<group>/<Name>Manager.qml` and whatever uses it.
 
 **Copy from:**
-- `qml/services/apps/TailscaleManager.qml` with `backend/internal/tailscale/`: state polled by the axiom daemon through a `ConsumerRegistry`; the consumer is `qml/components/bar/widgets/Tailscale/Tailscale.qml`. This is the preferred shape for anything polled.
+- `qml/services/apps/TailscaleManager.qml` with `backend/internal/tailscale/`: state polled by the axiom daemon through an `OwnerRegistry`; the consumer is `qml/components/bar/widgets/Tailscale/Tailscale.qml`. This is the preferred shape for anything polled.
 - `qml/services/session/IdleManager.qml`: an `IpcTarget`, state kept across reloads in `PersistentProperties`, and a daemon push (`idle.state`).
 - The skeleton below: the same API polled in QML, with its command through `CommandManager.run`, for what the daemon doesn't poll.
 
@@ -11,7 +11,7 @@ A service is a singleton that owns one domain's state and every side effect that
 
 ## Files
 1. `qml/services/<group>/<Name>Manager.qml`: a `pragma Singleton` `QtObject`, or Quickshell's `Singleton` when it holds child objects such as `PersistentProperties`. Each folder is its own QML module:
-   - `core/`: what everything stands on (config, theme, the daemon bridge and its `CommandManager`, `FileManager`, `StateManager`, `IpcTarget`, `ConsumerRegistry`, secrets).
+   - `core/`: what everything stands on (config, theme, the daemon bridge and its `CommandManager`, `FileManager`, `StateManager`, `IpcTarget`, `OwnerRegistry`, secrets).
    - `compositor/`: `CompositorManager` and each backend's files.
    - `session/`: locking, auth, greeter, polkit, idle, session actions.
    - `system/`: the machine's basics (audio, network, Bluetooth, battery, media, notifications, updates).
@@ -38,13 +38,13 @@ QtObject {
 
   // request: { interval } (ms)
   function acquire(owner, request) {
-    _registry.acquire(owner, {
+    _consumers.set(owner, {
       "interval": request?.interval ?? 10000
     });
   }
 
   function release(owner) {
-    _registry.release(owner);
+    _consumers.drop(owner);
   }
 
   function refresh() {
@@ -63,12 +63,12 @@ QtObject {
   }
 
   // -- Private --
-  property ConsumerRegistry _registry: ConsumerRegistry {}
-  readonly property int _interval: _registry.active ? Math.max(5000, Math.min(..._registry.requests.map(r => r.interval))) : 10000
+  property OwnerRegistry _consumers: OwnerRegistry {}
+  readonly property int _interval: _consumers.active ? Math.max(5000, Math.min(..._consumers.values.map(r => r.interval))) : 10000
 
   property Timer _timer: Timer {
     interval: root._interval
-    running: root._registry.active
+    running: root._consumers.active
     repeat: true
     triggeredOnStart: true
     onTriggered: root.refresh()
@@ -102,9 +102,9 @@ The consumer builds its request from config only, never from live values:
 ## Steps
 1. Name it `<Domain>Manager`, and don't shadow a Quickshell singleton (`NetworkingManager`, not `Networking`).
 2. Put the public API first (state, functions, signals) and the private parts after `// -- Private --`, prefixed `_`.
-3. Polled data uses a private `ConsumerRegistry`:
-   - Polled by the daemon (preferred): a `topics.Source{Name, Floor, Default, Fetch}` in a package of its own under `backend/internal/`, listed in `backend/internal/daemon/topics.go`. The service sends the merged request with `BackendManager.acquire(topic, …)` while `_registry.active` (and `release(topic)` when not) and fills its state from `BackendManager.listen("<topic>.state", …)`. Copy `TailscaleManager.qml`. The floor lives in Go ([protocol](../dev/backend/protocol.md) › Polled topics).
-   - Polled in QML (the skeleton): the interval is the shortest one asked for, with a floor, and the timer runs only while `_registry.active`, so nothing is fetched with no consumer.
+3. Polled data uses a private `OwnerRegistry`:
+   - Polled by the daemon (preferred): a `topics.Source{Name, Floor, Default, Fetch}` in a package of its own under `backend/internal/`, listed in `backend/internal/daemon/topics.go`. The service sends the merged request with `BackendManager.acquire(topic, …)` while `_consumers.active` (and `release(topic)` when not) and fills its state from `BackendManager.listen("<topic>.state", …)`. Copy `TailscaleManager.qml`. The floor lives in Go ([protocol](../dev/backend/protocol.md) › Polled topics).
+   - Polled in QML (the skeleton): the interval is the shortest one asked for, with a floor, and the timer runs only while `_consumers.active`, so nothing is fetched with no consumer.
 4. IPC is a `property IpcTarget _ipc` with typed functions (`(): void`, `(): string`). Parameters are `string`, since arguments arrive as text (`check_structure` enforces it); read a number through `_int(text)`, which answers a word with `bad_request`. A handler that belongs to one screen lives on that surface instead, with `enabled: ShellManager.isTarget(…)`.
 5. Processes and files go through the daemon's helpers: `CommandManager.run` / `runDetached`, `FileManager.read` / `write` / `watch`, `StateManager` for small state. A socket or anything else is a daemon method. Only the four files in `scripts/quickshell-io-allowlist.json` may use `Process`, `FileView`, `Socket` or `Quickshell.execDetached` directly, and the check fails a use anywhere else.
 6. Persistence:
@@ -117,7 +117,7 @@ The consumer builds its request from config only, never from live values:
 - **The greeter.** A side effect it can reach (writes, integrations, network) checks `Paths.greeter` first, as `CalendarManager` does. The greeter runs data, never code.
 - **Secrets** go through `SecretsManager` (stdin), never argv or config.json.
 - **The compositor** is reached only through `CompositorManager`, in neutral shapes: workspace and window focus through its `goToWorkspace`, `stepWorkspace`, `nthWorkspace` and `focusWindow`. Only the `Hyprland*`, `Niri*` and `Sway*` backend files talk to a compositor ([compositor/README](../dev/compositor/README.md)). Gate on `CompositorManager.supports.<key>`, never on which compositor it is.
-- **Requests.** An identical re-`acquire` is a no-op, but a new object on every sample churns every binding on `requests`. Build requests from config only, and never key a Repeater model on live values: that once pushed qs past 25 GB.
+- **Requests.** An identical re-`set` is a no-op, but a new object on every sample churns every binding on `values`. Build requests from config only, and never key a Repeater model on live values: that once pushed qs past 25 GB.
 - **Names are checked.** `check_structure` errors on a `<Name>Manager.` reference with no matching file and on near-miss names.
 - **Reloads** pick up a new singleton and start its timer again, so make `refresh()` idempotent (the skeleton's `_checking`).
 - **One-tap actions** (toggles, session actions) are rows of the action catalogue, and the UI runs them through `ActionsManager.run`. A service that adds one also adds its table row ([actions](../dev/core/actions.md)).

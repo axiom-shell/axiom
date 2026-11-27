@@ -185,11 +185,11 @@ QtObject {
   // second whenever that item is missing (the inputMethodPoll
   // topic; nothing is read while the item is there)
   function acquire(owner) {
-    root._consumers.acquire(owner, {});
+    root._consumers.set(owner, {});
   }
 
   function release(owner) {
-    root._consumers.release(owner);
+    root._consumers.drop(owner);
   }
 
   function refresh() {
@@ -211,7 +211,7 @@ QtObject {
   readonly property var _counted: InputSources.effective(InputConfig.sources, root.layouts, InputConfig.methodEnabled)
   // The login screen: no framework, nothing pushed
   readonly property bool _inert: Paths.greeter
-  property ConsumerRegistry _consumers: ConsumerRegistry {}
+  property OwnerRegistry _consumers: OwnerRegistry {}
   // Held while a surface holds it and a framework runs (the daemon reads
   // only fcitx5, and only without its tray item)
   readonly property bool _polls: !root._inert && root._consumers.active && root.running

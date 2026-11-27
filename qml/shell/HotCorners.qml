@@ -6,18 +6,18 @@ import Quickshell.Wayland
 import qs.config
 import qs.services.compositor
 import qs.services.ui
-import qs.components.hosts.popout
+import qs.components.hosts.window
 
 // Each hot corner (HotCorners.items) on the screens its target puts it on:
-// a transparent pixel of a window in its corner, on Top (so it's quiet
-// under a fullscreen window, as the bars are) and mapped after the bars
-// (LayerSlot), running its action (ShellManager.runAction) once the pointer
+// a transparent pixel of a window in its corner, on the Overlay layer after
+// the overlay's page (its `hot-corner` row; hidden under a fullscreen window,
+// so it's quiet there) (LayerSlot), running its action (ShellManager.runAction) once the pointer
 // has rested there for its delay, and again only after it left. Keyed by
 // id, so editing one corner rebuilds only it.
 Scope {
   Variants {
     // Once the layer rules are in (CompositorManager.surfacesReady), so
-    // each maps in its place after the bars and border
+    // each maps in its place
     model: CompositorManager.surfacesReady ? HotCornersConfig.ids : []
 
     delegate: Scope {
@@ -35,8 +35,9 @@ Scope {
 
           screen: modelData
           visible: slot.shown
-          WlrLayershell.layer: WlrLayer.Top
-          WlrLayershell.namespace: "axiom-hot-corner"
+          WlrLayershell.layer: slot.layer
+          readonly property string layerNamespace: "axiom-hot-corner"
+          WlrLayershell.namespace: corner.layerNamespace
           exclusionMode: ExclusionMode.Ignore
           color: "transparent"
           implicitWidth: 1
@@ -51,7 +52,6 @@ Scope {
           LayerSlot {
             id: slot
             window: corner
-            namespace: "axiom-hot-corner"
           }
 
           MouseArea {

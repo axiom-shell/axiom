@@ -2,7 +2,7 @@
   "about": "Hyprland 0.55, 3440x1440: a floating-pills bar on the left, a transparent bar on the right, the border, a dock reserving nothing. `surfaces` as LayerManager reported them, `reported` as Hyprland listed its layers (CompositorManager.withLayerRects), axiom's only.",
   "surfaces": [
     {
-      "output": "DP-1",
+      "outputName": "DP-1",
       "namespace": "axiom-dock",
       "layer": "top",
       "anchors": {
@@ -17,15 +17,15 @@
         "top": -2,
         "bottom": 0
       },
-      "w": 0,
-      "h": 98,
+      "width": 0,
+      "height": 98,
       "zone": 0,
       "id": 4,
       "order": -7,
       "seq": 2
     },
     {
-      "output": "DP-1",
+      "outputName": "DP-1",
       "namespace": "axiom-border",
       "layer": "top",
       "anchors": {
@@ -40,15 +40,15 @@
         "top": 0,
         "bottom": 0
       },
-      "w": 0,
-      "h": 8,
+      "width": 0,
+      "height": 8,
       "zone": 8,
       "id": 9,
       "order": 0,
       "seq": 3
     },
     {
-      "output": "DP-1",
+      "outputName": "DP-1",
       "namespace": "axiom-border",
       "layer": "top",
       "anchors": {
@@ -63,15 +63,15 @@
         "top": 0,
         "bottom": 0
       },
-      "w": 0,
-      "h": 8,
+      "width": 0,
+      "height": 8,
       "zone": 8,
       "id": 10,
       "order": 0,
       "seq": 4
     },
     {
-      "output": "DP-1",
+      "outputName": "DP-1",
       "namespace": "axiom-border",
       "layer": "top",
       "anchors": {
@@ -86,15 +86,15 @@
         "top": 0,
         "bottom": 0
       },
-      "w": 8,
-      "h": 0,
+      "width": 8,
+      "height": 0,
       "zone": 8,
       "id": 11,
       "order": 0,
       "seq": 5
     },
     {
-      "output": "DP-1",
+      "outputName": "DP-1",
       "namespace": "axiom-border",
       "layer": "top",
       "anchors": {
@@ -109,15 +109,15 @@
         "top": 0,
         "bottom": 0
       },
-      "w": 8,
-      "h": 0,
+      "width": 8,
+      "height": 0,
       "zone": 8,
       "id": 12,
       "order": 0,
       "seq": 6
     },
     {
-      "output": "DP-1",
+      "outputName": "DP-1",
       "namespace": "axiom-bar-floating",
       "layer": "top",
       "anchors": {
@@ -132,15 +132,15 @@
         "top": -2,
         "bottom": -2
       },
-      "w": 73,
-      "h": 0,
+      "width": 73,
+      "height": 0,
       "zone": 58,
       "id": 13,
       "order": -3,
       "seq": 7
     },
     {
-      "output": "DP-1",
+      "outputName": "DP-1",
       "namespace": "axiom-bar-transparent",
       "layer": "top",
       "anchors": {
@@ -155,8 +155,8 @@
         "top": -2,
         "bottom": -2
       },
-      "w": 48,
-      "h": 0,
+      "width": 48,
+      "height": 0,
       "zone": 42,
       "id": 14,
       "order": -5,

@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell.Wayland
 
 import qs.services.compositor
 
@@ -14,9 +13,12 @@ QtObject {
   id: root
 
   required property var window
-  required property string namespace
-  // Its WlrLayershell.layer (an attached property, unreadable from here)
-  property int layer: WlrLayer.Top
+  // Its window's layer now, as the layer service answers it from its row:
+  // bind WlrLayershell.layer and LayerOrigin.layer to it
+  readonly property int layer: LayerManager.wlrLayerOf(LayerManager.slotOf(root).layer)
+  // Its window is on the Overlay layer now (BlurManager.backsOn's second
+  // argument; a host's `onOverlayLayer` reads it)
+  readonly property bool onOverlayLayer: LayerManager.slotOf(root).layer === "overlay"
   // Among windows of its order on its screen and layer, lower maps first
   // (the border's corner pieces after its strips, so they're drawn over
   // the strips' ends)
@@ -31,15 +33,13 @@ QtObject {
   // nothing then: `idle`)
   property bool held: false
 
-  property int _uid: 0
   readonly property var _slot: {
-    const output = root.window?.screen?.name ?? "";
-    if (output === "")
+    const outputName = root.window?.screen?.name ?? "";
+    if (outputName === "")
       return null;
     return {
-      "output": output,
-      "layer": LayerManager.layerName(root.layer),
-      "namespace": root.namespace,
+      "outputName": outputName,
+      "namespace": root.window?.layerNamespace ?? "",
       "rank": root.rank,
       "rankGroup": root.rankGroup,
       "wanted": root.wanted,
@@ -47,17 +47,22 @@ QtObject {
       "mapped": root.window?.visible ?? false
     };
   }
-  on_SlotChanged: {
-    if (root._uid > 0)
-      LayerManager.reportSlot(root._uid, root._slot);
+  on_SlotChanged: root._report()
+  Component.onCompleted: root._report()
+  // Lets go of its window first: the dying window's last changes (it
+  // unmaps as its answer goes) must not report it again
+  Component.onDestruction: {
+    root.window = null;
+    LayerManager.dropSlot(root);
   }
-  Component.onCompleted: {
-    root._uid = LayerManager.register();
-    LayerManager.reportSlot(root._uid, root._slot);
+  function _report() {
+    if (root._slot)
+      LayerManager.setSlot(root, root._slot);
+    else
+      LayerManager.dropSlot(root);
   }
-  Component.onDestruction: LayerManager.reportSlot(root._uid, null)
 
-  readonly property bool shown: root._uid > 0 && LayerManager.shownSlots[root._uid] === true
+  readonly property bool shown: LayerManager.slotOf(root).shown
   // Mapped only to keep its place: nothing drawn, nothing reserved, no input
   readonly property bool idle: root.shown && !root.wanted
 }

@@ -8,6 +8,7 @@ import qs.config
 import qs.services.compositor
 import qs.services.ui
 import qs.components.hosts.popout
+import qs.components.hosts.window
 import qs.components.methods
 import qs.components.reusable
 
@@ -45,31 +46,13 @@ PanelWindow {
     return [look.shadowColor, look.shadowSize].join("|");
   }
 
-  // Its namespace and layer, set here so its LayerSlot can read them
+  // Its namespace, set here so its LayerSlot can read it
   required property string layerNamespace
-  property int stackLayer: WlrLayer.Top
-
-  // Its watchdog has warned (once per window)
-  property bool _warned: false
-  // Chrome is backed here but this window isn't shown (a seam: the chrome
-  // shows without its fill): a moment's grace, then it says so, once
-  Timer {
-    interval: 1000
-    running: backing.shapes.length > 0 && !layerSlot.shown
-    onTriggered: {
-      if (backing._warned)
-        return;
-      backing._warned = true;
-      console.warn(`${backing.layerNamespace} on ${backing.screen?.name ?? ""}: chrome is backed but its backing window isn't shown`);
-    }
-  }
 
   visible: layerSlot.shown
   LayerSlot {
     id: layerSlot
     window: backing
-    namespace: backing.layerNamespace
-    layer: backing.stackLayer
     held: true
   }
 
@@ -128,7 +111,7 @@ PanelWindow {
   }
 
   WlrLayershell.namespace: backing.layerNamespace
-  WlrLayershell.layer: backing.stackLayer
+  WlrLayershell.layer: layerSlot.layer
   WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
   exclusionMode: ExclusionMode.Ignore
   color: "transparent"

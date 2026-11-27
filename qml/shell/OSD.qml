@@ -46,7 +46,7 @@ Scope {
           distance: entry.osd.distance / 100
           fade: entry.osd.animation === "fade"
           triggerEnabled: entry.osd.openOnHover
-          overNamespace: "axiom-osd"
+          layerNamespace: "axiom-osd"
           // Closes under a higher popout, and won't open under one
           claimKey: "osd:" + entry.osd.id + ":" + (modelData?.name ?? "")
           claimKind: "osd"

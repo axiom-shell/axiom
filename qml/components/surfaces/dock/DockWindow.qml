@@ -8,6 +8,7 @@ import qs.services.compositor
 import qs.services.ui
 import qs.components.methods
 import qs.components.hosts.popout
+import qs.components.hosts.window
 import qs.components.reusable
 
 // One dock (a DockEntry) on one screen: a strip along its edge, inside the
@@ -138,8 +139,8 @@ Scope {
     // Its pill stretches as it's wanted, and draws back once it's gone
     showing: (root.wantShown || root._out) && root.count > 0
     open: root.wantShown
-    // A preview is on the Overlay layer, but fills itself (no origin)
-    onOverlayLayer: root.preview
+    // A preview is on the Overlay layer (its row), but fills itself (no origin)
+    onOverlayLayer: dockSlot.onOverlayLayer
     origin: root.preview ? null : root._origin
     attachedSurface: surface
     opens: root._origin !== null && !root.preview && panelWindow.visible && root.attached
@@ -207,7 +208,6 @@ Scope {
   }
 
   // --- Showing and hiding ---
-  readonly property bool fullscreen: CompositorManager.hasFullscreen(root.screen?.name ?? "")
   readonly property bool hiddenByHand: !!DockManager.hidden[root.dock.id]
   // Opened by the trigger (after openDelay), a reveal, or the pointer on
   // the shown dock, until the pointer has been gone for closeDelay. Only
@@ -394,7 +394,7 @@ Scope {
   EdgeTrigger {
     id: trigger
     screen: root.screen
-    visible: !root.preview && root.mode !== "always" && !root.fullscreen && root.count > 0
+    slotWanted: !root.preview && root.mode !== "always" && root.count > 0
     // Away it stays mapped, with no input: unmapping deletes its window
     takesInput: !root.away
     edge: root.edge
@@ -415,18 +415,14 @@ Scope {
     LayerSlot {
       id: dockSlot
       window: panelWindow
-      namespace: panelWindow.layerNamespace
-      layer: panelWindow.windowLayer
       wanted: root.count > 0
     }
 
-    // Top, with its layer rule ordering it after the border and bars: it
-    // sits inside them without shortening the bars on the other edges. A
-    // fullscreen window covers it. A preview is on Overlay, its rule
-    // ordering it after the overlay's panel.
-    readonly property int windowLayer: root.preview ? WlrLayer.Overlay : WlrLayer.Top
+    // Top (a preview's row, dock-preview, is on Overlay), its order after the
+    // border and bars: it sits inside them without shortening the bars on
+    // the other edges. A fullscreen window covers it.
     readonly property string layerNamespace: root.preview ? "axiom-dock-preview" : "axiom-dock"
-    WlrLayershell.layer: panelWindow.windowLayer
+    WlrLayershell.layer: dockSlot.layer
     WlrLayershell.namespace: panelWindow.layerNamespace
     // The full menu's keys come through it (as a grabbed popout's)
     WlrLayershell.keyboardFocus: menu.wantsKeyboard ? (menu.exclusiveKeyboard ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand) : WlrKeyboardFocus.None
@@ -535,9 +531,8 @@ Scope {
     LayerOrigin {
       id: placeOnScreen
       window: panelWindow
-      namespace: panelWindow.layerNamespace
       edge: root.edge
-      layer: panelWindow.windowLayer
+      layer: dockSlot.layer
     }
 
     Item {

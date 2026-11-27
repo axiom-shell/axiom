@@ -4,9 +4,11 @@ import Quickshell
 import Quickshell.Wayland
 import qs.config
 import qs.services.ui
+import qs.services.compositor
 import qs.components.reusable
 import qs.components.methods
 import qs.components.hosts.popout
+import qs.components.hosts.window
 
 // One screen's border (Appearance.screenBorder): an edge strip per side
 // (BorderPanel), reserving `frameWidth`, and a concave corner piece
@@ -16,6 +18,8 @@ Item {
   id: root
 
   property var screen: null
+  // The namespace of the frame's windows (the corner pieces)
+  readonly property string layerNamespace: "axiom-border"
   property int frameWidth: Appearance.screenMargin
   property int innerBorderRadius: Appearance.borderRadius
   property color frameColor: Style.surfacePage
@@ -52,7 +56,7 @@ Item {
 
   // The blur window draws the frame's fill (BlurManager): the strips and
   // corners draw their strokes only
-  readonly property bool backed: BlurManager.backsOn(root.screen, false)
+  readonly property bool backed: BlurManager.backsOn(root.screen, LayerManager.layerOn(root.screen?.name ?? "", root.layerNamespace) === "overlay")
   // The frame, for it: from past the integrated edge menus on each edge
   // (arranged outside the border) to the stroke's inner side, round the
   // corner pieces' arcs, in screen coordinates
@@ -180,12 +184,13 @@ Item {
       color: "transparent"
       mask: Region {}
       aboveWindows: true
-      WlrLayershell.namespace: "axiom-border"
+      readonly property string layerNamespace: root.layerNamespace
+      WlrLayershell.namespace: corner.layerNamespace
+      WlrLayershell.layer: cornerSlot.layer
       visible: cornerSlot.shown
       LayerSlot {
         id: cornerSlot
         window: corner
-        namespace: "axiom-border"
         // After the strips, over their ends
         rank: 1
       }

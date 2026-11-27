@@ -58,7 +58,7 @@ QtObject {
   property bool hasGpu: false
 
   function acquire(owner, request) {
-    _registry.acquire(owner, {
+    _consumers.set(owner, {
       "interval": request?.interval,
       "metrics": request?.metrics ?? [],
       "diskPaths": request?.diskPaths ?? [],
@@ -67,7 +67,7 @@ QtObject {
   }
 
   function release(owner) {
-    _registry.release(owner);
+    _consumers.drop(owner);
   }
 
   function wants(metric) {
@@ -86,7 +86,7 @@ QtObject {
   }
 
   // -- Private --
-  property ConsumerRegistry _registry: ConsumerRegistry {}
+  property OwnerRegistry _consumers: OwnerRegistry {}
 
   // Every metric a configured graph shows, from config only: SystemGraphs
   // modules on overlay pages and enabled edge menus, and the popouts of
@@ -124,7 +124,7 @@ QtObject {
   // requests (never apart: a half-evaluated one once sent an interval of
   // 0), so axiom is asked again only when it really changes (axiom keys
   // disks by the path as asked, ~ and all)
-  readonly property string _requestKey: _registry.active ? JSON.stringify(TopicRequest.systemRequest(_registry.requests)) : ""
+  readonly property string _requestKey: _consumers.active ? JSON.stringify(TopicRequest.systemRequest(_consumers.values)) : ""
   readonly property var _metrics: root._requestKey !== "" ? JSON.parse(root._requestKey).metrics : []
 
   on_RequestKeyChanged: {

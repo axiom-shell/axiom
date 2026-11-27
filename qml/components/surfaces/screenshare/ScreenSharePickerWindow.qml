@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Widgets
+import qs.components.hosts.window
 
 import qs.components.methods
 import qs.components.reusable
@@ -107,10 +108,15 @@ PanelWindow {
   focusable: root.hasCard
   // Gone at once for a region drag (no compositor fade either: LayerStack's
   // noAnim), so the screenshot picker's frozen frame doesn't take it in
-  visible: shown || (dim.opacity > 0 && !ScreenShareManager.pickingRegion)
-
-  WlrLayershell.layer: WlrLayer.Overlay
-  WlrLayershell.namespace: "axiom-screenshare"
+  visible: slot.shown
+  WlrLayershell.layer: slot.layer
+  readonly property string layerNamespace: "axiom-screenshare"
+  WlrLayershell.namespace: root.layerNamespace
+  LayerSlot {
+    id: slot
+    window: root
+    wanted: root.shown || (dim.opacity > 0 && !ScreenShareManager.pickingRegion)
+  }
   WlrLayershell.keyboardFocus: root.shown && root.hasCard ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
   Component.onCompleted: {

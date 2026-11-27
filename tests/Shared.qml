@@ -1,5 +1,6 @@
 import QtQuick
 import qs.components.methods
+import qs.components.methods.layer
 
 // The cases the JS helpers and the axiom binary (Go) must agree on
 // (tests/fixtures/shared/, docs/dev/backend/README.md › Shared fixtures):

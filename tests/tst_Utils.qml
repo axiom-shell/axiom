@@ -9,6 +9,14 @@ TestCase {
     id: files
   }
 
+  property Item item: Item {}
+
+  Component {
+    id: itemComponent
+
+    Item {}
+  }
+
   function test_valueAt() {
     const object = {
       "Bar": {
@@ -161,6 +169,80 @@ TestCase {
     verify(!Utils.deepEqual([Qt.rect(1, 2, 3, 4)], [Qt.rect(1, 2, 3, 4), Qt.rect(0, 0, 1, 1)]), "a rect more");
   }
 
+  function test_deepEqual_identity_data() {
+    return [
+      {
+        "tag": "key order is ignored in plain data",
+        "a": () => ({
+              "x": 1,
+              "y": [1, 2]
+            }),
+        "b": () => ({
+              "y": [1, 2],
+              "x": 1
+            }),
+        "equal": true
+      },
+      {
+        "tag": "items differ by identity",
+        "a": () => itemComponent.createObject(this),
+        "b": () => itemComponent.createObject(this),
+        "equal": false
+      },
+      {
+        "tag": "one item equals itself",
+        "a": () => this.item,
+        "b": () => this.item,
+        "equal": true
+      },
+      {
+        "tag": "equal rects stay equal",
+        "a": () => [Qt.rect(1, 2, 3, 4)],
+        "b": () => [Qt.rect(1, 2, 3, 4)],
+        "equal": true
+      },
+      {
+        "tag": "equal points stay equal",
+        "a": () => Qt.point(1, 2),
+        "b": () => Qt.point(1, 2),
+        "equal": true
+      }
+    ];
+  }
+
+  function test_deepEqual_identity(data) {
+    compare(Utils.deepEqual(data.a.call(this), data.b.call(this)), data.equal);
+  }
+
+  function test_isPlainObject_data() {
+    return [
+      {
+        "tag": "an object literal is plain",
+        "value": () => ({}),
+        "plain": true
+      },
+      {
+        "tag": "an array is not plain",
+        "value": () => [],
+        "plain": false
+      },
+      {
+        "tag": "null is not plain",
+        "value": () => null,
+        "plain": false
+      },
+      {
+        "tag": "an item is not plain",
+        "value": () => this.item,
+        "plain": false
+      }
+    ];
+  }
+
+  function test_isPlainObject(data) {
+    compare(Utils.isPlainObject(data.value.call(this)), data.plain);
+  }
+
   function test_withEntry() {
     const map = {
       "a": 1,
@@ -176,6 +258,14 @@ TestCase {
     }, "undefined leaves it out");
     verify(Utils.withEntry(map, "a", 5) !== map, "a new object");
     compare(map.a, 1, "the original is untouched");
+
+    const kept = new Map([["a", 1], ["b", 2]]);
+    const set = Utils.withEntry(kept, "c", 3);
+    verify(set instanceof Map && set !== kept, "a new Map");
+    compare(set.get("c"), 3);
+    const gone = Utils.withEntry(kept, "a", undefined);
+    verify(!gone.has("a") && gone.has("b"), "undefined leaves it out of a Map");
+    verify(kept.has("a") && !kept.has("c"), "the input Map is untouched");
   }
 
   function test_pick() {

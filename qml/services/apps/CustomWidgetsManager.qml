@@ -68,13 +68,13 @@ QtObject {
       release(owner);
       return;
     }
-    _registry.acquire(owner, {
+    _consumers.set(owner, {
       "id": id
     });
   }
 
   function release(owner) {
-    _registry.release(owner);
+    _consumers.drop(owner);
   }
 
   // Run the widget's script again now
@@ -302,10 +302,10 @@ QtObject {
   }
 
   // -- Private --
-  property ConsumerRegistry _registry: ConsumerRegistry {}
+  property OwnerRegistry _consumers: OwnerRegistry {}
   // Whether something shows the widget (the editor's running one counts)
   function _shown(id) {
-    return root._registry.requests.some(r => r.id === id);
+    return root._consumers.values.some(r => r.id === id);
   }
 
   property var _busy: ({})
@@ -441,7 +441,7 @@ QtObject {
   // config
   readonly property var _wanted: {
     const ids = {};
-    for (const r of root._registry.requests) {
+    for (const r of root._consumers.values) {
       const def = CustomWidgetsConfig.definition(r.id);
       if (def)
         ids[r.id] = {
@@ -513,7 +513,7 @@ QtObject {
     const keep = map => keepIn(map, wanted);
     // Actions are kept for what is shown, a definition or not
     const shown = {};
-    for (const r of root._registry.requests)
+    for (const r of root._consumers.values)
       shown[r.id] = true;
     root._busy = keepIn(root._busy, shown);
     root._lastAction = keepIn(root._lastAction, shown);

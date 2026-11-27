@@ -36,7 +36,7 @@ A Quickshell desktop for Hyprland, niri and sway: `qml/` (run by `qs`, no build 
 - Quickshell.Io only in `scripts/quickshell-io-allowlist.json`'s four files; everything else uses `CommandManager`, `FileManager`, `StateManager`, `IpcTarget` or a daemon method.
 - Polled data: `acquire(owner, request)` in `Component.onCompleted`, `release(owner)` in `onDestruction`.
 - Config writes only through `ConfigManager` or, from UI, `SettingsManager`; editors edit a `ConfigDraft`.
-- One-tap actions through `ActionsManager.run`; the compositor only through `CompositorManager`, gated on `CompositorManager.supports`, never on which compositor.
+- One-tap actions through `ActionsManager.run`; the compositor only through `CompositorManager`, gated on `CompositorManager.supports`, never on which compositor. A layer-shell window states its place through the layer service (its `LayerSlot` and `LayerStack` row) and never sets its own layer; only the service's per-compositor parts (the backends' layer facts, the daemon's compositor writers) differ by compositor (`docs/dev/compositor/layer-arrangement.md`).
 - Nothing writes under the tree (`Paths.treePath`; installs are read-only).
 
 ### Config

@@ -10,6 +10,7 @@ import qs.services.system
 import qs.services.ui
 import qs.components.methods
 import qs.components.hosts.popout
+import qs.components.hosts.window
 import qs.components.reusable
 
 // One screen's notification toasts (shell/Notifications builds one per
@@ -62,6 +63,7 @@ Scope {
   readonly property bool showing: root.count > 0
 
   // A fullscreen window on its screen now (quietFullscreen)
+  // Read raw, as the layer service reads it: `_snap` runs in the same deferred batch as LayerManager's pass, so this placement and BlurManager's backing change together, with no frame between (the layer service's `hasFullscreen` here would put `_snap` a batch later)
   readonly property bool fullscreenNow: CompositorManager.hasFullscreen(root.screenName)
   // Over a fullscreen window nothing else shows: the stack sits on the
   // whole screen, its gaps from the screen's edges. Showing toasts jump
@@ -303,8 +305,6 @@ Scope {
     LayerSlot {
       id: slot
       window: area
-      namespace: "axiom-notifications"
-      layer: WlrLayer.Overlay
     }
     color: "transparent"
     anchors {
@@ -313,8 +313,9 @@ Scope {
       left: true
       right: true
     }
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: "axiom-notifications"
+    WlrLayershell.layer: slot.layer
+    readonly property string layerNamespace: "axiom-notifications"
+    WlrLayershell.namespace: area.layerNamespace
     WlrLayershell.keyboardFocus: root.replyable && !root.attached ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     exclusionMode: root.fullscreen ? ExclusionMode.Ignore : ExclusionMode.Normal
     exclusiveZone: 0
@@ -324,8 +325,7 @@ Scope {
     LayerOrigin {
       id: placeOnScreen
       window: area
-      namespace: "axiom-notifications"
-      layer: WlrLayer.Overlay
+      layer: slot.layer
     }
 
     mask: Region {
@@ -376,7 +376,7 @@ Scope {
         visible: !SurfaceManager.captureFrozen
         screenName: root.screenName
         covered: root.covered
-        backed: BlurManager.backsOn(root.screen, true) && placeOnScreen.origin !== null
+        backed: BlurManager.backsOn(root.screen, slot.onOverlayLayer) && placeOnScreen.origin !== null
 
         x: toastCard.place.x
         y: toastCard.place.y

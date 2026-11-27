@@ -7,6 +7,7 @@ import qs.config
 import qs.services.compositor
 import qs.services.ui
 import qs.components.methods
+import qs.components.hosts.window
 
 /**
  * A popout that slides out of a screen edge and joins the screen border
@@ -95,7 +96,7 @@ PopoutWrapperBase {
   readonly property real slideDistance: (root._fromEdge.value ?? false) ? placement.slideFrom : 0
   // Over the overlay and fullscreen windows (BlurManager.backsOn), it and
   // a submenu in its window
-  readonly property bool onOverlayLayer: true
+  readonly property bool onOverlayLayer: layerSlot.onOverlayLayer
   property color fillColor: Style.surfacePage
   property color strokeColor: Style.frameStroke
   // No box of its own drawn, only its content (AttachedSurface.hollow: a
@@ -108,12 +109,11 @@ PopoutWrapperBase {
   // Other windows the grab lets input through to
   property var grabWindows: []
   // Its layer namespace
-  property string overNamespace: "axiom-edge-popout"
+  property string layerNamespace: "axiom-edge-popout"
   // The surface's window, its layer namespace, and the box within it
   window: surfaceWindow
   // The hover strip's window (a focus grab's partner, see MenuSync)
   readonly property var triggerWindow: trigger
-  readonly property string layerNamespace: root.overNamespace
   readonly property rect boxInWindow: Qt.rect(boxArea.x, boxArea.y, boxArea.width, boxArea.height)
   // ...its content's top-left in the window where it rests
   readonly property point contentInWindow: Qt.point(surface.x + surface.boxRect.x + loader.x, surface.y + surface.boxRect.y + loader.y)
@@ -201,6 +201,7 @@ PopoutWrapperBase {
   // The one change an open box moves for: it jumps straight to the shape
   // and place it would open at now, with no animation (`settled` off for
   // a tick while the latches follow, `_snapping`).
+  // Read raw, as the layer service reads it: `_snap` runs in the same deferred batch as LayerManager's pass, so this placement and BlurManager's backing change together, with no frame between (the layer service's `hasFullscreen` here would put `_snap` a batch later)
   readonly property bool fullscreen: CompositorManager.hasFullscreen(root.screen?.name ?? "")
   property ClosedLatch _fullscreenLatch: ClosedLatch {
     source: root.fullscreen
@@ -402,7 +403,7 @@ PopoutWrapperBase {
   EdgeTrigger {
     id: trigger
     screen: root.screen
-    visible: root.triggerEnabled
+    slotWanted: root.triggerEnabled
     edge: root.edge
     position: root.position
     positionOffset: root.positionOffset
@@ -418,7 +419,7 @@ PopoutWrapperBase {
   PanelWindow {
     id: surfaceWindow
     screen: root.screen
-    visible: root.occupied && loader.status === Loader.Ready
+    visible: layerSlot.shown
     color: "transparent"
 
     // Overlay so the connector draws over the border/bar stroke it joins.
@@ -426,8 +427,14 @@ PopoutWrapperBase {
     // the border's and bars' reserved area; the -borderWidth margin then
     // lines it up with their inner stroke, whether that's a bar or the
     // plain border.
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: root.layerNamespace
+    WlrLayershell.layer: layerSlot.layer
+    readonly property string layerNamespace: root.layerNamespace
+    LayerSlot {
+      id: layerSlot
+      window: surfaceWindow
+      wanted: root.occupied && loader.status === Loader.Ready
+    }
+    WlrLayershell.namespace: surfaceWindow.layerNamespace
     // Its top-left on its screen, or null while unknown (a wallpaper
     // picker's click point)
     readonly property var screenOrigin: placeOnScreen.origin
@@ -525,9 +532,8 @@ PopoutWrapperBase {
     LayerOrigin {
       id: placeOnScreen
       window: surfaceWindow
-      namespace: root.layerNamespace
       edge: root.edge
-      layer: WlrLayer.Overlay
+      layer: layerSlot.layer
     }
 
     EdgeSurface {

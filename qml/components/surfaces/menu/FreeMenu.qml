@@ -9,6 +9,7 @@ import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
 import qs.components.hosts.popout
+import qs.components.hosts.window
 
 // A free menu (placement `free`): a box of its own on no edge, in a
 // full-screen Top-layer window (axiom-menu) that never resizes, its input
@@ -70,8 +71,8 @@ PopoutWrapperBase {
   // fade | scale | slide; popped out, it appears at once where its edge
   // box was (an instant fade)
   readonly property string animation: root.popped ? "fade" : root.menu.animation
-  // Its window is on Top, under the Overlay layer (SubPopout reads it)
-  readonly property bool onOverlayLayer: false
+  // Its window is on the Overlay layer now (SubPopout reads it)
+  readonly property bool onOverlayLayer: menuSlot.onOverlayLayer
 
   // What's kept clear at each screen edge: what's reserved there, and the
   // gap windows keep from it
@@ -288,7 +289,7 @@ PopoutWrapperBase {
     readonly property int backfill: root._free.backfill
     readonly property bool onOverlayLayer: root.onOverlayLayer
     readonly property var origin: placeOnScreen.origin
-    readonly property bool backed: BlurManager.backsOn(root.screen, false) && placeOnScreen.origin !== null && !root.scaling
+    readonly property bool backed: BlurManager.backsOn(root.screen, root.onOverlayLayer) && placeOnScreen.origin !== null && !root.scaling
     readonly property bool opaque: BlurManager.opaqueOn(root.screen)
     readonly property var shadowLook: BarStyle.look
     readonly property var submenuJoin: null
@@ -323,14 +324,14 @@ PopoutWrapperBase {
     LayerSlot {
       id: menuSlot
       window: panel
-      namespace: "axiom-menu"
       wanted: root.occupied && loader.status === Loader.Ready
       held: true
     }
     color: "transparent"
 
-    WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.namespace: "axiom-menu"
+    WlrLayershell.layer: menuSlot.layer
+    readonly property string layerNamespace: "axiom-menu"
+    WlrLayershell.namespace: panel.layerNamespace
     WlrLayershell.keyboardFocus: focusGrab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
     // The whole screen, the bars' zones included: FreeMenuPlace keeps
     // the box clear of them
@@ -424,8 +425,7 @@ PopoutWrapperBase {
     LayerOrigin {
       id: placeOnScreen
       window: panel
-      namespace: "axiom-menu"
-      layer: WlrLayer.Top
+      layer: menuSlot.layer
     }
 
     EdgeSurface {

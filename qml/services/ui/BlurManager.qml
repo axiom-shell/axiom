@@ -15,7 +15,7 @@ import qs.services.compositor
  * exactly; the surfaces themselves draw their outer fill transparent
  * (`backing`). Layer-shell windows don't know where they are on
  * screen: each shape is placed from its window's origin as LayerManager
- * works it out (hosts/popout/LayerOrigin).
+ * works it out (hosts/window/LayerOrigin).
  */
 QtObject {
   id: root
@@ -33,7 +33,7 @@ QtObject {
   readonly property bool _pauses: root._wanted && Appearance.blurPauseFullscreen
   readonly property bool _perScreen: CompositorManager.supports.blurRegion === true
   // A fullscreen window on any screen: what the compositor-wide rules follow
-  readonly property bool _anyFullscreen: General.outputs.some(screen => CompositorManager.hasFullscreen(screen.name))
+  readonly property bool _anyFullscreen: General.outputs.some(screen => LayerManager.hasFullscreen(screen.name))
   readonly property bool paused: root._pauses && !root._perScreen && root._anyFullscreen
   // The surfaces in LayerStack.blurReduced (the overlay) unblurred over a
   // fullscreen window (Overlay.reduceFullscreen), the way the pause unblurs
@@ -54,21 +54,23 @@ QtObject {
 
   // Whether the blur is paused on `screen` (a ShellScreen or its name)
   function pausedOn(screen) {
-    return root._perScreen ? root._pauses && CompositorManager.hasFullscreen(root._name(screen)) : root.paused;
+    return root._perScreen ? root._pauses && LayerManager.hasFullscreen(root._name(screen)) : root.paused;
   }
 
   // Whether the blurReduced surfaces are unblurred on `screen` (a
   // ShellScreen or its name)
   function reducedOn(screen) {
-    return root._perScreen ? root._wanted && OverlayConfig.reduceFullscreen && CompositorManager.hasFullscreen(root._name(screen)) : root.reduced;
+    return root._perScreen ? root._wanted && OverlayConfig.reduceFullscreen && LayerManager.hasFullscreen(root._name(screen)) : root.reduced;
   }
 
   // Whether surfaces on `screen` leave their fill to the backing window:
   // drawn in every mode, opaque too (the compositor blurs it only where
-  // `active`/`regionsOn`), once its windows are built (BlurBacking waits for
-  // the layer rules, as the chrome does).
+  // `active`/`regionsOn`), while the layer service shows that screen's
+  // backing window (its `axiom-blur-backing` slot; on SwayFX the fills'
+  // window): so no surface is backed while that window isn't shown (starting,
+  // a screen added, mapping again in its place)
   function backingOn(screen) {
-    return CompositorManager.surfacesReady;
+    return LayerManager.slotOn(root._name(screen), "axiom-blur-backing")?.shown === true;
   }
 
   // Whether a surface on `screen` that blurs itself (LayerStack.
@@ -86,29 +88,23 @@ QtObject {
 
   // Whether a chrome surface on `screen` (a ShellScreen or its name) leaves
   // its fill to the backing window. `onOverlay`: its window is on the Overlay
-  // layer, over fullscreen windows (where the backing window rises too:
-  // overFullscreen). Otherwise it's on Top, faded out under a fullscreen
-  // window, and its copy goes with it.
+  // layer, over fullscreen windows, where the backing window is too
+  // (LayerManager.layerOn). Otherwise it's on Top, faded out under a
+  // fullscreen window, and its copy goes with it.
   function backsOn(screen, onOverlay) {
     return BackingRule.backsOn({
       "backing": root.backingOn(screen),
-      "fullscreen": CompositorManager.hasFullscreen(root._name(screen)),
-      "onOverlay": onOverlay
+      "fullscreen": LayerManager.hasFullscreen(root._name(screen)),
+      "onOverlay": onOverlay,
+      "backingOnOverlay": LayerManager.layerOn(root._name(screen), "axiom-blur-backing") === "overlay"
     });
-  }
-
-  // Whether the backing window on `screen` stands on the Overlay layer: a
-  // fullscreen window shown there hides the Top layer, and the surfaces
-  // over it still blur
-  function overFullscreen(screen) {
-    return root.backingOn(screen) && CompositorManager.hasFullscreen(root._name(screen));
   }
 
   // Whether the fill on `screen` goes solid, whichever window draws it (the
   // surfaces' and the copies' `fillOn`): blur paused for a fullscreen window
   // shown there (elsewhere it stays translucent)
   function opaqueOn(screen) {
-    return root.pausedOn(screen) && CompositorManager.hasFullscreen(root._name(screen));
+    return root.pausedOn(screen) && LayerManager.hasFullscreen(root._name(screen));
   }
 
   // A surface's own fill on `screen`: at the surface opacity, solid where

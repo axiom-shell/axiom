@@ -66,7 +66,7 @@ A module is a folder `content/<Type>/` with `<Type>.qml` and a `schema.yaml` bes
 ### Repeater models
 - For a derived set, use `model: rows.length` with the delegate reading `rows[index] ?? fallback`.
 - An `int` / `string` only notifies when it actually changes, so delegates (and Canvases) survive each sample or keystroke.
-- `check_structure` refuses a model reading a polled service's member (one polling through a `ConsumerRegistry` or `DeadlineTicker`), directly or through a property of the same file, unless it counts it (`.length`, `.count`); and an `acquire()` request reading one at all.
+- `check_structure` refuses a model reading a polled service's member (one polling through a `OwnerRegistry` or `DeadlineTicker`), directly or through a property of the same file, unless it counts it (`.length`, `.count`); and an `acquire()` request reading one at all.
 
 ### Testing
 Trying a module on the running shell:

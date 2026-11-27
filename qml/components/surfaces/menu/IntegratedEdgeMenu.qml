@@ -8,6 +8,7 @@ import qs.services.compositor
 import qs.services.ui
 import qs.components.methods
 import qs.components.hosts.popout
+import qs.components.hosts.window
 
 // An integrated edge menu: a Top-layer strip along the whole edge whose
 // exclusive zone is arranged before everything else's (its LayerStack
@@ -96,7 +97,7 @@ PopoutWrapperBase {
   EdgeTrigger {
     id: trigger
     screen: root.screen
-    visible: root.menu.open.onHover
+    slotWanted: root.menu.open.onHover
     edge: root.edge
     // On the modules, which span the whole edge as the strip does
     centre: root.edgeLength / 2
@@ -118,7 +119,6 @@ PopoutWrapperBase {
     LayerSlot {
       id: menuSlot
       window: panel
-      namespace: "axiom-edge-menu"
       wanted: root.occupied && loader.status === Loader.Ready
       // Where map order alone stacks: mapped from the start, a pixel deep,
       // reserving nothing while closed, so opening never maps it after
@@ -127,8 +127,9 @@ PopoutWrapperBase {
     }
     color: "transparent"
 
-    WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.namespace: "axiom-edge-menu"
+    WlrLayershell.layer: menuSlot.layer
+    readonly property string layerNamespace: "axiom-edge-menu"
+    WlrLayershell.namespace: panel.layerNamespace
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     exclusionMode: ExclusionMode.Normal
     exclusiveZone: menuSlot.idle ? 0 : root.depth
@@ -151,10 +152,10 @@ PopoutWrapperBase {
     LayerOrigin {
       id: placeOnScreen
       window: panel
-      namespace: "axiom-edge-menu"
+      layer: menuSlot.layer
       edge: root.edge
     }
-    readonly property bool backed: BlurManager.backsOn(root.screen, false) && placeOnScreen.origin !== null
+    readonly property bool backed: BlurManager.backsOn(root.screen, menuSlot.onOverlayLayer) && placeOnScreen.origin !== null
     // Its top-left on its screen, or null while unknown (a wallpaper
     // picker's click point)
     readonly property var screenOrigin: placeOnScreen.origin

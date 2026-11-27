@@ -143,11 +143,11 @@ QtObject {
   }
 
   function acquire(owner) {
-    root._registry.acquire(owner, true);
+    root._consumers.set(owner, true);
   }
 
   function release(owner) {
-    root._registry.release(owner);
+    root._consumers.drop(owner);
   }
 
   // Keeps the six weeks a view shows for a month in range, fetching them
@@ -336,7 +336,7 @@ QtObject {
 
   readonly property string _stateDir: Paths.userStatePath + "calendar"
   readonly property string _desktopEntry: "axiom-calendar"
-  property ConsumerRegistry _registry: ConsumerRegistry {}
+  property OwnerRegistry _consumers: OwnerRegistry {}
   // [{ cmd, run(done), callback }], and the one running
   property var _jobs: []
   property var _running: null
@@ -345,7 +345,7 @@ QtObject {
   property var _fired: ({})
 
   // Syncs while something shows calendars, or reminders are on
-  readonly property bool _wanted: !Paths.greeter && CalendarConfig.accounts.length > 0 && (root._registry.active || CalendarConfig.reminders)
+  readonly property bool _wanted: !Paths.greeter && CalendarConfig.accounts.length > 0 && (root._consumers.active || CalendarConfig.reminders)
 
   // What a sync fetches: a change syncs again (colors and names don't)
   readonly property string _syncKey: JSON.stringify(CalendarConfig.accounts.map(account => [account.id, account.kind, account.url, account.username, root.shownCalendars.filter(calendar => calendar.account === account.id).map(calendar => calendar.href)]))

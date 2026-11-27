@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import Quickshell
-import Quickshell.Wayland
 import QtQuick
 
 import qs.config
@@ -43,10 +42,10 @@ Scope {
       readonly property bool shadowsApart: BlurManager.shadowsApart
 
       // Its backing windows: the fills and the shadows apart (in that order,
-      // as SwayFX stacks by map order) or one drawing both. On Top, under the
-      // chrome and over the overlay's page; on Overlay (under every surface
-      // there, by its order) while a fullscreen window hides the Top
-      // layer, for the surfaces shown over it (BlurManager.overFullscreen)
+      // as SwayFX stacks by map order) or one drawing both. Its layer is its
+      // row's, and the layer service's over a fullscreen window (LayerStack:
+      // on Top under the chrome and over the overlay's page; on Overlay,
+      // under every surface there, for the surfaces shown over it)
       readonly property var parts: perScreen.shadowsApart ? ["fills", "shadows"] : ["all"]
 
       Variants {
@@ -58,7 +57,6 @@ Scope {
           screen: perScreen.modelData
           part: blurWindow.modelData
           shapes: perScreen.onScreen
-          stackLayer: BlurManager.overFullscreen(perScreen.screenName) ? WlrLayer.Overlay : WlrLayer.Top
           layerNamespace: blurWindow.part === "shadows" ? "axiom-shadows" : "axiom-blur-backing"
         }
       }

@@ -192,12 +192,12 @@ QtObject {
   // Displays of the position (the Media widget, NowPlaying): it ticks only
   // while one holds it
   function acquire(owner) {
-    root._registry.acquire(owner, true);
+    root._consumers.set(owner, true);
     root.updatePosition();
   }
 
   function release(owner) {
-    root._registry.release(owner);
+    root._consumers.drop(owner);
   }
 
   // --- Helper Functions ---
@@ -212,10 +212,10 @@ QtObject {
 
   // --- Private Logic, Timers, and Workers ---
 
-  property ConsumerRegistry _registry: ConsumerRegistry {}
+  property OwnerRegistry _consumers: OwnerRegistry {}
 
   property Timer _positionTimer: Timer {
-    running: root.isPlaying && root._registry.active
+    running: root.isPlaying && root._consumers.active
     interval: 500
     repeat: true
     // Copies the position into `position` too, so every consumer sees it

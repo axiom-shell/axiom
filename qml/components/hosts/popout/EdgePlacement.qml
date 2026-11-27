@@ -375,7 +375,7 @@ QtObject {
   // (null until known): the blur window draws its fill and casts its
   // shadow where it backs that layer on its screen; else it fills itself,
   // solid while blur is paused for a fullscreen window there
-  property bool onOverlayLayer: true
+  required property bool onOverlayLayer
   property var origin: null
   readonly property bool backed: BlurManager.backsOn(root.screen, root.onOverlayLayer) && root.origin !== null
   readonly property bool opaque: BlurManager.opaqueOn(root.screen)

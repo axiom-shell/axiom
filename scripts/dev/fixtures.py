@@ -49,8 +49,10 @@ SHARED = ROOT / "tests/fixtures/shared"
 # (the xkb list the renderer derives too) and the bind and layer helpers the
 # binary also ports, still used by the shell
 # (backend/internal/compositor/render; the rest's cases are frozen there)
-HELPERS = ("BindActions", "BindConditions", "BindKeys", "ConfigOps", "InputSources", "KeyNames", "LayerStack")
-RECORD_TESTS = ("Config", "SchemaValidation", "SchemaLayout", "GreeterBundle") + HELPERS
+# Each helper's folder under qml/components/methods/ ("" is the root)
+HELPERS = {"BindActions": "", "BindConditions": "", "BindKeys": "", "ConfigOps": "", "InputSources": "",
+           "KeyNames": "", "LayerStack": "layer"}
+RECORD_TESTS = ("Config", "SchemaValidation", "SchemaLayout", "GreeterBundle") + tuple(HELPERS)
 BLOB_SIZE = 2048
 # What the recorded cases are made from: a change to any re-records them
 STAMP_INPUTS = ("qml/components/methods/SchemaValidation.qml", "tests/Shared.qml", "tests/RepoFiles.qml",
@@ -58,8 +60,9 @@ STAMP_INPUTS = ("qml/components/methods/SchemaValidation.qml", "tests/Shared.qml
                 "qml/components/methods/SchemaLayout.qml", "tests/tst_SchemaLayout.qml",
                 "qml/components/methods/GreeterBundle.qml", "tests/tst_GreeterBundle.qml",
                 "qml/config/json/config.schema.json", "scripts/dev/fixtures.py",
-                *(f"qml/components/methods/{h}.qml" for h in HELPERS), *(f"tests/tst_{h}.qml" for h in HELPERS),
-                "qml/components/methods/MonitorLayout.qml", "qml/components/methods/PolkitAgents.qml",
+                *(Path("qml/components/methods", folder, f"{h}.qml").as_posix() for h, folder in HELPERS.items()),
+                *(f"tests/tst_{h}.qml" for h in HELPERS),
+                "qml/components/methods/MonitorLayout.qml", "qml/components/methods/polkit/PolkitAgents.qml",
                 "qml/components/methods/SwayState.qml", "qml/components/methods/NiriState.qml",
                 "backend/internal/compositor/actions/table.json",
                 "scripts/qml_modules.py", "scripts/run_tests.sh")

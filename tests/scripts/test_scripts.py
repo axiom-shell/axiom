@@ -436,10 +436,16 @@ class CheckStructure(unittest.TestCase):
         ("qml/shell/NState.qml", qml("property var s: NiriState.parse"), "qml/shell/NState.qml: uses a niri helper"),
         ("qml/shell/NotService.qml", qml("property var s: GhostManager.x"), "GhostManager is not a service"),
         ("qml/shell/Typo.qml", qml("property var s: AudioManger.x"), "AudioManger — did you mean AudioManager?"),
+        # A helper under methods/<domain>/ is a singleton too
+        ("qml/components/methods/demo/DemoFacts.qml", qml(), None),
+        ("qml/shell/DemoNear.qml", qml("property var s: DemoFact.x"), "DemoFact — did you mean DemoFacts?"),
         ("qml/config/GhostConfig.qml", qml("readonly property int k: _c.key ?? 1", head="pragma Singleton"),
          "`_c.key ??`: readers use no ?? fallback"),
         ("qml/shell/LiveModel.qml", qml("Repeater { model: SystemManager.processes }"),
          "qml/shell/LiveModel.qml:6: a Repeater model from live values (SystemManager.processes)"),
+        ("qml/services/core/Held.qml", qml("OwnerRegistry {}\n    property var rows: []", head="pragma Singleton"), None),
+        ("qml/shell/HeldModel.qml", qml("Repeater { model: Held.rows }"),
+         "qml/shell/HeldModel.qml:6: a Repeater model from live values (Held.rows)"),
         ("qml/shell/LiveRequest.qml", qml("readonly property var req: ({ top: SystemManager.cpu })\n    onReqChanged: SystemManager.acquire(this, req)"),
          "an acquire() request from live values (req → SystemManager.cpu)"),
         ("qml/shell/Stamp.qml", qml('property string s: Qt.formatDateTime(new Date(), "ddd")'), "qml/shell/Stamp.qml:6: Qt.formatDateTime"),
@@ -493,6 +499,29 @@ class CheckStructure(unittest.TestCase):
         ("qml/components/bar/widgets/Tsevenb/Tsevenb.qml", widget("text: box"), "Tsevenb/Tsevenb.qml:6: T7"),
         ("qml/components/bar/widgets/Teight/Teight.qml", widget('stateColorName: "error"'), "Teight/Teight.qml:6: T8"),
     ]
+    # The layer service's structure (check_structure.layer_service): a window with no row
+    # and the ways to set a layer or namespace, read a layer fact or WlrLayer, or give backsOn a literal
+    LAYER_FILES = [
+        ("qml/shell/NoRow.qml", qml('PanelWindow {\n      readonly property string layerNamespace: "axiom-norow"\n    }'),
+         "qml/shell/NoRow.qml:7: layer-namespace-row: axiom-norow has no LayerStack.layers row"),
+        ("qml/shell/OwnLayer.qml", qml('PanelWindow {\n      WlrLayershell.layer: WlrLayer.Top\n    }'),
+         "qml/shell/OwnLayer.qml:7: layer-slot-binding: WlrLayershell.layer binds `WlrLayer.Top`"),
+        ("qml/shell/OtherSlot.qml", qml('PanelWindow {\n      WlrLayershell.layer: other.layer\n    }'),
+         "qml/shell/OtherSlot.qml:7: layer-slot-binding: WlrLayershell.layer binds `other.layer`"),
+        ("qml/shell/OwnName.qml", qml('PanelWindow {\n      WlrLayershell.namespace: "axiom-bar"\n    }'),
+         'qml/shell/OwnName.qml:7: layer-slot-binding: WlrLayershell.namespace binds `"axiom-bar"`'),
+        ("qml/shell/Fact.qml", qml("property bool o: CompositorManager.supports.layerOrder"),
+         "qml/shell/Fact.qml:6: layer-slot-binding: reads a layer fact"),
+        ("qml/shell/Wlr.qml", qml("property int l: WlrLayer.Top"),
+         "qml/shell/Wlr.qml:6: layer-slot-binding: reads WlrLayer"),
+        ("qml/shell/Backs.qml", qml("property bool b: BlurManager.backsOn(screen, true)"),
+         "qml/shell/Backs.qml:6: layer-slot-binding: backsOn takes a literal layer"),
+    ]
+    # A window on its slot with a namespace that has a row breaks neither rule
+    LAYER_GOOD = ("qml/shell/GoodWindow.qml", qml(
+        'PanelWindow {\n      id: win\n      readonly property string layerNamespace: "axiom-bar"\n'
+        '      WlrLayershell.layer: slot.layer\n      WlrLayershell.namespace: win.layerNamespace\n'
+        '      LayerSlot {\n        id: slot\n      }\n    }'))
     # What the check must say about the schema and the allowlist edits below (and Reach)
     EDITS = [
         "chrome-drawing-allowlist.json: qml/services/core/Gone.qml no longer uses HoledCopy",
@@ -561,6 +590,26 @@ class CheckStructure(unittest.TestCase):
             code, out = run_check(root, "check_structure.py", files=[(p, text) for p, text, _ in self.FILES])
         self.assertEqual(code, 1)
         self.assertEqual(missed(out, [m for _, _, m in self.FILES if m] + self.EDITS), [], out)
+
+    def test_layer_service_rules(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "qml", "docs/dev/compositor/contract.md")
+            stack = root / "qml/components/methods/layer/LayerStack.qml"
+            text = stack.read_text()
+            row = '    {\n      "namespace": "osd",'
+            self.assertIn(row, text)
+            stack.write_text(text.replace('"namespace": "dock",\n      "order": -7,\n      "layer": "top",',
+                                          '"namespace": "dock",\n      "order": -7,', 1)
+                             .replace(row, '    {\n      "namespace": "bar",\n      "layer": "top"\n    },\n' + row, 1))
+            code, out = run_check(root, "check_structure.py", files=[(p, t) for p, t, _ in self.LAYER_FILES])
+            self.assertEqual(code, 1)
+            self.assertEqual(missed(out, [m for _, _, m in self.LAYER_FILES] + [
+                "LayerStack.qml: layer-namespace-row: namespace bar has two rows",
+                "LayerStack.qml: layer-namespace-row: row dock names no layer"]), [], out)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "qml", "docs/dev/compositor/contract.md")
+            code, out = run_check(root, "check_structure.py", files=[self.LAYER_GOOD])
+            self.assertEqual([line for line in out.splitlines() if "layer-" in line], [], out)
 
     def test_live_tree_passes(self):
         # The real widgets break no template rule, so each plant above is what fails
@@ -844,7 +893,8 @@ def demo_engine(root):
                       editPoints={"case": "DemoRules.rows", "rule": ["DemoRules", "DemoRules.boxOf"], "input": "DemoOwner",
                                   "output": "DemoEngine.api", "consumer": "DemoAdapter", "tuning": "DemoEngine.tuning"},
                       alone=[{"regex": "\\bdemoKindOf\\b", "only": [f"{methods}/demo/DemoRules.qml"], "why": "the kind lookup lives in the rules file"}])
-    text = json.loads(manifest_text(demo))
+    # the copied tree has the real domain folders (qml/components/methods/layer/ …), so their entries stay
+    text = json.loads(manifest_text(demo, **{"$domains": manifests.domains()}))
     text["sink"] = sink
     (root / "scripts" / "engines.json").write_text(json.dumps(text, indent=2) + "\n")
     for entry in manifests.engines(text=json.dumps(text))[0].values():
@@ -1778,6 +1828,8 @@ class CheckDocs(unittest.TestCase):
         ("docs/dev/ghost.md", "[a](nowhere.md)\n`services/core/GhostlyManager.qml`\n`AudioManager.noSuchMember`\n"
                               "`IconConfig.x`\n"),
         ("qml/components/reusable/GhostPiece.qml", qml()),
+        ("qml/components/methods/demo/DemoFacts.qml", qml()),
+        ("docs/dev/demo.md", "`DemoFacts.noSuchMember`\n"),
         (".claude/templates/ghost.md", "`.claude/templates/gone.md`\n"),
     ]
 
@@ -1792,6 +1844,7 @@ class CheckDocs(unittest.TestCase):
             "docs/dev/ghost.md:2: `services/core/GhostlyManager.qml` doesn't exist",
             "docs/dev/ghost.md:3: `AudioManager.noSuchMember`: AudioManager has no member noSuchMember",
             "docs/dev/ghost.md:4: `IconConfig.x`: IconConfig was renamed to IconsConfig",
+            "docs/dev/demo.md:1: `DemoFacts.noSuchMember`: DemoFacts has no member noSuchMember",
             ".claude/templates/ghost.md:1: `.claude/templates/gone.md` doesn't exist",
             "qml/components/reusable/GhostPiece.qml: not in docs/dev/core/shared-ui-pieces.md",
             "`x-ghost` isn't in docs/dev/core/schema-annotations.md",

@@ -23,7 +23,8 @@ import qs.components.views.Settings // qmllint disable unused-imports
 // After a close its pages stay built for `keptFor` (`kept`), so opening
 // again slides, with no rebuild. On Top under the chrome (LayerStack: after
 // the backdrop, before the backing window), held while closed (a pixel
-// drawing nothing); on Overlay while a fullscreen window is on its screen.
+// drawing nothing); on Overlay over a fullscreen window while shown (its
+// slot's layer).
 ReservedAreaWindow {
   id: root
 
@@ -33,6 +34,9 @@ ReservedAreaWindow {
   // Closed, its pages built: from the close until `keptFor` passes, or a
   // fullscreen window shows on its screen
   property bool kept: false
+  // Read raw, as the layer service reads it: the keep-warm drop and the reduced
+  // latch change in the same deferred batch as LayerManager's pass (the layer
+  // service's `hasFullscreen` here would put them a batch later)
   readonly property bool fullscreenNow: CompositorManager.hasFullscreen(root.screen?.name ?? "")
   // Open or closing: its slot's `wanted`
   readonly property bool _wanted: root.isOpen || hideTimer.running
@@ -46,7 +50,7 @@ ReservedAreaWindow {
     PopoutManager.closeOn(root.screen?.name ?? "")
   // This opening draws reduced effects (Overlay.reduceFullscreen): the page's
   // cheaper drawing is decided as it opens; its blur follows the screen live
-  // (BlurManager.reduced), and its layer follows `fullscreenNow`
+  // (BlurManager.reduced)
   property ClosedLatch _reduced: ClosedLatch {
     source: OverlayConfig.reduceFullscreen && root.fullscreenNow
     closed: !root._wanted
@@ -62,22 +66,11 @@ ReservedAreaWindow {
   // The page switcher's on the top edge, not the bottom
   readonly property bool _navigatorTop: OverlayConfig.navigator === "top"
 
-  visible: slot.shown
   // Held once the layer rules are in (CompositorManager.surfacesReady), with the
   // chrome it keeps its place among; before that it maps only while open, as a
-  // window without a slot
-  LayerSlot {
-    id: slot
-    window: root
-    namespace: root.layerNamespace
-    layer: root.stackLayer
-    wanted: root._wanted
-    held: CompositorManager.surfacesReady
-  }
-  // On Top under the chrome (LayerStack: after the backdrop, before the
-  // backing window), held while closed; on Overlay while a fullscreen
-  // window is on its screen, down once it's gone
-  stackLayer: root.fullscreenNow ? WlrLayer.Overlay : WlrLayer.Top
+  // window without a slot (its layer is its row's, LayerStack)
+  slotWanted: root._wanted
+  slotHeld: CompositorManager.surfacesReady
   // One namespace in every state: a held window whose namespace changed is
   // remade and lands last on its layer (its reduced blur is BlurManager's)
   layerNamespace: "axiom-overlay"
@@ -233,7 +226,7 @@ ReservedAreaWindow {
     id: slideContainer
     anchors.fill: parent
     // Held and idle it is a pixel: a kept page's changes draw no frames
-    visible: !slot.idle
+    visible: !root.slot.idle
     opacity: root.steppedAside || (root.fades && !root.isOpen) ? 0 : 1
     Glide on opacity {
       duration: Appearance.animNormal
@@ -288,9 +281,9 @@ ReservedAreaWindow {
       // until the first map, estimate from the screen less its margins
       property real roomWidth: root.screen.width - root.margins.left - root.margins.right
       property real roomHeight: root.screen.height - root.margins.top - root.margins.bottom - OverlayConfig.navigatorRoom
-      onWidthChanged: if (!slot.idle && pageArea.width > 0)
+      onWidthChanged: if (!root.slot.idle && pageArea.width > 0)
         pageArea.roomWidth = pageArea.width
-      onHeightChanged: if (!slot.idle && pageArea.height > 0)
+      onHeightChanged: if (!root.slot.idle && pageArea.height > 0)
         pageArea.roomHeight = pageArea.height
 
       OverlayPages {

@@ -6,7 +6,7 @@ import Quickshell
 import Quickshell.Services.Polkit
 
 import qs.config
-import qs.components.methods
+import qs.components.methods.polkit
 import qs.services.core
 import qs.services.ui
 
@@ -15,7 +15,7 @@ import qs.services.ui
  * PolkitConfig.enabled, a PolkitAgent answers apps' requests for
  * administrator rights, and each one goes through the shared prompt's
  * queue (PromptManager), which draws its card (prompt/PolkitCard). A session has one agent, so registering fails while another holds
- * it: axiom then stops the known ones (methods/PolkitAgents), their
+ * it: axiom then stops the known ones (methods/polkit/PolkitAgents), their
  * systemd user units included, and registers again. The daemon does the
  * looking and the stopping (polkit.probe, polkit.stopOthers), only in
  * this session, and records what it stopped: it starts them again when the

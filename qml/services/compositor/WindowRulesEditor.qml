@@ -38,11 +38,11 @@ QtObject {
 
   // The page takes the editor: the count runs until it lets go
   function acquire(owner) {
-    root._counting.acquire(owner, true);
+    root._counting.set(owner, true);
   }
 
   function release(owner) {
-    root._counting.release(owner);
+    root._counting.drop(owner);
   }
 
   // The problems and per-rule facts to show ({ issues, rules },
@@ -377,7 +377,7 @@ QtObject {
   property int _sequence: 0
 
   // Pages holding the editor: the count runs while there is one
-  property ConsumerRegistry _counting: ConsumerRegistry {}
+  property OwnerRegistry _counting: OwnerRegistry {}
   property int _matchSequence: 0
 
   property Timer _timer: Timer {

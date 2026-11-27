@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -18,6 +19,12 @@ import (
 // fakeHyprland answers every request on dir's request socket with "ok"
 // ("[]" to a JSON one), sending what it was asked on the returned channel
 func fakeHyprland(t *testing.T) (string, <-chan string) {
+	t.Helper()
+	return fakeHyprlandEval(t, "ok")
+}
+
+// fakeHyprlandEval is fakeHyprland answering every eval with `reply`
+func fakeHyprlandEval(t *testing.T, reply string) (string, <-chan string) {
 	t.Helper()
 	// Unix socket paths are short: t.TempDir can be too long
 	dir, err := os.MkdirTemp("", "axhypr")
@@ -43,7 +50,7 @@ func fakeHyprland(t *testing.T) (string, <-chan string) {
 			if strings.HasPrefix(string(buf[:n]), "j/") {
 				io.WriteString(c, "[]")
 			} else {
-				io.WriteString(c, "ok")
+				io.WriteString(c, reply)
 			}
 			c.Close()
 		}
@@ -60,22 +67,23 @@ func TestLayerRules(t *testing.T) {
 	dir, asked := fakeHyprland(t)
 	w := newHypr(env2(tables, schema, func(string) string { return "" }), &ipc.Hypr{Dir: dir})
 	m := &Manager{w: w}
-	want := "eval "
-	for i, rule := range tables.LayerRulesLua() {
-		if i > 0 {
-			want += "\n"
-		}
-		want += "pcall(function() " + rule + " end)"
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	var want string
 	for name, run := range map[string]func(){
-		"asked":    func() { m.AddLayerRules(ctx) },
+		"asked": func() {
+			if ordered, err := m.AddLayerRules(ctx); err != nil || !ordered {
+				t.Errorf("every rule taken: ordered %v, err %v", ordered, err)
+			}
+		},
 		"reloaded": func() { m.configReloaded(ctx, ipc.Reload{}) },
 	} {
 		run()
 		select {
 		case got := <-asked:
+			if want == "" {
+				want = got
+			}
 			if got != want {
 				t.Errorf("%s: sent %q, want %q", name, got, want)
 			}
@@ -83,11 +91,43 @@ func TestLayerRules(t *testing.T) {
 			t.Fatalf("%s: nothing sent", name)
 		}
 	}
-	if !strings.Contains(want, `name = "axiom-bar"`) {
-		t.Errorf("no bar rule in %q", want)
+	for _, rule := range tables.LayerRules() {
+		if !strings.Contains(want, "pcall(function() "+rule.Lua+" end)") {
+			t.Errorf("rule %q not sent in %q", rule.Lua, want)
+		}
 	}
-	if err := (&Manager{w: &fakeWriter{}}).AddLayerRules(ctx); err == nil {
+	if !strings.Contains(want, `name = "axiom-bar"`) || !strings.Contains(want, "order = 5, no_anim = true") {
+		t.Errorf("no ordered bar rule in %q", want)
+	}
+	if _, err := (&Manager{w: &fakeWriter{}}).AddLayerRules(ctx); err == nil {
 		t.Error("layer rules added on another compositor")
+	}
+}
+
+// A Hyprland that refuses a rule (its eval ends in the error naming it): the
+// add reports the order isn't in, logs the rule, and the Lua it sent tries
+// that rule again with its animation alone
+func TestLayerRulesRefused(t *testing.T) {
+	t.Parallel()
+	tables, schema := repo(t)
+	dir, asked := fakeHyprlandEval(t, "Lua error: layer rules refused: axiom-popout")
+	var logged []string
+	e := env2(tables, schema, func(string) string { return "" })
+	e.logf = func(f string, a ...any) { logged = append(logged, fmt.Sprintf(f, a...)) }
+	w := newHypr(e, &ipc.Hypr{Dir: dir})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	ordered, err := (&Manager{w: w}).AddLayerRules(ctx)
+	if err != nil || ordered {
+		t.Errorf("a refused rule: ordered %v, err %v", ordered, err)
+	}
+	if got := strings.Join(logged, "\n"); !strings.Contains(got, "axiom-popout") {
+		t.Errorf("the log doesn't name the rule: %q", got)
+	}
+	sent := <-asked
+	retry := `if not pcall(function() hl.layer_rule({ name = "axiom-popout", match = { namespace = "^axiom-popout$" }, order = -10, no_anim = true }) end) then pcall(function() hl.layer_rule({ name = "axiom-popout", match = { namespace = "^axiom-popout$" }, no_anim = true }) end) refused[#refused + 1] = "axiom-popout" end`
+	if !strings.Contains(sent, retry) {
+		t.Errorf("no no_anim-only retry for axiom-popout in %q", sent)
 	}
 }
 

@@ -398,3 +398,33 @@ func TestSurfaceBlurReduced(t *testing.T) {
 		}
 	}
 }
+
+// The static files' layer rules: each in its own pcall as the runtime add
+// guards it, a rule with a Retry trying it on failure
+func TestLayerRulesLuaGuard(t *testing.T) {
+	t.Parallel()
+	tb := repoTables(t)
+	// the repo's layers all have an order and no_anim: add one with an
+	// order alone, which has no Retry
+	tb = &Tables{Layers: append(append([]*jsonx.Object(nil), tb.Layers...), parse(t, `{"namespace":"x","order":1}`).(*jsonx.Object))}
+	rules, lua := tb.LayerRules(), tb.LayerRulesLua()
+	if len(rules) != len(lua) {
+		t.Fatalf("%d rules, %d Lua lines", len(rules), len(lua))
+	}
+	var withRetry, alone int
+	for i, r := range rules {
+		want := "pcall(function() " + r.Lua + " end)"
+		if r.Retry != "" {
+			want = "if not pcall(function() " + r.Lua + " end) then pcall(function() " + r.Retry + " end) end"
+			withRetry++
+		} else {
+			alone++
+		}
+		if lua[i] != want {
+			t.Errorf("%s: got %q, want %q", r.Name, lua[i], want)
+		}
+	}
+	if withRetry == 0 || alone == 0 {
+		t.Errorf("the repo's layers should give both forms: %d guarded with a retry, %d guarded alone", withRetry, alone)
+	}
+}

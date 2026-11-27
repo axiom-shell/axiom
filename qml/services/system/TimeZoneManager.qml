@@ -31,13 +31,13 @@ QtObject {
       root.release(owner);
       return;
     }
-    root._registry.acquire(owner, {
+    root._consumers.set(owner, {
       "zones": zones
     });
   }
 
   function release(owner) {
-    root._registry.release(owner);
+    root._consumers.drop(owner);
   }
 
   // A zone's offset, or null (its clock shows the system's time): not read
@@ -50,9 +50,9 @@ QtObject {
   }
 
   // -- Private --
-  property ConsumerRegistry _registry: ConsumerRegistry {}
+  property OwnerRegistry _consumers: OwnerRegistry {}
   // The zones asked for, as a key: identical requests don't re-read
-  readonly property string _wanted: [].concat(...root._registry.requests.map(request => request.zones)).filter((zone, i, all) => all.indexOf(zone) === i).sort().join("\n")
+  readonly property string _wanted: [].concat(...root._consumers.values.map(request => request.zones)).filter((zone, i, all) => all.indexOf(zone) === i).sort().join("\n")
   on_WantedChanged: root._read()
   // Asked again while reading: read once more after
   property bool _again: false

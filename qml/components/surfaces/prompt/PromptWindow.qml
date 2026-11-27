@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import qs.components.hosts.window
 
 import qs.components.reusable
 import qs.config
@@ -51,12 +52,17 @@ PanelWindow {
   exclusionMode: ExclusionMode.Ignore
   color: "transparent"
   focusable: root.hasCard
-  visible: shown || dim.opacity > 0
-
-  WlrLayershell.layer: WlrLayer.Overlay
+  visible: slot.shown
+  WlrLayershell.layer: slot.layer
   // Named for the polkit prompt it began as: the layer rules (and their
   // recorded test cases) know it by that name
-  WlrLayershell.namespace: "axiom-polkit"
+  readonly property string layerNamespace: "axiom-polkit"
+  WlrLayershell.namespace: root.layerNamespace
+  LayerSlot {
+    id: slot
+    window: root
+    wanted: root.shown || dim.opacity > 0
+  }
   WlrLayershell.keyboardFocus: root.live ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
   Component.onCompleted: {

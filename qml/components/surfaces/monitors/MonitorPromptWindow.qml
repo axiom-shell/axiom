@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
+import qs.components.hosts.window
 
 import qs.components.reusable
 import qs.config
@@ -16,8 +17,7 @@ PanelWindow {
 
   readonly property bool asking: MonitorManager.pending
   readonly property bool shown: asking || MonitorManager.identifying
-
-  visible: shown || card.opacity > 0
+  visible: slot.shown
   color: "transparent"
   exclusionMode: ExclusionMode.Ignore
   implicitWidth: card.width
@@ -27,9 +27,14 @@ PanelWindow {
   mask: Region {
     item: card
   }
-
-  WlrLayershell.layer: WlrLayer.Overlay
-  WlrLayershell.namespace: "axiom-monitor-prompt"
+  WlrLayershell.layer: slot.layer
+  readonly property string layerNamespace: "axiom-monitor-prompt"
+  WlrLayershell.namespace: root.layerNamespace
+  LayerSlot {
+    id: slot
+    window: root
+    wanted: root.shown || card.opacity > 0
+  }
   WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
   Component.onCompleted: {

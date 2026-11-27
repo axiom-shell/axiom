@@ -99,6 +99,7 @@ for f in "${changed[@]}"; do
   tests/Shared.qml | scripts/dev/fixtures.py | scripts/generate.sh) go=1 fixtures=1 tests+=(Shared) ;;
   esac
   case "$f" in
+  # (`*` crosses `/`: a domain helper under methods/<domain>/ matches too)
   qml/components/methods/*.qml)
     name="$(basename "$f" .qml)"
     [[ -f "tests/tst_$name.qml" ]] && tests+=("$name")
@@ -106,7 +107,7 @@ for f in "${changed[@]}"; do
   # The row runner: its own test, and OSDSystems, which uses its compare
   tests/EngineRows.qml) tests+=(EngineRows OSDSystems) ;;
   tests/enginerows/*) tests+=(EngineRows) ;;
-  tests/flat/*.js)
+  tests/*/*.js)
     name="$(basename "$f" .js)"
     [[ -f "tests/tst_$name.qml" ]] && tests+=("$name")
     ;;

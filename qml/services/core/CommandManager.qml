@@ -44,7 +44,7 @@ QtObject {
       release(owner);
       return;
     }
-    _registry.acquire(owner, {
+    _consumers.set(owner, {
       "command": request.command,
       "interval": request.interval ?? 5000,
       "mode": request.mode ?? "poll",
@@ -53,7 +53,7 @@ QtObject {
   }
 
   function release(owner) {
-    _registry.release(owner);
+    _consumers.drop(owner);
   }
 
   // Run a command once, detached: a shell string (a widget's click or
@@ -121,8 +121,8 @@ QtObject {
   property var _outputs: ({})
   property var _values: ({})
   property var _runs: ({})
-  property ConsumerRegistry _registry: ConsumerRegistry {}
-  readonly property var _requests: _registry.requests
+  property OwnerRegistry _consumers: OwnerRegistry {}
+  readonly property var _requests: _consumers.values
   on_RequestsChanged: _sync()
 
   // command -> { interval, mode, format } as axiom watches it

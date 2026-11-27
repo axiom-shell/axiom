@@ -1306,7 +1306,7 @@ def rpc_page():
     return "\n".join(out).rstrip() + "\n", problems
 
 
-LAYERS_PATH = QML_ROOT / "components/methods/LayerStack.qml"
+LAYERS_PATH = QML_ROOT / "components/methods/layer/LayerStack.qml"
 
 # The words of an edit point's "where … goes" line, by `editPoints` key
 EDIT_POINT_TEXT = {"case": "a case", "rule": "a rule", "input": "an input", "output": "an output",
@@ -1332,16 +1332,19 @@ def json_property(path, name, default=_ABSENT):
 
 def layers_page():
     out = [NOTICE, "# Layer stacking", "",
-           "Every axiom layer namespace, from `LayerStack.layers`: Hyprland's layer rules (`render.LayerRulesLua`), "
+           "Every axiom layer namespace, from `LayerStack.layers`: Hyprland's layer rules (`render.LayerRules`), "
            "and the order axiom maps its surfaces in elsewhere ([layer arrangement](../compositor/layer-arrangement.md)). "
            "Higher `order` is arranged (and drawn) first: closer to the screen edge, and it takes a shared corner. "
+           "`layer` is the window's layer, `overFullscreen` how it stands over a fullscreen window, `modal` an instant action surface. "
            "Hyprland reads `order` only as a surface maps. "
            "Cite this page rather than repeating the numbers in a doc.", "",
-           "| Namespace | Order | Why |", "|---|---|---|"]
+           "| Namespace | Layer | Order | Over fullscreen | Modal | Why |", "|---|---|---|---|---|---|"]
     for layer in json_property(LAYERS_PATH, "layers"):
         order = layer.get("order")
         flags = " (no animation)" if layer.get("noAnim") else ""
-        out.append(f"| `axiom-{layer['namespace']}` | {'' if order is None else order} | {layer['why']}{flags} |")
+        over = f"`{layer['overFullscreen']}`" if layer.get("overFullscreen") else ""
+        out.append(f"| `axiom-{layer['namespace']}` | `{layer['layer']}` | {'' if order is None else order} | {over} | "
+                   f"{'yes' if layer.get('modal') else ''} | {layer['why']}{flags} |")
     return "\n".join(out).rstrip() + "\n"
 
 

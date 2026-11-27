@@ -13,7 +13,7 @@ How clocks show another time zone (the JS engine has no Intl), plus the Clock mo
 ### TimeZoneManager
 - Used by clocks set to another zone: a Clock module's or a Time widget's `timezone`.
 - **`acquire(owner, zone)` / `release(owner)`:**
-  - a `ConsumerRegistry`;
+  - an `OwnerRegistry`;
   - `zone` may be a list, as WorldClocks asks for.
 - **Reading a zone:**
   - The zones asked for are read with one `tz.offsets` call to axiom (`backend/internal/tz`): each zone's file in the zoneinfo directory (`$TZDIR`, else `/usr/share/zoneinfo`), its offset now in minutes east of UTC. A zone name that isn't a plain relative path is never read.

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import qs.components.hosts.window
 
 import qs.components.reusable
 import qs.config
@@ -119,7 +120,7 @@ PanelWindow {
 
   FocusGrab {
     id: grab
-    active: root.shown && group.ownsGrab
+    active: root.shown && root.visible && group.ownsGrab
     windows: group.windows.concat(SurfaceManager.modalWindows)
     onCleared: root.shown = false
   }
@@ -142,11 +143,17 @@ PanelWindow {
   color: "transparent"
   focusable: true
   // Stays mapped while the card fades out
-  visible: shown || card.opacity > 0
+  visible: slot.shown
 
   WlrLayershell.keyboardFocus: grab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
-  WlrLayershell.layer: WlrLayer.Overlay
-  WlrLayershell.namespace: "axiom-powermenu"
+  WlrLayershell.layer: slot.layer
+  readonly property string layerNamespace: "axiom-powermenu"
+  WlrLayershell.namespace: root.layerNamespace
+  LayerSlot {
+    id: slot
+    window: root
+    wanted: root.shown || card.opacity > 0
+  }
 
   // Where the compositor blurs only what a window asks: the card, as it
   // fades and slides in

@@ -17,6 +17,12 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/store"
 )
 
+// layerRulesResult is compositor.layerRules' result: whether Hyprland took
+// every layer rule (axiom's order is in only then)
+type layerRulesResult struct {
+	Ordered bool `json:"ordered"`
+}
+
 // newCompositor is the compositor's config layer (internal/compositor/
 // manager) for the compositor this daemon runs under: nil when the tree's
 // tables can't be read (logged), and inert under a compositor without
@@ -139,11 +145,12 @@ func (d *Daemon) compositorMethods(reg *rpc.Registry, m *manager.Manager) {
 		}
 		return struct{}{}, nil
 	})
-	rpc.Handle(reg, "compositor.layerRules", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
+	rpc.Handle(reg, "compositor.layerRules", func(ctx context.Context, c *rpc.Conn, _ struct{}) (layerRulesResult, error) {
 		if err := shellOnly(c); err != nil {
-			return struct{}{}, err
+			return layerRulesResult{}, err
 		}
-		return struct{}{}, m.AddLayerRules(ctx)
+		ordered, err := m.AddLayerRules(ctx)
+		return layerRulesResult{Ordered: ordered}, err
 	})
 	rpc.Handle(reg, "compositor.state", func(ctx context.Context, c *rpc.Conn, _ struct{}) (json.RawMessage, error) {
 		return jsonx.MarshalCompact(m.State(ctx)), nil

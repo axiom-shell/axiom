@@ -53,6 +53,9 @@ Singleton {
       "focusGrab": true,
       "blurThreshold": true,
       "layerRestack": true,
+      // Hyprland keeps axiom's order itself: true only while axiom's order
+      // rules are in
+      "layerOrder": _layerRules.ordered,
       "blur": true,
       "cursorPos": true,
       "cursorWarp": true,
@@ -720,6 +723,9 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
     id: _layerRules
     reloadableId: "axiomLayerRules"
     property bool ready: false
+    // The last compositor.layerRules reply: Hyprland took every rule, order
+    // included
+    property bool ordered: false
   }
 
   // Shows the shell anyway if axiom never answers
@@ -731,12 +737,22 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
   Component.onCompleted: {
     _fetch();
     layerApplied();
-    // Added again on a QML reload too, as the rules replace themselves; an
-    // error (no axiom, the greeter's, whose surfaces have no rule) is no
-    // reason to wait
-    BackendManager.call("compositor.layerRules", {}, () => _layerRules.ready = true);
+    // Added again on a QML reload too, as the rules replace themselves
+    root._addLayerRules();
     if (!_layerRules.ready)
       _layerRulesTimeout.start();
+  }
+
+  // Asks axiom to add the layer rules (and again after a reload, which drops
+  // them), and takes its answer: whether Hyprland took every one, so keeps
+  // the order itself. An error (no axiom, the greeter's, whose surfaces have no
+  // rule) is no reason to wait, and no order.
+  // rpc: compositor.layerRules
+  function _addLayerRules() {
+    BackendManager.call("compositor.layerRules", {}, (error, result) => {
+      _layerRules.ordered = !error && result?.ordered === true;
+      _layerRules.ready = true;
+    });
   }
 
   // A monitor made a mirror, or no longer one, sends no monitor event, yet
@@ -762,6 +778,12 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
         return;
       if (event.name === "configreloaded")
         root.layerApplied();
+      // A fullscreen change decides which layer the layer service puts the
+      // surfaces on: read at once, not after the debounce
+      if (event.name === "fullscreen") {
+        root._fetch();
+        return;
+      }
       // Quickshell doesn't track special workspaces: refresh the monitors'
       // lastIpcObject, which carries them (specialWorkspaceId)
       if (event.name === "activespecial" || event.name === "activespecialv2")
@@ -784,6 +806,7 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
       break;
     case "configreloaded":
       root.configReloaded();
+      root._addLayerRules();
       break;
     case "activelayout":
       root.keyboardLayoutChanged();

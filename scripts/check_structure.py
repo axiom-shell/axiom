@@ -35,7 +35,7 @@ running anything:
     (an entry no longer used is an error); every BlurShape's `shown:` reads
     `backed`
   - no Repeater model or acquire() request in the UI reads a polled
-    service's member (one owning a ConsumerRegistry or DeadlineTicker),
+    service's member (one owning an OwnerRegistry or DeadlineTicker),
     in the expression or through a property of the file; a model may
     count one (`.length`, `.count`)
   - the config UI and onboarding build no hover tint (StateLayer), key
@@ -61,6 +61,13 @@ running anything:
     opens, and one whose popoutName is an overlay module declares it; its
     anchors hand its values by `fromWidget` (the keys popoutModule lists),
     never `extraData`, and a widget without popoutModule has no `fromWidget`
+  - every `axiom-<x>` window namespace in qml/ (and every
+    BarsConfig.layerNamespace value) has one LayerStack.layers row, which
+    names its layer, and no namespace has two (layer-namespace-row); a
+    window binds its layer to its LayerSlot's and its namespace to its own
+    `layerNamespace`, only the layer service reads the compositor's layer
+    facts and WlrLayer, and no `backsOn(` takes a literal layer
+    (layer-slot-binding)
   - no UI switches one of the shell's actions through its service's own
     toggle or setter (Wi-Fi, Bluetooth, caffeine, do not disturb, night
     light, dark mode, the mutes, the VPN, a recording, a session action,
@@ -81,6 +88,7 @@ import re
 import sys
 from pathlib import Path
 
+import gen_docs
 import qml_modules
 from qml_modules import qml_files
 
@@ -160,6 +168,21 @@ WIDGET_OUTPUTS = ("colors drawnColors paint shownItems backgroundLevel backgroun
                   "splitPart innerSplits contentAcross leadLength minimumSize pulse box hitArea autoColors "
                   "barOffset barLength runPlace segmented pinStart fillsOnHover").split()
 WIDGET_COLOR_CALLS = qml_modules.WIDGET_COLOR_CALLS
+
+BARS_CONFIG = "qml/config/BarsConfig.qml"
+# The windows with no layer service running (no LayerSlot), each with its
+# reason: the greeter runs in its own shell, the notice shows where no
+# parent shell does
+LAYER_SLOT_EXCEPTIONS = {
+    "qml/components/surfaces/greeter/GreeterWindow.qml": "the greeter's own shell runs no layer service",
+    "qml/shell/NoParentNotice.qml": "shown where no shell runs, so no layer service",
+}
+LAYER_SERVICE = "qml/services/compositor/LayerManager.qml"
+# The backends that declare the layer facts (supports.layerOrder, layerRestack)
+LAYER_FACT_BACKENDS = ("qml/services/compositor/HyprlandManager.qml", "qml/services/compositor/SwayManager.qml",
+                       "qml/services/compositor/NiriManager.qml")
+# WlrLayer is read by the layer service, the window hosts and the excluded windows
+WLR_LAYER_SCOPES = (LAYER_SERVICE, "qml/components/hosts/window/", *LAYER_SLOT_EXCEPTIONS)
 
 errors, warnings = [], []
 
@@ -366,6 +389,61 @@ def bar_widget_template(schema, sources, errors):
         for rule, message in items:
             if rule not in skip:
                 errors.append(message)
+
+
+def layer_service(sources, errors):
+    """The layer service's structure (docs/dev/compositor/layer-arrangement.md):
+    layer-namespace-row: every "axiom-<x>" a window is given has one
+    LayerStack.layers row with a layer; layer-slot-binding: windows bind
+    the slot's layer and their own namespace, and the layer facts and
+    WlrLayer stay the service's."""
+    rows = gen_docs.json_property(gen_docs.LAYERS_PATH, "layers", default=[])
+    stack_path = rel(gen_docs.LAYERS_PATH)
+    names = [r["namespace"] for r in rows]
+    for name in sorted({n for n in names if names.count(n) > 1}):
+        errors.append(f"{stack_path}: layer-namespace-row: namespace {name} has two rows")
+    for r in rows:
+        if "layer" not in r:
+            errors.append(f"{stack_path}: layer-namespace-row: row {r['namespace']} names no layer")
+    given = {}  # namespace -> where
+    for path, text in sources.items():
+        if path.startswith("tests/"):
+            continue
+        code = re.sub(r"//[^\n]*", "", text)
+        for n, line in enumerate(code.split("\n"), 1):
+            m = re.search(r"\b(?:layerNamespace|WlrLayershell\.namespace)\s*:(.*)", line)
+            if m:
+                for lit in re.findall(r'"axiom-([\w-]+)"', m.group(1)):
+                    given.setdefault(lit, f"{path}:{n}")
+    bars = re.search(r"function layerNamespace\(.*?\n  \}", sources.get(BARS_CONFIG, ""), re.S)
+    for lit in re.findall(r'"axiom-([\w-]+)"', bars.group(0) if bars else ""):
+        given.setdefault(lit, BARS_CONFIG)
+        given.setdefault(lit + "-long", BARS_CONFIG)
+    for name, where in sorted(given.items()):
+        if name not in names:
+            errors.append(f"{where}: layer-namespace-row: axiom-{name} has no LayerStack.layers row ({stack_path})")
+
+    for path, text in sorted(sources.items()):
+        if path.startswith("tests/"):
+            continue
+        code = re.sub(r"//[^\n]*", "", text)
+        for n, line in enumerate(code.split("\n"), 1):
+            if path not in LAYER_SLOT_EXCEPTIONS:
+                layer = re.search(r"\bWlrLayershell\.layer\s*:\s*(.*)", line)
+                if layer:
+                    slots = [re.search(r"\bid\s*:\s*(\w+)", body).group(1) for _, body in qml_blocks(code, "LayerSlot")
+                             if re.search(r"\bid\s*:\s*(\w+)", body)]
+                    if layer.group(1).strip() not in [f"{s}.layer" for s in slots]:
+                        errors.append(f"{path}:{n}: layer-slot-binding: WlrLayershell.layer binds `{layer.group(1).strip()}`: bind <id>.layer of the window's LayerSlot")
+                name = re.search(r"\bWlrLayershell\.namespace\s*:\s*(.*)", line)
+                if name and not re.fullmatch(r"\w+\.layerNamespace", name.group(1).strip()):
+                    errors.append(f"{path}:{n}: layer-slot-binding: WlrLayershell.namespace binds `{name.group(1).strip()}`: bind <id>.layerNamespace")
+            if path != LAYER_SERVICE and not path.startswith(LAYER_FACT_BACKENDS) and re.search(r"\blayer(?:Order|Restack)\b", line):
+                errors.append(f"{path}:{n}: layer-slot-binding: reads a layer fact (layerOrder, layerRestack): only {LAYER_SERVICE} does")
+            if "WlrLayer." in line and not path.startswith(WLR_LAYER_SCOPES):
+                errors.append(f"{path}:{n}: layer-slot-binding: reads WlrLayer: only the layer service, components/hosts/window/ and the windows with no layer service do")
+            if re.search(r"\bbacksOn\([^,()]+,\s*(?:true|false)\s*\)", line):
+                errors.append(f"{path}:{n}: layer-slot-binding: backsOn takes a literal layer: pass the slot's onOverlayLayer")
 
 
 def popout_modules(schema, sources, errors):
@@ -865,16 +943,16 @@ def main():
         code = "\n".join(line.split("//", 1)[0] for line in re.sub(r"/\*.*?\*/", "", text, flags=re.S).splitlines())
         if not path.startswith(("qml/services/", "qml/components/", "qml/shell/", "qml/config/")):
             continue
-        if not re.fullmatch(r"qml/(services/compositor|components/methods)/Hypr\w*\.qml", path) and re.search(r"\bHyprState\.", code):
+        if not re.fullmatch(r"qml/(services/compositor|components/methods(/\w+)?)/Hypr\w*\.qml", path) and re.search(r"\bHyprState\.", code):
             errors.append(f"{path}: uses a Hyprland helper (only the Hyprland* services and helpers may; go through CompositorManager / CompositorConfigManager)")
         for prefix, name, _, _ in backends:
-            if not re.fullmatch(rf"qml/(services/compositor|components/methods)/{prefix}\w*\.qml", path) and re.search(rf"\b{prefix}State\.", code):
+            if not re.fullmatch(rf"qml/(services/compositor|components/methods(/\w+)?)/{prefix}\w*\.qml", path) and re.search(rf"\b{prefix}State\.", code):
                 errors.append(f"{path}: uses a {name} helper (only the {prefix}* services and helpers may; go through CompositorManager / CompositorConfigManager)")
 
     # Singleton references: FooManager. must be a service, and a near-miss
     # of any project singleton (AudioManger.) is a typo
     external = {"ToplevelManager"}  # Quickshell's own
-    singletons = {f.stem for d in ("services/*", "config", "components/methods") for f in QML_ROOT.glob(f"{d}/*.qml")}
+    singletons = {f.stem for d in ("services/*", "config", "components/methods/**") for f in QML_ROOT.glob(f"{d}/*.qml")}
     services = {f.stem for f in QML_ROOT.glob("services/*/*.qml")} | external
     for path, text in sources.items():
         # without strings and comments
@@ -893,12 +971,12 @@ def main():
     # Repeater models and acquire() requests never come from live values
     # (CLAUDE.md › UI): a model re-evaluated per sample once
     # pushed qs past 25 GB. Live means a member of a polled service (one
-    # polling through a ConsumerRegistry or DeadlineTicker, not
+    # polling through an OwnerRegistry or DeadlineTicker, not
     # BackendManager's or NotesManager's acquire()), read in the expression
     # or through one property of the same file. A model may count one
     # (`.length`, `.count`: an int notifies only when it changes); a request
     # may not read one at all
-    polled = {f.stem for f in QML_ROOT.glob("services/*/*.qml") if re.search(r"\b(?:ConsumerRegistry|DeadlineTicker)\s*\{", f.read_text())}
+    polled = {f.stem for f in QML_ROOT.glob("services/*/*.qml") if re.search(r"\b(?:OwnerRegistry|DeadlineTicker)\s*\{", f.read_text())}
     chain = re.compile(r"(?<![\w.])(?:root\.)?([A-Za-z_]\w*)((?:\??\.\w+)*)")
 
     def live_reads(expr, props, counts, depth=0):
@@ -991,6 +1069,7 @@ def main():
 
     bar_widget_template(schema, sources, errors)
     popout_modules(schema, sources, errors)
+    layer_service(sources, errors)
 
     # Readers: the schema fills every default, so `_c.key ?? x` is dead
     for path, text in sources.items():

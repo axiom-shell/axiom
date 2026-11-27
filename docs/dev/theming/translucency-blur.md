@@ -38,7 +38,7 @@ Written by `render.BlurLua` from `render.SurfaceBlur`'s rule groups (the ones Sw
   - Hyprland blurs a layer's popups whether or not the layer blurs, never with xray, and with its `ignore_alpha`. The group says `xray = false` anyway, for niri's rule (below).
   - So a bar popout, a popup drawn transparent over the blur window, blurs only under its content.
 - `axiom-blur-backdrops`, on `axiom-backdrop` and polkit (whose window holds its dim), at any alpha.
-- Not a blur rule: `LayerStack.layers`' `noAnim` (`no_anim`, one layer rule per namespace, `render.LayerRulesLua`) is on every chrome namespace in every mode: the chrome slides itself.
+- Not a blur rule: `LayerStack.layers`' `noAnim` (`no_anim`, one layer rule per namespace, `render.LayerRules`, with the rule's `order`) is on every chrome namespace in every mode: the chrome slides itself.
 - That's all it writes: the strength is Hyprland's own blur.
 - The module file holds the setting as saved (`_surfacesBlur(true)`). At runtime it's `BlurManager.active`, evaluated over the file after every reload.
 
@@ -59,13 +59,14 @@ niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a
 - Turning a look part off rewrites the file (an eval can't take a setting back).
 
 ### Per screen
-Every mode is backed: `BlurManager.backingOn(screen)` is `CompositorManager.surfacesReady` alone, so the backing window draws the chrome opaque, translucent with the blur off, and blurred, on every compositor (plain sway too, where it only holds its place under the bars), and the compositor blurs it only where `active`/`regionsOn`. `shadowsApart` stays capability-only: on SwayFX the shadow windows exist with the blur off too.
+Every mode is backed: `BlurManager.backingOn(screen)` follows the backing window's slot (`LayerManager.slotOn`: true while the layer service shows it), so chrome draws its own fill whenever that window isn't shown (e.g. while it maps again on sway), and the backing window draws the chrome opaque, translucent with the blur off, and blurred, on every compositor (plain sway too, where it only holds its place under the bars), and the compositor blurs it only where `active`/`regionsOn`. `shadowsApart` stays capability-only: on SwayFX the shadow windows exist with the blur off too.
 
 `BlurManager.backsOn(screen, onOverlay)`:
 - A surface on the Overlay layer (bar popouts and submenus, edge popouts, OSDs) stays backed while the overlay is open on its screen: the one backing window draws it, over the overlay's page (which is under the backing window, LayerStack).
   - It reads its host's `onOverlayLayer`, which its submenu follows (true for bar and edge popouts; false for a free menu, whose window is on Top).
+- BlurManager's fullscreen reads (backing, pause, reduce, opaque) are the layer pass's (`LayerManager.hasFullscreen`), so a surface's handover to the backing window and that window's move to Overlay happen in one turn and the move rides its first frame (a frame drawn on Top in between would never be followed by another: no frame callback under a fullscreen window).
 - A surface on Top (bars, the border, docks, integrated menus) leaves the backing window while a fullscreen window shows there, since that fades the Top layer out.
-  - The backing window itself then rises to the Overlay layer on that screen (`overFullscreen`, order 9 keeping it under the surfaces there, after the overlay's page), so what shows over a fullscreen window still blurs. Where layers stack by map order, each move lands it on top of its new layer, so the windows ordered over it there map again (`LayerManager.reportSlot`; [layer arrangement](../compositor/layer-arrangement.md)).
+  - The backing window itself then rises to the Overlay layer on that screen (its row's `overFullscreen: "always"`, order 9 keeping it under the surfaces there, after the overlay's page), so what shows over a fullscreen window still blurs. Where layers stack by map order, each move lands it on top of its new layer, so the windows ordered over it there map again (`LayerManager`'s sequence pass; [layer arrangement](../compositor/layer-arrangement.md)).
 
 ### Paused over fullscreen
 - `blur.pauseFullscreen` (on by default): while a screen shows a fullscreen window, the blur pauses (`BlurManager.pausedOn(screen)`):

@@ -1,6 +1,6 @@
 # Popout registry and collisions
 
-> **Files:** `qml/services/ui/PopoutManager.qml`, `qml/components/hosts/popout/PopoutClaim.qml`, `qml/components/methods/PopoutGeometry.qml`, `tests/tst_PopoutGeometry.qml`, `qml/components/methods/SurfaceOutline.qml`, `qml/components/hosts/popout/LayerOrigin.qml`, `qml/components/bar/BarPanel.qml`
+> **Files:** `qml/services/ui/PopoutManager.qml`, `qml/components/hosts/popout/PopoutClaim.qml`, `qml/components/methods/PopoutGeometry.qml`, `tests/tst_PopoutGeometry.qml`, `qml/components/methods/SurfaceOutline.qml`, `qml/components/hosts/window/LayerOrigin.qml`, `qml/components/bar/BarPanel.qml`
 > **Config:** none
 > **Related:** [Surface context](surface-context.md), [Hosts and switching](hosts-and-switching.md), [Submenus](submenus.md), [Menu hosts](../menus/hosts.md)
 

@@ -304,16 +304,65 @@ func boolText(b bool) string {
 	return "false"
 }
 
-// LayerRulesLua is a named layer rule per LayerStack.layers entry with an
-// effect (adding one again replaces it): its animation.
-func (t *Tables) LayerRulesLua() []string {
-	out := []string{}
+// A LayerRule is a named Hyprland layer rule for one LayerStack.layers entry
+// (adding one again replaces it): Name its rule's name, Lua the rule with its
+// place (`order`, which Hyprland reads as a surface maps) and its animation
+// (`no_anim`) in one hl.layer_rule, Retry the same with its animation alone
+// ("" where the rule has no order to drop).
+type LayerRule struct{ Name, Lua, Retry string }
+
+// GuardedLua is the rule in its own pcall, so Hyprland refusing it doesn't
+// stop the Lua after it: on failure its Retry, in its own pcall, then
+// onRefused, each left out where "".
+func (r LayerRule) GuardedLua(onRefused string) string {
+	then := []string{}
+	if r.Retry != "" {
+		then = append(then, "pcall(function() "+r.Retry+" end)")
+	}
+	if onRefused != "" {
+		then = append(then, onRefused)
+	}
+	if len(then) == 0 {
+		return "pcall(function() " + r.Lua + " end)"
+	}
+	return "if not pcall(function() " + r.Lua + " end) then " + strings.Join(then, " ") + " end"
+}
+
+// LayerRules is one rule per entry with an effect: its place and its
+// animation.
+func (t *Tables) LayerRules() []LayerRule {
+	out := []LayerRule{}
 	for _, l := range t.Layers {
-		if !truthy(l.Value("noAnim")) {
+		ns := str(l.Value("namespace"))
+		place, anim := "", ""
+		if order, ok := l.Get("order"); ok {
+			place = ", order = " + str(order)
+		}
+		if truthy(l.Value("noAnim")) {
+			anim = ", no_anim = true"
+		}
+		if place == "" && anim == "" {
 			continue
 		}
-		ns := str(l.Value("namespace"))
-		out = append(out, "hl.layer_rule({ name = "+LuaString("axiom-"+ns)+", match = { namespace = "+LuaString("^axiom-"+ns+"$")+" }, no_anim = true })")
+		rule := func(effects string) string {
+			return "hl.layer_rule({ name = " + LuaString("axiom-"+ns) + ", match = { namespace = " + LuaString("^axiom-"+ns+"$") + " }" + effects + " })"
+		}
+		r := LayerRule{Name: "axiom-" + ns, Lua: rule(place + anim)}
+		if place != "" && anim != "" {
+			r.Retry = rule(anim)
+		}
+		out = append(out, r)
+	}
+	return out
+}
+
+// LayerRulesLua is each LayerRules rule's Lua for the static files, each rule
+// guarded as the runtime add guards it (GuardedLua), so a Hyprland refusing
+// `order` doesn't stop the setup after it.
+func (t *Tables) LayerRulesLua() []string {
+	out := []string{}
+	for _, r := range t.LayerRules() {
+		out = append(out, r.GuardedLua(""))
 	}
 	return out
 }

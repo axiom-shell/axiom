@@ -8,6 +8,7 @@ import qs.services.ui
 import qs.config
 import qs.components.reusable
 import qs.components.surfaces.workspaces
+import qs.components.hosts.window
 
 // The workspace overview: the hovered monitor's workspace board
 // (WorkspacesConfig's layout) with its windows, full screen. Drag a window to move it (onto a side of another
@@ -104,11 +105,16 @@ Scope {
       // Over everything, so window coordinates are the monitor's (the
       // cursor goes back to them after a drop)
       exclusionMode: ExclusionMode.Ignore
-      visible: overlayWindow.shown || content.opacity > 0
+      visible: slot.shown
       color: "transparent"
-
-      WlrLayershell.layer: WlrLayer.Overlay
-      WlrLayershell.namespace: "axiom-workspaces"
+      WlrLayershell.layer: slot.layer
+      readonly property string layerNamespace: "axiom-workspaces"
+      WlrLayershell.namespace: overlayWindow.layerNamespace
+      LayerSlot {
+        id: slot
+        window: overlayWindow
+        wanted: overlayWindow.shown || content.opacity > 0
+      }
       // OnDemand, not Exclusive: an exclusive layer makes Hyprland refuse
       // focus to every window, so focusing one (a click, a drop's target)
       // would only switch the workspace, and closing would refocus the old
@@ -119,7 +125,7 @@ Scope {
         id: grab
         // Off for a moment to take the grab back after a drop moved focus
         property bool rearming: false
-        active: overlayWindow.shown && !grab.rearming
+        active: overlayWindow.shown && overlayWindow.visible && !grab.rearming
         windows: [overlayWindow].concat(SurfaceManager.modalWindows)
         onCleared: {
           if (overview.recentAction()) {

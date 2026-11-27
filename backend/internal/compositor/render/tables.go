@@ -30,8 +30,8 @@ type Tables struct {
 
 // The files Tables come from, by their paths in the tree
 const (
-	LayerStackFile   = "qml/components/methods/LayerStack.qml"
-	PolkitAgentsFile = "qml/components/methods/PolkitAgents.qml"
+	LayerStackFile   = "qml/components/methods/layer/LayerStack.qml"
+	PolkitAgentsFile = "qml/components/methods/polkit/PolkitAgents.qml"
 )
 
 // ParseTables reads the tables from their files' text (read: a repo path's

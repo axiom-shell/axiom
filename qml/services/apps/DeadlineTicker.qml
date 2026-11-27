@@ -66,12 +66,12 @@ Scope {
 
   // `interval`: ms between updates of `now` this owner wants
   function acquire(owner, interval) {
-    root._registry.acquire(owner, interval ?? 1000);
+    root._consumers.set(owner, interval ?? 1000);
     root.now = Date.now();
   }
 
   function release(owner) {
-    root._registry.release(owner);
+    root._consumers.drop(owner);
   }
 
   // `actions` ([{ id, label }]) are buttons on it; `onAction(id)` runs the
@@ -88,7 +88,7 @@ Scope {
   // -- Private --
 
   readonly property var _store: StateManager.createStateHandler(root.name)
-  property ConsumerRegistry _registry: ConsumerRegistry {}
+  property OwnerRegistry _consumers: OwnerRegistry {}
 
   // Matched on a reload to the old ticker's (both the Scope's first
   // child): loaded fires once, after the old values were copied in, or
@@ -175,9 +175,9 @@ Scope {
   }
 
   property Timer _tick: Timer {
-    interval: Math.max(50, Math.min(...root._registry.requests.concat([1000])))
+    interval: Math.max(50, Math.min(...root._consumers.values.concat([1000])))
     repeat: true
-    running: root.ticks && root._registry.active
+    running: root.ticks && root._consumers.active
     onTriggered: root.now = Date.now()
   }
 

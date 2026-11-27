@@ -5,12 +5,12 @@ The systems `/review-system` knows. Each `## <name>` entry: **Scope** in a line;
 ## compositor
 Scope: the neutral compositor layer: the contract, `supports`, layers and their order, config modes, window look.
 Docs: compositor/README.md compositor/contract.md compositor/config-modes.md compositor/layer-arrangement.md compositor/window-look.md
-Extra: qml/components/methods/CompositorKind.qml backend/internal/compositor/edit/edit.go qml/components/hosts/popout/LayerSlot.qml qml/services/ui/BackdropManager.qml qml/components/surfaces/backdrop/ScreenBackdrop.qml qml/shell/Backdrops.qml
+Extra: qml/components/methods/CompositorKind.qml backend/internal/compositor/edit/edit.go qml/components/hosts/window/LayerSlot.qml qml/services/ui/BackdropManager.qml qml/components/surfaces/backdrop/ScreenBackdrop.qml qml/shell/Backdrops.qml
 Checks:
 - Every consumer goes through `CompositorManager` (neutral shapes, `goToWorkspace`/`focusWindow`); no backend object leaks out of it.
 - Every `supports.<key>` read anywhere is one each backend sets (true or false), and every gated feature reads a key rather than a compositor name.
 - Nothing writes compositor config unless `supports.configModes`; leaving `included`/`managed` gives the config back.
-- Layer order only from `LayerStack.layers`; bars and the border never over fullscreen, nothing maps a Top window in response to fullscreen (a recurring regression).
+- Layer order only from `LayerStack.layers`; bars and the border never over fullscreen, nothing maps again at a fullscreen change except sway's bars at an exit with the overlay open (a recurring regression); the hot corners hide while a fullscreen window is up (their row's `overFullscreen: "never"`).
 Seams: every feature reading windows, outputs, workspaces or `supports`.
 
 ## hyprland
@@ -156,11 +156,11 @@ Checks:
 Seams: config (the store, `ConfigManager`, `ConfigOps.qml`); saved configs and sharing.
 
 ## services-core
-Scope: the services pattern, ConsumerRegistry, commands, state and files, shell targeting, file picker; the polled data services behind modules and widgets (audio, media, battery, system stats, weather, Claude usage, updates).
+Scope: the services pattern, OwnerRegistry, commands, state and files, shell targeting, file picker; the polled data services behind modules and widgets (audio, media, battery, system stats, weather, Claude usage, updates).
 Docs: core/services-pattern.md core/shell-manager-targeting.md core/file-picker.md
-Extra: qml/services/core/ConsumerRegistry.qml qml/services/core/StateManager.qml qml/services/core/FileManager.qml qml/services/ui/ShellManager.qml qml/components/methods/KeyboardLayouts.qml qml/services/system/InputSourceManager.qml qml/services/system/AudioManager.qml qml/services/system/MediaManager.qml qml/services/system/BatteryManager.qml qml/services/apps/WeatherManager.qml qml/services/apps/ClaudeUsageManager.qml qml/config/BatteryConfig.qml qml/config/WeatherConfig.qml qml/config/ClaudeUsageConfig.qml qml/config/UpdatesConfig.qml backend/internal/sysmon/ backend/internal/media/ backend/internal/weather/ backend/internal/claudeusage/ backend/internal/updates/
+Extra: qml/services/core/OwnerRegistry.qml qml/services/core/StateManager.qml qml/services/core/FileManager.qml qml/services/ui/ShellManager.qml qml/components/methods/KeyboardLayouts.qml qml/services/system/InputSourceManager.qml qml/services/system/AudioManager.qml qml/services/system/MediaManager.qml qml/services/system/BatteryManager.qml qml/services/apps/WeatherManager.qml qml/services/apps/ClaudeUsageManager.qml qml/config/BatteryConfig.qml qml/config/WeatherConfig.qml qml/config/ClaudeUsageConfig.qml qml/config/UpdatesConfig.qml backend/internal/sysmon/ backend/internal/media/ backend/internal/weather/ backend/internal/claudeusage/ backend/internal/updates/
 Checks:
-- Every polled service uses `acquire`/`release` with the Timer gated on `_registry.active`; requests from config only.
+- Every polled service uses `acquire`/`release` with the Timer gated on `_consumers.active`; requests from config only.
 - Persisted state written atomically, under XDG paths, never under the tree (`Paths.treePath`).
 - Only `ShellManager.isTarget` answers shortcuts, IPC and OSD; IPC handlers enabled on the target instance only.
 Seams: every service.
