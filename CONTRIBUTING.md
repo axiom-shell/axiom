@@ -62,7 +62,7 @@ You work in a clone of your own, anywhere, which axiom runs in **dev mode**: its
 2. **Find your way in.** Use the table below to find the doc for what you're touching, and read it first. Check the [open issues](https://github.com/axiom-shell/axiom/issues) in that area too.
 3. **Edit and save.** With dev mode running your clone, the shell reloads, so you see the change straight away, and a saved Go file rebuilds the binary too.
 4. **Check it** with `scripts/dev/verify.sh` until it prints `verify ok`. It formats your QML, runs the checks your change touches and shows the shell's log.
-5. **Update the purpose comment** of each file whose why changed.
+5. **Keep each file's purpose comment true** if its why changed.
 6. **Open a pull request** against `main` and fill in the template, linking the issue it closes (`Fixes #123`). CI runs every check (`scripts/dev/verify.sh --all` locally).
 
 Found an unrelated bug along the way? [Report it](https://github.com/axiom-shell/axiom/issues/new?template=01-bug.yml) rather than fixing it in the same pull request.
