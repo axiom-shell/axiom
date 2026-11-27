@@ -96,7 +96,7 @@ for f in "${changed[@]}"; do
   # The contrast pairs the Go side (palette) and tst_Tone both read
   tests/fixtures/style/contrast.json) go=1 ;;
   # The shared fixtures: both sides replay them (docs/dev/backend/README.md)
-  tests/Shared.qml | scripts/dev/fixtures.py | scripts/generate.sh) go=1 fixtures=1 tests+=(Shared) ;;
+  tests/Shared.qml | tests/RepoFiles.qml | scripts/dev/fixtures.py | scripts/generate.sh) go=1 fixtures=1 tests+=(Shared) ;;
   esac
   case "$f" in
   # (`*` crosses `/`: a domain helper under methods/<domain>/ matches too)
@@ -130,6 +130,8 @@ for f in "${changed[@]}"; do
   data/custom-widgets/habits.sh) script_tests+=(HabitsScript) ;;
   scripts/check_sizes.py) script_tests+=(CheckSizes) ;;
   scripts/dev/new_names.py) script_tests+=(NewNames) ;;
+  scripts/dev/fixtures.py) script_tests+=(FixturesGolden) ;;
+  scripts/run_tests.sh) script_tests+=(RunTests) ;;
   scripts/check_icons.py) script_tests+=(CheckIcons) ;;
   scripts/check_structure.py | scripts/quickshell-io-allowlist.json | scripts/chrome-drawing-allowlist.json | scripts/bar-widget-exceptions.json) script_tests+=(CheckStructure CheckStyle) ;;
   scripts/qml_modules.py) script_tests+=(CheckStructure CheckStyle Ratchet CheckQmllint CheckEngines) ;;

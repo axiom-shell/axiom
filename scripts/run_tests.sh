@@ -20,7 +20,11 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$root/scripts/lib/qt_paths.sh"
 tree="$(mktemp -d)"
 layout_tree="$tree/layout"
-trap 'rm -rf "$tree"' EXIT
+marker="$root/tests/.recording"
+trap 'rm -rf "$tree" "$marker"' EXIT
+# scripts/dev/fixtures.py passes the kind it records in AXIOM_RECORDING; any
+# other run removes a marker that a killed recording left.
+if [ -n "${AXIOM_RECORDING:-}" ]; then printf '%s\n' "$AXIOM_RECORDING" >"$marker"; else rm -f "$marker"; fi
 
 quiet=0
 if [ "${1:-}" = "-q" ]; then

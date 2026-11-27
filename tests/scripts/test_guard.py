@@ -605,12 +605,14 @@ class GeneratedEdits(unittest.TestCase):
                      "tests/fixtures/shared/blobs/abc.json", "backend/internal/assets/data/config/json/backend.json",
                      "qml/config/themes/template/theme.json", "qml/config/i18n/template/language.json",
                      "qml/components/surfaces/wallpaper/shaders/stamps.txt", "qml/components/surfaces/wallpaper/shaders/blur.frag.qsb",
-                     "docs/dev/generated/files.md", "docs/dev/config/Bars.md"):
+                     "docs/dev/generated/files.md", "docs/dev/config/Bars.md",
+                     "tests/barstyle/Matrix.js", "tests/flat/ExampleMatrix.js"):
             self.assertTrue(self.denied(path), path)
 
     def test_sources_pass(self):
         for path in ("qml/config/schema/sections/Bars.yaml", "qml/components/methods/SchemaValidation.qml", "data/examples/basic.json",
-                     "qml/components/surfaces/wallpaper/shaders/blur.frag", "qml/config/i18n/ja.json"):
+                     "qml/components/surfaces/wallpaper/shaders/blur.frag", "qml/config/i18n/ja.json",
+                     "tests/barstyle/Bars.js", "tests/tst_BarStyleMatrix.qml"):
             self.assertFalse(self.denied(path), path)
 
     def test_bash_writes(self):

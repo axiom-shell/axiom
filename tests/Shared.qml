@@ -22,9 +22,11 @@ QtObject {
 
   // The live schema, which a case names by its path instead of copying it
   readonly property string schemaPath: "qml/config/json/config.schema.json"
-  readonly property var schema: _json(schemaPath)
+  readonly property var schema: root._files.json(schemaPath)
 
-  readonly property bool recording: _read("tests/fixtures/shared/.recording") !== ""
+  // True while scripts/dev/fixtures.py record runs
+  readonly property bool recording: root._files.recording("fixture")
+  readonly property RepoFiles _files: RepoFiles {}
   property int _calls: 0
 
   // op → function(args) returning the output: the schema's, and every
@@ -233,29 +235,13 @@ QtObject {
     }
     // Large arguments are stored once, by hash (scripts/dev/fixtures.py)
     if (!Array.isArray(value) && typeof value.$blob === "string" && Object.keys(value).length === 1)
-      return _resolve(_json("tests/fixtures/shared/blobs/" + value.$blob + ".json"));
+      return _resolve(root._files.json("tests/fixtures/shared/blobs/" + value.$blob + ".json"));
     if (!Array.isArray(value) && typeof value.$repoFile === "string" && Object.keys(value).length === 1)
-      return value.$repoFile === root.schemaPath ? root.schema : _json(value.$repoFile);
+      return value.$repoFile === root.schemaPath ? root.schema : root._files.json(value.$repoFile);
     if (Array.isArray(value))
       return value.map(v => _resolve(v));
     for (const key in value)
       value[key] = _resolve(value[key]);
     return value;
-  }
-
-  // Files by path from the repo root (as RepoFiles, which this can't use
-  // from its own bindings: they may run before a child object exists)
-  function _read(path) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", Qt.resolvedUrl("../" + path), false);
-    xhr.send();
-    return xhr.responseText;
-  }
-
-  function _json(path) {
-    const text = _read(path);
-    if (text === "")
-      throw new Error("empty or unreadable: " + path);
-    return JSON.parse(text);
   }
 }

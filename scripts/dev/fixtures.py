@@ -14,13 +14,24 @@ byte (docs/dev/backend/README.md › Shared fixtures).
   scripts/dev/fixtures.py ensure     record only when what the cases are
                                      made from changed since the last
                                      recording (scripts/generate.sh runs it)
+  scripts/dev/fixtures.py golden <Name> [--allow <file>]
+                                     re-record one golden (GOLDENS, or a listed
+                                     engine's tests.golden) from its test.
+                                     Changed, added or removed keys are written
+                                     only when --allow lists them, as
+                                     {"<group> <key>": {"rule": "<rule id>",
+                                     "reason": "<one line>"}}; a listed key that
+                                     didn't change is refused too. A golden with
+                                     no file yet is written whole
   scripts/dev/fixtures.py check      the index lists exactly the cases on
                                      disk, each with its expected file, and
                                      every blob is used (CI)
 
 The whole directory is generated and gitignored: CI records it before the
 tests that replay it (both the JS and the Go side). Recording needs Qt 6's
-qmltestrunner.
+qmltestrunner. It passes the kind ("fixture", or "golden <Name>") in
+AXIOM_RECORDING, which run_tests.sh writes to tests/.recording for the run
+(RepoFiles.recording reads it).
 
 A case is <suite>/<test>/<name>.json ({op, args}) plus <name>.expected.json
 (the exact bytes the JS helper produced). Arguments larger than BLOB_SIZE
@@ -36,6 +47,7 @@ shell's copy of the migrations was removed.
 """
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -43,7 +55,13 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts"))
+import manifests  # noqa: E402
+
 SHARED = ROOT / "tests/fixtures/shared"
+# Goldens of no listed engine; a listed engine's goldens are its manifest
+# tests.golden (manifests.golden_file); a golden has one home at a time
+GOLDENS = {"BarStyleMatrix": "tests/barstyle/Matrix.js"}
 # Suites recorded from the JS helpers (the rest are written by Go's tests)
 # ConfigOps (config.set's ops, which the daemon's tests decode), InputSources
 # (the xkb list the renderer derives too) and the bind and layer helpers the
@@ -69,6 +87,8 @@ STAMP_INPUTS = ("qml/components/methods/SchemaValidation.qml", "tests/Shared.qml
 
 
 def main(argv):
+    if len(argv) in (3, 5) and argv[1] == "golden" and (len(argv) == 3 or argv[3] == "--allow"):
+        return golden(argv[2], argv[4] if len(argv) == 5 else None)
     if len(argv) != 2 or argv[1] not in ("record", "ensure", "check"):
         print(__doc__.strip(), file=sys.stderr)
         return 2
@@ -96,12 +116,7 @@ def record():
     # What an earlier recording left that no suite writes any more
     for stale in ("legacy", "share", "corpus", "schemas", ".corpus"):
         shutil.rmtree(SHARED / stale, ignore_errors=True)
-    marker = SHARED / ".recording"
-    marker.write_text("1\n")
-    try:
-        out = run_tests()
-    finally:
-        marker.unlink(missing_ok=True)
+    out = run_tests(RECORD_TESTS, "FIXTURE", "fixture")
 
     records = [decode(line) for line in out.splitlines() if "@@FIXTURE " in line]
     if not records:
@@ -141,13 +156,13 @@ def record():
     return 0
 
 
-def run_tests():
-    """Runs the recording tests, failing if any of them fails."""
-    proc = subprocess.run([str(ROOT / "scripts/run_tests.sh"), *RECORD_TESTS],
-                          cwd=ROOT, capture_output=True, text=True, errors="surrogateescape")
+def run_tests(names, tag, kind):
+    """Runs the named tests, failing if any of them fails; @@<tag> lines stay out of the failure print; kind is the recording marker's content."""
+    proc = subprocess.run([str(ROOT / "scripts/run_tests.sh"), *names],
+                          cwd=ROOT, env={**os.environ, "AXIOM_RECORDING": kind}, capture_output=True, text=True, errors="surrogateescape")
     output = proc.stdout + proc.stderr
     if proc.returncode != 0:
-        print("\n".join(l for l in output.splitlines() if "@@FIXTURE" not in l)[-4000:], file=sys.stderr)
+        print("\n".join(l for l in output.splitlines() if f"@@{tag}" not in l)[-4000:], file=sys.stderr)
         raise SystemExit("the recording tests failed; nothing was written")
     return output
 
@@ -199,6 +214,104 @@ def store_blobs(value, blobs):
 
 def dump(value):
     return json.dumps(value, ensure_ascii=False, indent=2) + "\n"
+
+
+# --- golden ---
+
+def golden(name, allow):
+    """Records one golden from its test; the exit code."""
+    in_manifest, in_goldens = manifests.golden_file(name), GOLDENS.get(name)
+    if in_manifest and in_goldens:
+        print(f"{name} is in GOLDENS and in scripts/engines.json's tests.golden; keep one", file=sys.stderr)
+        return 2
+    rel = in_manifest or in_goldens
+    if not rel:
+        print(f"no golden named {name} (GOLDENS: {', '.join(GOLDENS)})", file=sys.stderr)
+        return 2
+    try:
+        allowed = read_allow(allow) if allow else {}
+    except (OSError, ValueError) as err:
+        print(f"{allow}: {err}", file=sys.stderr)
+        return 2
+    path = ROOT / rel
+    old = None
+    if path.exists():
+        try:
+            old = golden_data(path.read_text(encoding="utf-8"))
+        except ValueError:
+            print(f"can't read {rel}'s data", file=sys.stderr)
+            return 1
+    out = run_tests([name], "MATRIX", f"golden {name}")
+
+    data = {}
+    for line in out.splitlines():
+        if "@@MATRIX " not in line:
+            continue
+        group, key, value = decode_matrix(line)
+        if key in data.get(group, {}):
+            print(f"{group} {key}: recorded twice", file=sys.stderr)
+            return 1
+        data.setdefault(group, {})[key] = value
+    if not data:
+        print("no cases were recorded (did the test run?)", file=sys.stderr)
+        return 1
+
+    flat = {f"{g} {k}": v for g, keys in data.items() for k, v in keys.items()}
+    if old is None:
+        problems = [f"{key}: in --allow but unchanged" for key in sorted(allowed)]
+        counts = f"{len(flat)} keys"
+    else:
+        was = {f"{g} {k}": v for g, keys in old.items() for k, v in keys.items()}
+        changed = {key for key in flat if key in was and flat[key] != was[key]}
+        added, removed = set(flat) - set(was), set(was) - set(flat)
+        diff = {**{k: "changed" for k in changed}, **{k: "added" for k in added}, **{k: "removed" for k in removed}}
+        problems = [f"{key}: {how}, not in --allow" for key, how in sorted(diff.items()) if key not in allowed]
+        problems += [f"{key}: in --allow but unchanged" for key in sorted(set(allowed) - set(diff))]
+        counts = (f"{len(changed)} changed, {len(added)} added, {len(removed)} removed" if diff else "data unchanged")
+    if problems:
+        print("\n".join(problems) + "\nnothing written", file=sys.stderr)
+        return 1
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(golden_text(name, data), encoding="utf-8")
+    print(f"{rel}: {'written (' + counts + ')' if old is None else counts}")
+    return 0
+
+
+def decode_matrix(line):
+    """A @@MATRIX line's (group, key, value): `<group> <key>\t<value>` after the tag."""
+    head, value = line.split("@@MATRIX ", 1)[1].rstrip("\r\n").split("\t", 1)
+    group, key = head.split(" ", 1)
+    return group, key, value
+
+
+def golden_data(text):
+    """A golden file's data section (`var expected = …;`) parsed; ValueError if it has none or isn't groups of keys."""
+    head, found, body = text.partition("var expected = ")
+    if not found:
+        raise ValueError("no data section")
+    data = json.loads(body.rstrip().removesuffix(";"))
+    if not (isinstance(data, dict) and all(isinstance(keys, dict) for keys in data.values())):
+        raise ValueError("data section isn't groups of keys")
+    return data
+
+
+def golden_text(name, data):
+    """The whole golden file: header and the data section, groups and keys sorted."""
+    ordered = {g: dict(sorted(data[g].items())) for g in sorted(data)}
+    return (".pragma library\n"
+            f"// Generated by scripts/dev/fixtures.py golden {name} from tests/tst_{name}.qml; never edited by hand.\n"
+            "var expected = " + dump(ordered).rstrip("\n") + ";\n")
+
+
+def read_allow(path):
+    """The --allow file: {"<group> <key>": {"rule": …, "reason": …}}; ValueError if it isn't."""
+    allowed = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(allowed, dict):
+        raise ValueError("not a JSON object")
+    for key, why in allowed.items():
+        if not (isinstance(why, dict) and all(isinstance(why.get(f), str) and why[f] for f in ("rule", "reason"))):
+            raise ValueError(f"{key}: needs a non-empty rule and reason")
+    return allowed
 
 
 # --- index and check ---

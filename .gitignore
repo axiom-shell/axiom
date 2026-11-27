@@ -15,6 +15,9 @@ docs/dev/generated/
 .pytest_cache/
 CLAUDE.local.md
 
+# recording marker (scripts/run_tests.sh writes it from AXIOM_RECORDING)
+tests/.recording
+
 # Claude Code: the plans folder, worktrees, personal settings
 .plans/
 .claude/worktrees/
