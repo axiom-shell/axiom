@@ -680,10 +680,15 @@ class CheckStructure(unittest.TestCase):
             ("qml/shell/SwayUse.qml", qml("property var w: I3.workspaces", imports="import Quickshell.I3")),
             ("qml/shell/GhostMember.qml", qml("property var x: Quickshell.ghostMember")),
             ("qml/components/reusable/TrayUse.qml", qml("property var m: QsMenuOpener {}", imports="import Quickshell.Services.SystemTray")),
+            ("qml/shell/HyprType.qml", qml("HyprlandMonitor {}\n    ClippingRectangle {}", imports="import Quickshell.Hyprland\nimport Quickshell.Widgets")),
+            ("qml/shell/I3Type.qml", qml("I3Workspace {}\n    SystemClock {}", imports="import Quickshell.I3")),
         ]
 
         def lists(data):
             grants = data["files"]
+            data["anywhere"]["window"] = {"rules": ["window"], "reason": "a fixture"}
+            data["anywhere"]["foo"] = {"rules": ["screen-type"], "reason": "a fixture"}
+            grants["qml/shell"] = {"rules": ["window"], "reason": "a fixture"}
             grants["qml/config/Paths.qml"]["rules"] += ["socket", "ghost"]
             grants.update({
                 "qml/shell/NoReason.qml": {"rules": [], "reason": ""},
@@ -711,7 +716,12 @@ class CheckStructure(unittest.TestCase):
             "qml/shell/GhostMember.qml: quickshell-use Quickshell.ghostMember:",
             "qml/components/reusable/TrayUse.qml: quickshell-use tray-menu (QsMenuOpener): move it into TrayMenuList",
             "quickshell-exceptions.json: qml/shell/NoReason.qml has no reason",
-            "scripts/quickshell-exceptions.json: qml/shell/Gone.qml doesn't exist",
+            "scripts/quickshell-exceptions.json: qml/shell/Gone.qml is not a file",
+            "scripts/quickshell-exceptions.json: qml/shell is not a file",
+            "scripts/quickshell-exceptions.json: window is not an anywhere type: anywhere holds only clock, diff-model, rounded-clip, screen-type, each listing itself",
+            "scripts/quickshell-exceptions.json: foo is not an anywhere type",
+            "qml/shell/HyprType.qml: quickshell-use import: imports Quickshell.Hyprland but uses nothing QUICKSHELL_USES knows of it",
+            "qml/shell/I3Type.qml: quickshell-use import: imports Quickshell.I3 but uses nothing QUICKSHELL_USES knows of it",
             "scripts/quickshell-exceptions.json: qml/config/Paths.qml no longer uses socket: remove it: the list only shrinks",
             "quickshell-exceptions.json: qml/config/Paths.qml names ghost, not a rule",
             "scripts/quickshell-exceptions.json: qml/services/system/BatteryManager.qml lists upower, a daemon-set use: it can't be granted",
@@ -720,8 +730,24 @@ class CheckStructure(unittest.TestCase):
         ]), [], out)
         for quiet in ("PowerChip.qml: quickshell-use upower (import Quickshell.Services.UPower): only the files",
                       "qml/shell/Blue.qml: quickshell-use import", "no longer uses window", "no longer uses ghost",
-                      "BatteryManager.qml: quickshell-use upower"):
+                      "BatteryManager.qml: quickshell-use upower", "qml/shell/Hypr.qml: quickshell-use import",
+                      "qml/shell/SwayUse.qml: quickshell-use import", "qml/shell/Bare.qml: quickshell-use import: imports Quickshell.",
+                      "NoReason.qml lists no use", "qml/shell no longer uses window"):
             self.assertEqual([l for l in out.splitlines() if quiet in l], [], quiet + "\n" + out)
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, *self.NAMING_PATHS, plant=lambda root: [
+                p.write_text(p.read_text().replace("ScriptModel", "ListModel")) for p in (root / "qml").rglob("*.qml")])
+            edit_json(root / "scripts/quickshell-exceptions.json", lambda data: data["files"].update(
+                {"qml/shell/Bar.qml": {"rules": [], "reason": "a fixture"}}))
+            _, out = run_check(root, "check_structure.py", "--base", base, files=[("qml/shell/Bar.qml", qml())])
+        self.assertEqual(missed(out, [
+            "scripts/quickshell-exceptions.json: diff-model is used nowhere: remove it: the list only shrinks",
+            "scripts/quickshell-exceptions.json: qml/shell/Bar.qml lists no use: remove it: the list only shrinks"]), [], out)
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, *self.NAMING_PATHS)
+            (root / "scripts/quickshell-exceptions.json").write_text("{")
+            _, out = run_check(root, "check_structure.py", "--base", base, files=[])
+        self.assertEqual(len([l for l in out.splitlines() if "quickshell-exceptions.json: not JSON" in l]), 1, out)
 
     def test_naming_baseline_and_new_rules(self):
         def without_root_id(root):

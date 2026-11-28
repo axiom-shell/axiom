@@ -511,14 +511,14 @@
         "instances",
         "screens"
       ],
-      "reason": "the windowed greeter: it must exist even with no monitor connected (a stand-in screen then)"
+      "reason": "the windowed greeter's per-screen wiring: it must exist even with no monitor connected (a stand-in screen then)"
     },
     "qml/shell/GreeterPreview.qml": {
       "rules": [
         "instances",
         "screens"
       ],
-      "reason": "the preview window has a screen to open on even with no monitor connected (a stand-in one then)"
+      "reason": "the preview window's per-screen wiring: it has a screen to open on even with no monitor connected (a stand-in one then)"
     },
     "qml/shell/HotCorners.qml": {
       "rules": [
@@ -535,7 +535,7 @@
         "screens",
         "session-lock"
       ],
-      "reason": "the lock is a Wayland session lock; its preview window has a screen to open on even with no monitor connected (a stand-in one then)"
+      "reason": "the lock is a Wayland session lock, its state survives a config reload (a reload never unlocks), and its per-screen wiring; its preview window has a screen to open on even with no monitor connected (a stand-in one then)"
     },
     "qml/shell/Menus.qml": {
       "rules": [
