@@ -85,7 +85,7 @@ a hit not in it fails, a fixed entry left behind fails, and an entry added
 since the base fails unless its rule is new there or it moved to another
 file. A hit is `<file>: <rule> <symbol>`; scripts/structure-exceptions.json
 waives one (a file glob, or a name; rules and reason; an entry that waives
-nothing fails).
+nothing fails; quickshell-use's grants are scripts/quickshell-exceptions.json's, never this file).
 
   scripts/check_structure.py                    errors (exit 1) and warnings
   scripts/check_structure.py --base REF         read the base from REF (default: HEAD^1 in CI, else the
@@ -116,6 +116,7 @@ RULES = {
     "folder-case": "grouping folders are lowercase words joined; a folder of one kind under surfaces/ or content/parts/ is singular",
     "test-names": "test functions are `test_snake_case`; a `tst_<X>` tests exactly the stem <X>, never a near-stem of another",
     "singleton-children": "a singleton's members are properties, functions and signals: its child objects hang off a property",
+    "quickshell-use": "a Quickshell API only in the files scripts/quickshell-exceptions.json lists, the four anywhere types, or a baseline entry; system data, compositor IPC, files and processes are the daemon's",
 }
 # The shell's QML: `qs.` module names are relative to it
 QML_ROOT = ROOT / "qml"
@@ -165,6 +166,66 @@ IO_KINDS = {
     "FileView": re.compile(r"(?<![\w.])FileView\s*\{"),
     "Socket": re.compile(r"(?<![\w.])Socket\s*\{"),
     "execDetached": re.compile(r"\bQuickshell\.execDetached\("),
+}
+
+# The files allowed Quickshell APIs, each with its reason (quickshell-use)
+QUICKSHELL_EXCEPTIONS = ROOT / "scripts" / "quickshell-exceptions.json"
+# {use id: (pattern over a file's code, set, home, advice)}: set is "wayland", "toolkit" or "daemon" (only the
+# first two can be listed); advice None = the service-module advice (UI: read it through the service; services
+# and readers: extend the home over BackendManager)
+QUICKSHELL_USES = {
+    "window": (re.compile(r"(?<![\w$])(?:PanelWindow|PopupWindow|FloatingWindow|QsWindow|ExclusionMode|Edges|PopupAdjustment|Region|RegionShape|Intersection)\b"),
+               "wayland", "the surface's window file", "go through the surface's window file or a piece in components/hosts/window/"),
+    "instances": (re.compile(r"(?<![\w$])(?:ShellRoot|Scope|Variants|LazyLoader)\b"), "toolkit", "the shell entry in qml/shell/",
+                  "add the file to scripts/quickshell-exceptions.json with what it is the platform's home for"),
+    "persist": (re.compile(r"(?<![\w$])PersistentProperties\b|(?<![\w$])Singleton\s*\{"), "toolkit", "the service that owns the state",
+                "add the file to scripts/quickshell-exceptions.json with what it is the platform's home for"),
+    "runtime": (re.compile(r"\bQuickshell\.(?:reload|shellDir|shellPath|processId|appId)\b"), "toolkit", "the file that reads the runtime",
+                "add the file to scripts/quickshell-exceptions.json with what it is the platform's home for"),
+    "env": (re.compile(r"\bQuickshell\.env\("), "toolkit", "Paths", "read it through Paths"),
+    "screens": (re.compile(r"\bQuickshell\.screens\b"), "wayland", "General", "build on General.outputs or General.screensFor(target)"),
+    "apps": (re.compile(r"(?<![\w$])DesktopEntr(?:ies|y)\b|\bQuickshell\.iconPath\b"), "daemon", "AppIconManager", None),
+    "tray-menu": (re.compile(r"(?<![\w$])(?:QsMenuOpener|QsMenuHandle|QsMenuEntry|QsMenuButtonType)\b"), "daemon", "TrayMenuList", None),
+    "screen-type": (re.compile(r"(?<![\w$])ShellScreen\b"), "wayland", "the anywhere section", "add the file to scripts/quickshell-exceptions.json with what it is the platform's home for"),
+    "rounded-clip": (re.compile(r"(?<![\w$])ClippingRectangle\b"), "toolkit", "the anywhere section", "add the file to scripts/quickshell-exceptions.json with what it is the platform's home for"),
+    "clock": (re.compile(r"(?<![\w$])SystemClock\b"), "toolkit", "the anywhere section", "add the file to scripts/quickshell-exceptions.json with what it is the platform's home for"),
+    "diff-model": (re.compile(r"(?<![\w$])ScriptModel\b"), "toolkit", "the anywhere section", "add the file to scripts/quickshell-exceptions.json with what it is the platform's home for"),
+    "layer-shell": (re.compile(r"(?<![\w$])(?:WlrLayershell|WlrLayer|WlrKeyboardFocus)\b"), "wayland", "the surface's window file",
+                    "go through the surface's window file or a piece in components/hosts/window/"),
+    "session-lock": (re.compile(r"(?<![\w$])WlSessionLock\w*"), "wayland", "Lockscreen",
+                     "add the file to scripts/quickshell-exceptions.json with what it is the platform's home for"),
+    "screencopy": (re.compile(r"(?<![\w$])ScreencopyView\b"), "wayland", "a capture window",
+                   "add the file to scripts/quickshell-exceptions.json with what it is the platform's home for"),
+    "foreign-toplevel": (re.compile(r"(?<![\w$])ToplevelManager\b"), "wayland", "the file that tracks the windows",
+                         "add the file to scripts/quickshell-exceptions.json with what it is the platform's home for"),
+    "background-effect": (re.compile(r"(?<![\w$])BackgroundEffect\b"), "wayland", "the surface's window file",
+                          "add the file to scripts/quickshell-exceptions.json with what it is the platform's home for"),
+    "shortcut-inhibit": (re.compile(r"(?<![\w$])ShortcutInhibitor\b"), "wayland", "KeyRecorder",
+                         "add the file to scripts/quickshell-exceptions.json with what it is the platform's home for"),
+    "icon-image": (re.compile(r"(?<![\w$])IconImage\b"), "toolkit", "the file that draws the icon",
+                   "add the file to scripts/quickshell-exceptions.json with what it is the platform's home for"),
+    "hyprland": (re.compile(r"(?<![\w$])Hyprland\.(?!dispatch\()"), "daemon", "CompositorManager", "go through CompositorManager"),
+    "focus-grab": (re.compile(r"(?<![\w$])HyprlandFocusGrab\b"), "wayland", "HyprlandGrab",
+                   "add the file to scripts/quickshell-exceptions.json with what it is the platform's home for"),
+    "compositor-dispatch": (re.compile(r"(?<![\w$])(?:Hyprland|I3)\.dispatch\("), "daemon", "CompositorManager", "go through CompositorManager"),
+    "i3": (re.compile(r"(?<![\w$])I3\.(?!dispatch\()|(?<![\w$])I3IpcListener\b"), "daemon", "CompositorManager", "go through CompositorManager"),
+    "process": (re.compile(r"(?<![\w.])Process\s*\{"), "daemon", "CommandManager",
+                "go through CommandManager, FileManager, StateManager or IpcTarget, or a daemon method"),
+    "file-view": (re.compile(r"(?<![\w.])FileView\s*\{"), "daemon", "FileManager",
+                  "go through CommandManager, FileManager, StateManager or IpcTarget, or a daemon method"),
+    "socket": (re.compile(r"(?<![\w.])(?:Socket|SplitParser)\s*\{"), "toolkit", "BackendManager",
+               "add the file to scripts/quickshell-exceptions.json with what it is the platform's home for"),
+    "exec-detached": (re.compile(r"\bQuickshell\.execDetached\("), "daemon", "CommandManager",
+                      "go through CommandManager, FileManager, StateManager or IpcTarget, or a daemon method"),
+    "pipewire": (re.compile(r"^import Quickshell\.Services\.Pipewire\b", re.M), "daemon", "AudioManager", None),
+    "mpris": (re.compile(r"^import Quickshell\.Services\.Mpris\b", re.M), "daemon", "MediaManager", None),
+    "upower": (re.compile(r"^import Quickshell\.Services\.UPower\b", re.M), "daemon", "BatteryManager", None),
+    "notifications": (re.compile(r"^import Quickshell\.Services\.Notifications\b", re.M), "daemon", "NotificationManager", None),
+    "system-tray": (re.compile(r"^import Quickshell\.Services\.SystemTray\b", re.M), "daemon", "the bar's SystemTray widget", None),
+    "polkit": (re.compile(r"^import Quickshell\.Services\.Polkit\b", re.M), "daemon", "PolkitManager", None),
+    "pam": (re.compile(r"^import Quickshell\.Services\.Pam\b", re.M), "daemon", "AuthManager", None),
+    "greetd": (re.compile(r"^import Quickshell\.Services\.Greetd\b", re.M), "daemon", "GreetdManager", None),
+    "networking": (re.compile(r"^import Quickshell\.Networking\b", re.M), "daemon", "NetworkingManager", None),
 }
 
 # The chrome-drawing constructs the one chrome path replaced, frozen to the
@@ -554,7 +615,7 @@ def near_stem(name, stems):
 
 
 def naming_hits(sources, tests):
-    """({file: {rule: [symbol]}} past the exceptions, errors): the hits of RULES over the shell's `sources`
+    """({file: {rule: [symbol]}} past the exceptions, errors): the hits of RULES but quickshell-use over the shell's `sources`
     and the `tests` harnesses ({path: text} each)."""
     hits = qml_modules.Hits()
     stems = {}
@@ -610,7 +671,7 @@ def naming_hits(sources, tests):
         if re.fullmatch(r"[a-z]\w*[A-Z]\w*", name) or rel(folder.parent) in GROUPING_PARENTS and re.fullmatch(r"[a-z]\w*s", name):
             hits.add(path, "folder-case", f"folder:{name}")
     found = hits.found()
-    exceptions, errors = qml_modules.load_exceptions(EXCEPTIONS, set(RULES))
+    exceptions, errors = qml_modules.load_exceptions(EXCEPTIONS, set(RULES) - {"quickshell-use"})
     return found, errors + qml_modules.waive(found, exceptions, "scripts/structure-exceptions.json")
 
 
@@ -623,6 +684,66 @@ def main():
     schema = json.loads(SCHEMA.read_text())
     sources = {rel(f): f.read_text() for f in qml_files()}
     named, hit_errors = naming_hits(sources, harness_files())
+    # quickshell-use: a Quickshell API only in the files scripts/quickshell-exceptions.json lists (its `files`
+    # grants Wayland- and toolkit-set uses, `anywhere` the four anywhere types, `never` bans a module); every other
+    # use is a found entry the ratchet holds to structure-baseline.json (daemon-set uses can't be granted). Its
+    # found joins `named` after the waive: structure-exceptions.json never grants it
+    anywhere, anywhere_errors = qml_modules.load_exceptions(QUICKSHELL_EXCEPTIONS, set(QUICKSHELL_USES), section="anywhere")
+    never, never_errors = qml_modules.load_exceptions(QUICKSHELL_EXCEPTIONS, set(QUICKSHELL_USES), section="never")
+    granted, granted_errors = qml_modules.load_exceptions(QUICKSHELL_EXCEPTIONS, set(QUICKSHELL_USES), section="files")
+    quick_file = rel(QUICKSHELL_EXCEPTIONS)
+    quick_errors = anywhere_errors + never_errors + granted_errors
+    quick, said, used = qml_modules.Hits(), {}, {}
+    for path, text in sources.items():
+        src = qml_modules.Source(path, text)
+        for n, (use, (pattern, kind, home, advice)) in enumerate(QUICKSHELL_USES.items()):
+            m = pattern.search(src.code)
+            if not m:
+                continue
+            used.setdefault(path, set()).add(use)
+            if kind != "daemon" and (use in anywhere or use in granted.get(path, {}).get("rules", [])):
+                continue
+            quick.add(path, "quickshell-use", use, n)
+            what = f"{path}: quickshell-use {use} ({m.group(0).rstrip(" \t\n({.")}):"
+            if kind != "daemon":
+                said[path, use] = f"{what} only the files {quick_file} lists may ({home} is {use}'s home): {advice}"
+            elif advice:
+                said[path, use] = f"{what} {advice}"
+            elif not home.endswith("Manager"):
+                said[path, use] = f"{what} move it into {home}"
+            elif path.startswith(("qml/components/", "qml/shell/")):
+                said[path, use] = f"{what} read it through that service ({home} is {use}'s home)"
+            else:
+                said[path, use] = f"{what} system data comes from the daemon, not a Quickshell module: extend {home} over BackendManager"
+        imports = text
+        for module, entry in never.items():
+            gone = re.compile(rf"^import {re.escape(module)}\b.*$", re.M)
+            if gone.search(text):
+                quick_errors.append(f"{path}: quickshell-use {module}: {entry['reason']}")
+                imports = gone.sub("", imports)
+        if qml_modules.QUICKSHELL_IMPORT.search(imports) and path not in used:
+            quick_errors.append(f"{path}: quickshell-use import: imports Quickshell but uses nothing QUICKSHELL_USES knows: drop the import, or add the type to QUICKSHELL_USES with a use id and a reason")
+        unknown = set()
+        for line in src.code.split("\n"):
+            if not line.lstrip().startswith("import "):
+                unknown |= {m.group(1) for m in re.finditer(r"(?<![\w$.])Quickshell\.([a-z]\w*)", line)
+                            if not any(pattern.match(line, m.start()) for pattern, *_ in QUICKSHELL_USES.values())}
+        quick_errors += [f"{path}: quickshell-use Quickshell.{member}: a Quickshell member QUICKSHELL_USES doesn't know: add it to QUICKSHELL_USES with a use id and a reason"
+                         for member in sorted(unknown)]
+    for key, entry in sorted({**anywhere, **granted}.items()):
+        if key in granted and not (ROOT / key).exists():
+            quick_errors.append(f"{quick_file}: {key} doesn't exist")
+            continue
+        for use in entry["rules"]:
+            if use not in QUICKSHELL_USES:
+                continue
+            if QUICKSHELL_USES[use][1] == "daemon":
+                quick_errors.append(f"{quick_file}: {key} lists {use}, a daemon-set use: it can't be granted (its remaining uses are structure-baseline.json entries)")
+            elif key in granted and use not in used.get(key, set()):
+                quick_errors.append(f"{quick_file}: {key} no longer uses {use}: remove it: the list only shrinks")
+    for path, rules in quick.found().items():
+        named.setdefault(path, {}).update(rules)
+    hit_errors += quick_errors
     if args.update_baseline:
         try:
             if not hit_errors:
@@ -1258,7 +1379,8 @@ def main():
                 errors.append(f"{path}: {name} is defined in {' and '.join(sorted(sources_of))}; import only one")
 
     try:
-        errors.extend(hit_errors + qml_modules.ratchet(named, BASELINE, base, qml_modules.new_rules(base, SELF, RULES)))
+        errors.extend(hit_errors + qml_modules.ratchet(named, BASELINE, base, qml_modules.new_rules(base, SELF, RULES),
+                                                                        unlisted=lambda f, r, s: said.get((f, s)) if r == "quickshell-use" else None))
     except ValueError as e:
         errors.append(str(e))
     for e in errors:

@@ -655,6 +655,7 @@ class CheckStructure(unittest.TestCase):
             "qml/shell/Reach.qml: private-reach g:host._drawn: not in the baseline",
             "qml/shell/Reach.qml: private-reach Reach:id _soon: not in the baseline",
             "qml/shell/Edge.qml: suffix-rules Edge:Window: not in the baseline",
+            "qml/shell/Tip.qml: quickshell-use window (PopupWindow):",
             "qml/shell/RootId.qml: root-id RootId:copies: not in the baseline",
             "qml/shell/WorkspaceCell.qml: stem-unique stem:WorkspaceCell: not in the baseline",
             "qml/shell/FooPanel.qml: suffix-rules FooPanel:Panel: not in the baseline",
@@ -672,6 +673,62 @@ class CheckStructure(unittest.TestCase):
         lines = out.splitlines()
         for rule, statement in check_structure.RULES.items():
             self.assertEqual(lines.count(f"error    {rule}: {statement}"), 1, rule + "\n" + out)
+
+    def test_quickshell_use(self):
+        files = [
+            ("qml/components/reusable/PowerChip.qml", qml(imports="import Quickshell.Services.UPower")),
+            ("qml/services/system/PowerManager.qml", qml(imports="import Quickshell.Services.UPower")),
+            ("qml/shell/Hypr.qml", qml("property var w: Hyprland.workspaces", imports="import Quickshell.Hyprland")),
+            ("qml/services/core/FileManager.qml", qml()),
+            ("qml/shell/Blue.qml", qml(imports="import Quickshell.Bluetooth")),
+            ("qml/shell/Bare.qml", qml(imports="import Quickshell")),
+            ("qml/shell/Screens.qml", qml("property var s: Quickshell.screens")),
+            ("qml/services/core/Spawner.qml", qml("Process {}")),
+            ("qml/shell/SwayUse.qml", qml("property var w: I3.workspaces", imports="import Quickshell.I3")),
+            ("qml/shell/GhostMember.qml", qml("property var x: Quickshell.ghostMember")),
+            ("qml/components/reusable/TrayUse.qml", qml("property var m: QsMenuOpener {}", imports="import Quickshell.Services.SystemTray")),
+        ]
+
+        def lists(data):
+            grants = data["files"]
+            grants["qml/config/Paths.qml"]["rules"] += ["socket", "ghost"]
+            grants.update({
+                "qml/shell/NoReason.qml": {"rules": [], "reason": ""},
+                "qml/shell/Gone.qml": {"rules": ["window"], "reason": "a fixture"},
+                "qml/services/system/BatteryManager.qml": {"rules": ["upower"], "reason": "a fixture"}})
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, *self.NAMING_PATHS)
+            edit_json(root / "scripts/quickshell-exceptions.json", lists)
+            edit_json(root / "scripts/structure-exceptions.json", lambda data: data.update({
+                "qml/shell/Hypr.qml": {"rules": ["quickshell-use"], "reason": "a fixture"}}))
+            code, out = run_check(root, "check_structure.py", "--base", base, files=files)
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, [
+            "qml/components/reusable/PowerChip.qml: quickshell-use upower (import Quickshell.Services.UPower): read it through that service (BatteryManager is upower's home)",
+            "qml/services/system/PowerManager.qml: quickshell-use upower (import Quickshell.Services.UPower): system data comes from the daemon, not a Quickshell module: extend BatteryManager over BackendManager",
+            "qml/shell/Hypr.qml: quickshell-use hyprland (Hyprland): go through CompositorManager",
+            "qml/services/core/FileManager.qml: quickshell-use file-view: fixed, still baselined",
+            "qml/shell/Blue.qml: quickshell-use Quickshell.Bluetooth: Bluetooth is the daemon's",
+            "qml/shell/Bare.qml: quickshell-use import: imports Quickshell but uses nothing QUICKSHELL_USES knows: drop the import",
+            "qml/shell/Screens.qml: quickshell-use screens (Quickshell.screens): only the files scripts/quickshell-exceptions.json lists may (General is screens's home): build on General.outputs",
+            "qml/services/core/Spawner.qml: quickshell-use process (",
+            "go through CommandManager, FileManager, StateManager or IpcTarget",
+            "qml/shell/SwayUse.qml: quickshell-use i3 (",
+            "go through CompositorManager",
+            "qml/shell/GhostMember.qml: quickshell-use Quickshell.ghostMember:",
+            "qml/components/reusable/TrayUse.qml: quickshell-use tray-menu (QsMenuOpener): move it into TrayMenuList",
+            "quickshell-exceptions.json: qml/shell/NoReason.qml has no reason",
+            "scripts/quickshell-exceptions.json: qml/shell/Gone.qml doesn't exist",
+            "scripts/quickshell-exceptions.json: qml/config/Paths.qml no longer uses socket: remove it: the list only shrinks",
+            "quickshell-exceptions.json: qml/config/Paths.qml names ghost, not a rule",
+            "scripts/quickshell-exceptions.json: qml/services/system/BatteryManager.qml lists upower, a daemon-set use: it can't be granted",
+            "structure-exceptions.json: qml/shell/Hypr.qml names quickshell-use, not a rule",
+            "error    quickshell-use: a Quickshell API only in the files",
+        ]), [], out)
+        for quiet in ("PowerChip.qml: quickshell-use upower (import Quickshell.Services.UPower): only the files",
+                      "qml/shell/Blue.qml: quickshell-use import", "no longer uses window", "no longer uses ghost",
+                      "BatteryManager.qml: quickshell-use upower"):
+            self.assertEqual([l for l in out.splitlines() if quiet in l], [], quiet + "\n" + out)
 
     def test_naming_baseline_and_new_rules(self):
         def without_root_id(root):
@@ -860,6 +917,19 @@ class Ratchet(unittest.TestCase):
         out = self.ratchet({"a.qml": {"purity": ["f:Date.now", "f:Date.now#2"]}})
         self.assertEqual(out, ["a.qml: purity f:Date.now#2: not in the baseline (fix it, or add an exception with its reason to engines-exceptions.json)"])
         self.assertEqual(self.ratchet({}), ["a.qml: purity f:Date.now: fixed, still baselined (delete the entry)"])
+
+    def test_unlisted_hook(self):
+        write(self.root, self.PATH, json.dumps({**self.KNOWN, "c.qml": {"dag": ["x:y"]}}))
+        found = {"b.qml": {"purity": ["g:console"]}, "c.qml": {"dag": ["x:y"]}}
+        others = ["a.qml: purity f:Date.now: fixed, still baselined (delete the entry)",
+                  f"c.qml: dag x:y: added to the baseline since {self.base} (a baseline only shrinks)"]
+        generic = "b.qml: purity g:console: not in the baseline (fix it, or add an exception with its reason to engines-exceptions.json)"
+
+        def hooked(unlisted):
+            return self.qm.ratchet(found, self.PATH, self.base, set(), root=self.root, unlisted=unlisted)
+        self.assertEqual(hooked(lambda f, r, s: f"{f}: custom {s}"), ["b.qml: custom g:console", *others])
+        self.assertEqual(hooked(lambda f, r, s: None), [generic, *others])
+        self.assertEqual(hooked(None), [generic, *others])
 
     def test_malformed_baseline(self):
         write(self.root, self.PATH, json.dumps({"f:Date.now": "tag"}))

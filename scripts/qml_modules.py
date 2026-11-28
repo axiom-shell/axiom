@@ -185,13 +185,14 @@ def _old(new_rules, entries):
     return {e for e in entries if e[1] not in new_rules and e[0] not in new_rules}
 
 
-def ratchet(found, path, base, new_rules, root=ROOT, files=None):
+def ratchet(found, path, base, new_rules, root=ROOT, files=None, unlisted=None):
     """Hold found {file: {rule: [symbol]}} to the baseline at `path` (repo-relative) in `root`:
     error lines for a hit not in the baseline, a baselined one that's gone, and an entry added
     since `base` whose rule and file aren't in `new_rules` and that isn't a move. The base is read
     on every call. With `files` (repo-relative paths) every compare keeps only the entries of those
     files. A move is an entry whose rule and symbol the base listed under a file where it no longer
-    is, while the count of that rule and symbol doesn't grow (the pairing reads the whole baseline)."""
+    is, while the count of that rule and symbol doesn't grow (the pairing reads the whole baseline).
+    A hit not in the baseline prints `unlisted(file, rule, symbol)` when that returns a line, else the generic one."""
     try:
         before = _entries_at(base, path, root)
     except ValueError as e:
@@ -209,7 +210,8 @@ def ratchet(found, path, base, new_rules, root=ROOT, files=None):
     moved = _moved(whole_before, whole_listed, old)
     errors = []
     for f, r, s in sorted(hits - listed):
-        errors.append(f"{f}: {r} {s}: not in the baseline (fix it, or add an exception with its reason to {Path(path).name.replace('-baseline', '-exceptions')})")
+        errors.append((unlisted and unlisted(f, r, s))
+                      or f"{f}: {r} {s}: not in the baseline (fix it, or add an exception with its reason to {Path(path).name.replace('-baseline', '-exceptions')})")
     for f, r, s in sorted(listed - hits):
         errors.append(f"{f}: {r} {s}: fixed, still baselined (delete the entry)")
     for f, r, s in sorted(old - moved):

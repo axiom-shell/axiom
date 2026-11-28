@@ -31,14 +31,85 @@
       "ShapedBox:box"
     ]
   },
+  "qml/components/bar/widgets/SystemTray/SystemTray.qml": {
+    "quickshell-use": [
+      "system-tray"
+    ]
+  },
+  "qml/components/bar/widgets/Window/Window.qml": {
+    "quickshell-use": [
+      "foreign-toplevel"
+    ]
+  },
+  "qml/components/bar/widgets/Workspaces/SpecialCells.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
   "qml/components/bar/widgets/Workspaces/WorkspaceCell.qml": {
     "stem-unique": [
       "stem:WorkspaceCell"
     ]
   },
+  "qml/components/bar/widgets/base/BarToolTip.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
+  "qml/components/content/AudioMixer/AudioMixer.qml": {
+    "quickshell-use": [
+      "apps"
+    ]
+  },
+  "qml/components/content/Favourites/Favourites.qml": {
+    "quickshell-use": [
+      "apps",
+      "instances"
+    ]
+  },
+  "qml/components/content/Greeting/Greeting.qml": {
+    "quickshell-use": [
+      "env"
+    ]
+  },
+  "qml/components/content/Notifications/Notifications.qml": {
+    "quickshell-use": [
+      "notifications"
+    ]
+  },
+  "qml/components/content/WallpaperPicker/WallpaperPicker.qml": {
+    "quickshell-use": [
+      "window"
+    ]
+  },
+  "qml/components/content/parts/AudioRow.qml": {
+    "quickshell-use": [
+      "icon-image"
+    ]
+  },
   "qml/components/content/parts/DriveRow.qml": {
     "root-id": [
       "DriveRow:row"
+    ]
+  },
+  "qml/components/content/parts/KeyboardMap.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
+  "qml/components/content/parts/LoginField.qml": {
+    "quickshell-use": [
+      "env"
+    ]
+  },
+  "qml/components/content/parts/TrayMenuItem.qml": {
+    "quickshell-use": [
+      "tray-menu"
+    ]
+  },
+  "qml/components/content/parts/TrayMenuList.qml": {
+    "quickshell-use": [
+      "tray-menu"
     ]
   },
   "qml/components/content/parts/VpnRow.qml": {
@@ -51,6 +122,11 @@
       "EventEditor:Editor"
     ]
   },
+  "qml/components/content/parts/custom/CustomElementBase.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
   "qml/components/content/parts/notes/NoteEditor.qml": {
     "suffix-rules": [
       "NoteEditor:Editor"
@@ -59,6 +135,28 @@
   "qml/components/content/parts/notifications": {
     "folder-case": [
       "folder:notifications"
+    ]
+  },
+  "qml/components/content/parts/notifications/NotificationActions.qml": {
+    "quickshell-use": [
+      "apps",
+      "icon-image",
+      "instances"
+    ]
+  },
+  "qml/components/content/parts/notifications/NotificationAvatar.qml": {
+    "quickshell-use": [
+      "apps"
+    ]
+  },
+  "qml/components/forms/FieldChangeMarks.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
+  "qml/components/forms/SchemaField.qml": {
+    "quickshell-use": [
+      "instances"
     ]
   },
   "qml/components/forms/ScreenSharingSetup.qml": {
@@ -71,7 +169,16 @@
       "SetupLines:block"
     ]
   },
+  "qml/components/hosts/overlay/OverlayPageNavigator.qml": {
+    "quickshell-use": [
+      "instances",
+      "window"
+    ]
+  },
   "qml/components/hosts/overlay/OverlayPanel.qml": {
+    "quickshell-use": [
+      "background-effect"
+    ],
     "suffix-rules": [
       "OverlayPanel:Panel",
       "OverlayPanel:Window"
@@ -92,6 +199,16 @@
       "stem:InputSources"
     ]
   },
+  "qml/components/reusable/ActionPill.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
+  "qml/components/reusable/ActionTile.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
   "qml/components/reusable/DragLayer.qml": {
     "suffix-rules": [
       "DragLayer:Layer"
@@ -107,12 +224,56 @@
       "_inHeader:it._listHeader"
     ]
   },
+  "qml/components/reusable/ModalHeader.qml": {
+    "quickshell-use": [
+      "icon-image"
+    ]
+  },
+  "qml/components/reusable/PreviewTile.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
   "qml/components/reusable/StateLayer.qml": {
     "suffix-rules": [
       "StateLayer:Layer"
     ]
   },
+  "qml/components/reusable/StyledIconButton.qml": {
+    "quickshell-use": [
+      "instances",
+      "window"
+    ]
+  },
+  "qml/components/reusable/StyledTextButton.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
+  "qml/components/reusable/StyledToolTip.qml": {
+    "quickshell-use": [
+      "background-effect"
+    ]
+  },
+  "qml/components/reusable/StyledVolumeBar.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
+  "qml/components/reusable/TipIcon.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
+  "qml/components/reusable/TruncationTip.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
   "qml/components/surfaces/backdrop/ScreenBackdrop.qml": {
+    "quickshell-use": [
+      "background-effect"
+    ],
     "suffix-rules": [
       "ScreenBackdrop:Window"
     ]
@@ -121,6 +282,16 @@
     "suffix-rules": [
       "BorderPanel:Panel",
       "BorderPanel:Window"
+    ]
+  },
+  "qml/components/surfaces/dock/DockMenu.qml": {
+    "quickshell-use": [
+      "background-effect"
+    ]
+  },
+  "qml/components/surfaces/dock/DockWindow.qml": {
+    "quickshell-use": [
+      "background-effect"
     ]
   },
   "qml/components/surfaces/launcher/LauncherPanel.qml": {
@@ -133,12 +304,30 @@
       "folder:monitors"
     ]
   },
+  "qml/components/surfaces/monitors/MonitorPromptWindow.qml": {
+    "quickshell-use": [
+      "background-effect"
+    ]
+  },
   "qml/components/surfaces/notifications": {
     "folder-case": [
       "folder:notifications"
     ]
   },
+  "qml/components/surfaces/notifications/ToastItem.qml": {
+    "quickshell-use": [
+      "notifications"
+    ]
+  },
+  "qml/components/surfaces/notifications/ToastStack.qml": {
+    "quickshell-use": [
+      "notifications"
+    ]
+  },
   "qml/components/surfaces/osd/design/OSDTile.qml": {
+    "quickshell-use": [
+      "instances"
+    ],
     "root-id": [
       "OSDTile:tile"
     ]
@@ -146,6 +335,26 @@
   "qml/components/surfaces/osd/systems/Brightness/BrightnessWatch.qml": {
     "root-id": [
       "BrightnessWatch:watch"
+    ]
+  },
+  "qml/components/surfaces/powermenu/PowerMenuWindow.qml": {
+    "quickshell-use": [
+      "background-effect"
+    ]
+  },
+  "qml/components/surfaces/prompt/PolkitCard.qml": {
+    "quickshell-use": [
+      "apps"
+    ]
+  },
+  "qml/components/surfaces/prompt/PromptWindow.qml": {
+    "quickshell-use": [
+      "background-effect"
+    ]
+  },
+  "qml/components/surfaces/screenshare/ScreenSharePickerWindow.qml": {
+    "quickshell-use": [
+      "background-effect"
     ]
   },
   "qml/components/surfaces/workspaces": {
@@ -168,6 +377,11 @@
       "BarsPanel:Panel"
     ]
   },
+  "qml/components/views/BarEditor/SectionLane.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
   "qml/components/views/CustomWidgets/ActionsEditor.qml": {
     "suffix-rules": [
       "ActionsEditor:Editor"
@@ -176,6 +390,11 @@
   "qml/components/views/CustomWidgets/DefinitionsPanel.qml": {
     "suffix-rules": [
       "DefinitionsPanel:Panel"
+    ]
+  },
+  "qml/components/views/CustomWidgets/ModulePreviews.qml": {
+    "quickshell-use": [
+      "instances"
     ]
   },
   "qml/components/views/Keybinds/ActiveFilters.qml": {
@@ -203,6 +422,11 @@
       "LayoutsPanel:Panel"
     ]
   },
+  "qml/components/views/Settings/AccountCard.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
   "qml/components/views/Settings/OSDBarsEditor.qml": {
     "suffix-rules": [
       "OSDBarsEditor:Editor"
@@ -218,9 +442,40 @@
       "RemoveAxiomPanel:Panel"
     ]
   },
+  "qml/components/views/Settings/ScreenSpotPicker.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
+  "qml/components/views/Settings/SettingsField.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
+  "qml/components/views/Settings/SpecialWorkspacesField.qml": {
+    "quickshell-use": [
+      "instances"
+    ]
+  },
+  "qml/components/views/Settings/SystemInfoCard.qml": {
+    "quickshell-use": [
+      "apps",
+      "icon-image"
+    ]
+  },
   "qml/components/views/WindowRules/RulesPanel.qml": {
     "suffix-rules": [
       "RulesPanel:Panel"
+    ]
+  },
+  "qml/config/General.qml": {
+    "quickshell-use": [
+      "env"
+    ]
+  },
+  "qml/config/I18n.qml": {
+    "quickshell-use": [
+      "file-view"
     ]
   },
   "qml/config/NightLight.qml": {
@@ -242,6 +497,9 @@
       "ChatManager:id _flush",
       "ChatManager:id _noticeClear"
     ],
+    "quickshell-use": [
+      "persist"
+    ],
     "singleton-children": [
       "IpcTarget",
       "Timer",
@@ -255,6 +513,16 @@
       "_warnAlarmTimer:id _warnAlarm"
     ]
   },
+  "qml/services/apps/EmojiManager.qml": {
+    "quickshell-use": [
+      "apps"
+    ]
+  },
+  "qml/services/apps/FileSearchManager.qml": {
+    "quickshell-use": [
+      "apps"
+    ]
+  },
   "qml/services/apps/NotesManager.qml": {
     "private-reach": [
       "_errorClear:id _errorClear"
@@ -264,13 +532,29 @@
     "private-reach": [
       "PomodoroManager:id _ticker"
     ],
+    "quickshell-use": [
+      "persist"
+    ],
     "singleton-children": [
       "DeadlineTicker"
+    ]
+  },
+  "qml/services/apps/ScreenShareManager.qml": {
+    "quickshell-use": [
+      "persist"
+    ]
+  },
+  "qml/services/apps/ScreenshotManager.qml": {
+    "quickshell-use": [
+      "env"
     ]
   },
   "qml/services/apps/StopwatchManager.qml": {
     "private-reach": [
       "StopwatchManager:id _ticker"
+    ],
+    "quickshell-use": [
+      "persist"
     ],
     "singleton-children": [
       "DeadlineTicker"
@@ -282,6 +566,9 @@
     ]
   },
   "qml/services/compositor/CompositorManager.qml": {
+    "quickshell-use": [
+      "persist"
+    ],
     "singleton-children": [
       "Connections"
     ]
@@ -290,11 +577,18 @@
     "private-reach": [
       "FocusLeave:id _lost",
       "FocusLeave:id _watchers"
+    ],
+    "quickshell-use": [
+      "instances"
     ]
   },
   "qml/services/compositor/HyprlandManager.qml": {
     "private-reach": [
       "HyprlandManager:id _layerRules"
+    ],
+    "quickshell-use": [
+      "compositor-dispatch",
+      "hyprland"
     ],
     "singleton-children": [
       "Connections",
@@ -306,16 +600,42 @@
       "MonitorManager:id _trial"
     ]
   },
+  "qml/services/compositor/NiriManager.qml": {
+    "quickshell-use": [
+      "persist"
+    ]
+  },
+  "qml/services/compositor/SwayIpcManager.qml": {
+    "quickshell-use": [
+      "compositor-dispatch"
+    ]
+  },
   "qml/services/compositor/SwayManager.qml": {
     "private-reach": [
       "SwayManager:id _recent"
+    ],
+    "quickshell-use": [
+      "i3"
     ],
     "singleton-children": [
       "Connections",
       "I3IpcListener"
     ]
   },
+  "qml/services/compositor/WindowRulesEditor.qml": {
+    "quickshell-use": [
+      "apps"
+    ]
+  },
+  "qml/services/compositor/WindowRulesManager.qml": {
+    "quickshell-use": [
+      "apps"
+    ]
+  },
   "qml/services/compositor/WindowSwitcherManager.qml": {
+    "quickshell-use": [
+      "persist"
+    ],
     "singleton-children": [
       "Connections",
       "IpcTarget",
@@ -327,6 +647,9 @@
       "_rehome:manager._bases",
       "_rehome:manager._bases#2",
       "_return:manager._bases"
+    ],
+    "quickshell-use": [
+      "env"
     ]
   },
   "qml/services/core/DependencyManager.qml": {
@@ -346,6 +669,11 @@
       "Connections"
     ]
   },
+  "qml/services/core/FileManager.qml": {
+    "quickshell-use": [
+      "file-view"
+    ]
+  },
   "qml/services/core/SelfUpdateManager.qml": {
     "private-reach": [
       "SelfUpdateManager:id _reloadTimer",
@@ -360,9 +688,39 @@
       "Timer#3"
     ]
   },
+  "qml/services/core/ThemeManager.qml": {
+    "quickshell-use": [
+      "file-view"
+    ]
+  },
+  "qml/services/core/WaylandManager.qml": {
+    "quickshell-use": [
+      "persist"
+    ]
+  },
+  "qml/services/session/AccountManager.qml": {
+    "quickshell-use": [
+      "env",
+      "persist"
+    ]
+  },
+  "qml/services/session/AuthManager.qml": {
+    "quickshell-use": [
+      "pam"
+    ]
+  },
+  "qml/services/session/GreetdManager.qml": {
+    "quickshell-use": [
+      "env",
+      "greetd"
+    ]
+  },
   "qml/services/session/IdleManager.qml": {
     "private-reach": [
       "IdleManager:id _ticker"
+    ],
+    "quickshell-use": [
+      "persist"
     ],
     "singleton-children": [
       "DeadlineTicker"
@@ -380,6 +738,10 @@
   "qml/services/session/PolkitManager.qml": {
     "private-reach": [
       "PolkitManager:id _state"
+    ],
+    "quickshell-use": [
+      "env",
+      "polkit"
     ]
   },
   "qml/services/session/RecommendedSetupManager.qml": {
@@ -388,13 +750,61 @@
     ]
   },
   "qml/services/system/AppIconManager.qml": {
+    "quickshell-use": [
+      "apps",
+      "persist"
+    ],
     "singleton-children": [
       "Connections"
     ]
   },
+  "qml/services/system/AudioManager.qml": {
+    "quickshell-use": [
+      "pipewire"
+    ]
+  },
+  "qml/services/system/BatteryManager.qml": {
+    "quickshell-use": [
+      "upower"
+    ]
+  },
+  "qml/services/system/BrightnessManager.qml": {
+    "quickshell-use": [
+      "persist"
+    ]
+  },
+  "qml/services/system/ClipboardManager.qml": {
+    "quickshell-use": [
+      "persist"
+    ]
+  },
+  "qml/services/system/DateTimeManager.qml": {
+    "quickshell-use": [
+      "persist"
+    ]
+  },
+  "qml/services/system/DefaultAppsManager.qml": {
+    "quickshell-use": [
+      "persist"
+    ]
+  },
   "qml/services/system/FootprintManager.qml": {
+    "quickshell-use": [
+      "env",
+      "persist"
+    ],
     "singleton-children": [
       "Connections"
+    ]
+  },
+  "qml/services/system/MediaManager.qml": {
+    "quickshell-use": [
+      "mpris"
+    ]
+  },
+  "qml/services/system/NetworkingManager.qml": {
+    "quickshell-use": [
+      "networking"
     ]
   },
   "qml/services/system/NightLightManager.qml": {
@@ -407,8 +817,49 @@
     ]
   },
   "qml/services/system/NotificationManager.qml": {
+    "quickshell-use": [
+      "apps",
+      "notifications",
+      "persist"
+    ],
     "singleton-children": [
       "NotificationServer"
+    ]
+  },
+  "qml/services/system/PrivacyManager.qml": {
+    "quickshell-use": [
+      "apps",
+      "pipewire"
+    ]
+  },
+  "qml/services/system/SystemInfoManager.qml": {
+    "quickshell-use": [
+      "persist"
+    ]
+  },
+  "qml/services/ui/CursorThemeManager.qml": {
+    "quickshell-use": [
+      "persist"
+    ]
+  },
+  "qml/services/ui/DockManager.qml": {
+    "quickshell-use": [
+      "apps"
+    ]
+  },
+  "qml/services/ui/IntegrationHookupManager.qml": {
+    "quickshell-use": [
+      "persist"
+    ]
+  },
+  "qml/services/ui/LauncherFiles.qml": {
+    "quickshell-use": [
+      "env"
+    ]
+  },
+  "qml/services/ui/LauncherManager.qml": {
+    "quickshell-use": [
+      "apps"
     ]
   },
   "qml/services/ui/MenuManager.qml": {
@@ -433,6 +884,9 @@
     "private-reach": [
       "WallpaperManager:id _themeSchedule"
     ],
+    "quickshell-use": [
+      "persist"
+    ],
     "singleton-children": [
       "DailySchedule"
     ]
@@ -443,8 +897,26 @@
     ]
   },
   "qml/shell/BlurBackingWindow.qml": {
+    "quickshell-use": [
+      "background-effect"
+    ],
     "root-id": [
       "BlurBackingWindow:backing"
+    ]
+  },
+  "qml/shell/Greeter.qml": {
+    "quickshell-use": [
+      "env"
+    ]
+  },
+  "qml/shell/Lockscreen.qml": {
+    "quickshell-use": [
+      "env"
+    ]
+  },
+  "qml/shell/WorkspaceOverlay.qml": {
+    "quickshell-use": [
+      "background-effect"
     ]
   },
   "tests/tst_OSDSystems.qml": {
