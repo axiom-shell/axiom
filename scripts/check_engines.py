@@ -1,61 +1,25 @@
 #!/usr/bin/env python3
 """The engine checks: what lives in qml/components/methods/ and how the engines listed in
-scripts/engines.json call each other (docs/dev/core/engines.md > Checks). Rules:
-
-  placed  a folder under methods/ that is neither a listed engine's folder nor a `$domains` key; a
-          listed folder, `files` or `helpers` path that doesn't exist
-  purity  in methods/: an import other than QtQuick, qs.components.methods and the folders the file's
-          engine or `$domains` entry `uses` (a root file, and a listed engine's `files`, have no `uses`);
-          Timer, Date.now(, new Date(), Math.random, console., Qt.callLater
-  dag     a cycle in the forward graph (signature edges model -> solve -> drawn, `fedBy`, api `feeds`),
-          in the `$domains` `uses` or among an engine folder's files (a file naming another's stem and
-          `.` or ` {`); an owner or adapter calling two stages of one engine with no edge or `unfed`
-          between them; an edge from a `drawn` node into another stage; a cross-engine `fedBy` or
-          `intakes` entry whose seam isn't a row of engines.md > Seam register, and a register row
-          between two listed engines with no such entry; an `intakes` rule no row of the engine's
-          rows file names
-  trace   EngineTrace used anywhere under qml/ other than through .record(, .forget( or .tracing, outside
-          qml/services/core/EngineTrace.qml; any EngineTrace use in an engine's folder or files
-  apply   in an engine's adapters and itemPaths: a Qt.callLater without `// allowed: apply <what>` or
-          `// allowed: settle <what>` on its line; an onContactsChanged, onStretchChanged,
-          onCoverChanged, onPillsChanged or onRequestsChanged handler; a setRequest( call
-  facade-only  outside an engine's files: a use of an internal file; a stage called from a file its
-          Caller column (engines.md > Stages) doesn't allow; a kit used outside `itemPaths`; an extra
-          called from a plug-in folder without `"plugins": true`
-  api     in a facade: `api` not JSON, not the first member, a function with no key or a key with no
-          function, an `in` that isn't the function's destructure, an `out` producer that isn't an
-          engine file's member
-  shape   in a facade: an `api` key that isn't a stage or an extra, an `in` key a verb doesn't allow or
-          a required one missing, a function not in the one form; in an engine file: more lines than
-          the file shape allows, a function over 60 lines, an expression with two ternaries
-  tables  the manifest's `tables` entries, and each table in its file: a row with the wrong keys or no
-          `why`, a repeated id, an uncovered or doubled cell, an ordered table without a catch-all, a
-          `"rule": "<id>"` literal that names no row or function
-  alone   a match of an `alone` entry's regex in a file outside its `only` paths; the key itself not a list
-  contract  an engine's rows file: an `api` key or a rule id no row names, a row whose `call` isn't an
-          `api` key, a row with `args`
-  edit-points  an `editPoints` symbol that isn't a file or a member of a file the engine holds; the key
-          itself not an object
-  doc     the manifest's `doc` file missing, or lacking one of the eleven headings in order
+scripts/engines.json call each other (docs/dev/core/engines.md > Checks). Rules: `RULES` below, one statement each; a
+failing rule's statement prints under the failures.
 
 A hit is `<file>: <rule> <symbol>`, the symbol `<member>:<token>` (the root member enclosing it, else
 the file's name) with a repeat numbered `#2`... Every hit is held to scripts/engines-baseline.json, which
 only shrinks: a hit not in it fails, a baselined hit that's gone fails (delete the entry), an entry
 added since the base fails unless its rule or its file is new there (the rule absent from the base's
-RULES, a file of an engine absent from the base's manifest). The base is read on every run. A hit is
-waived by an entry in scripts/engines-exceptions.json (rules and reason; an entry that waives nothing
-fails).
+RULES, a file of an engine absent from the base's manifest) or it moved: the same rule and symbol was
+listed at the base under a file where it no longer is, and their count doesn't grow. The base is read on
+every run. A hit is waived by an entry in scripts/engines-exceptions.json (rules and reason; an
+entry that waives nothing fails).
 
   scripts/check_engines.py                    every hit past the baseline; exit 1 on any
   scripts/check_engines.py --base REF         read the base from REF (default: HEAD^1 in GitHub
                                               Actions, else the merge-base with origin/main)
   scripts/check_engines.py --update-baseline  add the hits of a rule or engine new since the base to
-                                              the baseline, drop the fixed ones
+                                              the baseline, re-key a moved entry, drop the fixed ones
 """
 import argparse
-import ast
 import collections
-import fnmatch
 import itertools
 import json
 import re
@@ -68,7 +32,6 @@ import manifests  # noqa: E402
 import qml_modules  # noqa: E402
 
 ROOT = qml_modules.ROOT
-METHODS = "qml/components/methods"
 MANIFEST = manifests.ENGINES.relative_to(ROOT).as_posix()
 SELF = "scripts/check_engines.py"
 DOC = "docs/dev/core/engines.md"
@@ -76,7 +39,21 @@ TRACE_FILE = "qml/services/core/EngineTrace.qml"
 EXCEPTIONS = ROOT / "scripts" / "engines-exceptions.json"
 BASELINE = "scripts/engines-baseline.json"
 
-RULES = ["placed", "purity", "facade-only", "api", "shape", "dag", "tables", "alone", "contract", "edit-points", "doc", "apply", "trace"]
+RULES = {
+    "placed": "a folder under methods/ that is neither a listed engine's folder nor a `$domains` key; a listed folder, `files` or `helpers` path that doesn't exist",
+    "purity": "in methods/: an import other than QtQuick, qs.components.methods and the folders the file's engine or `$domains` entry `uses` (a root file, and a listed engine's `files`, have no `uses`); Timer, Date.now(, new Date(), Math.random, console., Qt.callLater",
+    "facade-only": "outside an engine's files: a use of an internal file; a stage called from a file its Caller column (engines.md > Stages) doesn't allow; a kit used outside `itemPaths`; an extra called from a plug-in folder without `\"plugins\": true`",
+    "api": "in a facade: `api` not JSON, not the first member, a function with no key or a key with no function, an `in` that isn't the function's destructure, an `out` producer that isn't an engine file's member",
+    "shape": "in a facade: an `api` key that isn't a stage or an extra, an `in` key a verb doesn't allow or a required one missing, a function not in the one form; in an engine file: more lines than the file shape allows, a function over 60 lines, an expression with two ternaries",
+    "dag": "a cycle in the forward graph (signature edges model -> solve -> drawn, `fedBy`, api `feeds`), in the `$domains` `uses` or among an engine folder's files (a file naming another's stem and `.` or ` {`); an owner or adapter calling two stages of one engine with no edge or `unfed` between them; an edge from a `drawn` node into another stage; a cross-engine `fedBy` or `intakes` entry whose seam isn't a row of engines.md > Seam register, and a register row between two listed engines with no such entry; an `intakes` rule no row of the engine's rows file names",
+    "tables": "the manifest's `tables` entries, and each table in its file: a row with the wrong keys or no `why`, a repeated id, an uncovered or doubled cell, an ordered table without a catch-all, a `\"rule\": \"<id>\"` literal that names no row or function",
+    "alone": "a match of an `alone` entry's regex in a file outside its `only` paths; the key itself not a list",
+    "contract": "an engine's rows file: an `api` key or a rule id no row names, a row whose `call` isn't an `api` key, a row with `args`",
+    "edit-points": "an `editPoints` symbol that isn't a file or a member of a file the engine holds; the key itself not an object",
+    "doc": "the manifest's `doc` file missing, or lacking one of the eleven headings in order",
+    "apply": "in an engine's adapters and itemPaths: a Qt.callLater without `// allowed: apply <what>` or `// allowed: settle <what>` on its line; an onContactsChanged, onStretchChanged, onCoverChanged, onPillsChanged or onRequestsChanged handler; a setRequest( call",
+    "trace": "EngineTrace used anywhere under qml/ other than through .record(, .forget( or .tracing, outside qml/services/core/EngineTrace.qml; any EngineTrace use in an engine's folder or files",
+}
 
 IMPORT = re.compile(r"^\s*import\s+([\w.]+)", re.M)
 PURITY = {"Timer": r"\bTimer\s*\{", "Date.now": r"\bDate\.now\(", "new Date()": r"\bnew Date\(\s*\)",
@@ -100,12 +77,6 @@ FILE_LINES = 500
 FUNCTION_LINES = 60
 
 
-def _code(text):
-    """`text` with its // comments removed and each /* */ comment that opens a line blanked (the line count stays)."""
-    text = re.sub(r"^[ \t]*/\*.*?\*/", lambda m: re.sub(r"[^\n]", " ", m.group()), text, flags=re.M | re.S)
-    return re.sub(r"//[^\n]*", "", text)
-
-
 def _expand(paths, suffix=""):
     """The repo-relative files under these files and folders that exist, sorted."""
     out = set()
@@ -116,41 +87,9 @@ def _expand(paths, suffix=""):
     return sorted(out)
 
 
-class Hits:
-    """The hits of a run, {file: {rule: [symbol]}} once numbered."""
-
-    def __init__(self):
-        self.pending = {}
-
-    def add(self, file, rule, symbol, at=0):
-        """A hit; `at` orders the hits of one file and rule (a repeat is numbered in that order)."""
-        self.pending.setdefault((file, rule), []).append((at, symbol))
-
-    def add_at(self, rel, rule, text, found):
-        """The hits of `rel`'s text: `found` is [(offset in the code, token)]."""
-        lines = text.split("\n")
-        code = _code(text)
-        for at, token in found:
-            line = code.count("\n", 0, at)
-            member = Path(rel).stem
-            for raw in lines[: line + 1]:
-                m = gen_docs.MEMBER.match(raw)
-                if m:
-                    member = m.group(3) or m.group(5) or m.group(7)
-                elif re.match(r"  \S", raw) and raw[2] not in "})]":
-                    member = Path(rel).stem
-            self.add(rel, rule, f"{member}:{token}", at)
-
-    def found(self):
-        out = {}
-        for (file, rule), hits in sorted(self.pending.items()):
-            out.setdefault(file, {})[rule] = qml_modules.numbered([s for _, s in sorted(hits, key=lambda h: h[0])])
-        return out
-
-
 def _matches(text, patterns):
     """[(offset in the comment-stripped code, token)] of every match of {token: regex}."""
-    code = _code(text)
+    code = qml_modules.blank_comments(text)
     return [(m.start(), token) for token, rx in patterns.items() for m in re.finditer(rx, code)]
 
 
@@ -203,27 +142,10 @@ def _seam_register():
     return rows
 
 
-def _base_rules(base):
-    """RULES in the base's copy of this file ([] when the file is absent); ValueError when the base
-    can't be read or its RULES isn't one assignment of a list literal."""
-    text = qml_modules.file_at(base, SELF)
-    if text is None:
-        return []
-    try:
-        values = [ast.literal_eval(n.value) for n in ast.parse(text).body
-                  if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "RULES" for t in n.targets)
-                  and isinstance(n.value, ast.List)]
-    except (SyntaxError, ValueError):
-        values = []
-    if len(values) != 1:
-        raise ValueError(f"{SELF}: can't read RULES at the base {base}")
-    return values[0]
-
-
 def _new_rules(base):
     """The rule ids absent from the base's RULES and the files of each engine absent from the base's
     manifest; ValueError when the base can't be read."""
-    new = set(RULES) - set(_base_rules(base))
+    new = qml_modules.new_rules(base, SELF, RULES)
     text = qml_modules.file_at(base, MANIFEST)
     at_base = manifests.engines(text=text)[0] if text is not None else {}
     for name, entry in manifests.engines()[0].items():
@@ -253,8 +175,8 @@ def _api_of(facade):
 
 
 def _placed(hits, engines, domains):
-    listed = [e["folder"] for e in engines.values() if e["folder"]] + [f"{METHODS}/{d}" for d in domains]
-    for folder in sorted((ROOT / METHODS).iterdir()):
+    listed = [e["folder"] for e in engines.values() if e["folder"]] + [f"{qml_modules.METHODS}/{d}" for d in domains]
+    for folder in sorted((ROOT / qml_modules.METHODS).iterdir()):
         rel = folder.relative_to(ROOT).as_posix()
         if folder.is_dir() and not any(manifests.within(rel, p) for p in listed):
             hits.add(rel, "placed", folder.name)
@@ -269,13 +191,13 @@ def _placed(hits, engines, domains):
 
 
 def _purity(hits, engines, domains):
-    for f in _expand([METHODS], ".qml"):
+    for f in _expand([qml_modules.METHODS], ".qml"):
         text = (ROOT / f).read_text()
         uses = next((e["uses"] for e in engines.values() if manifests.within(f, e["folder"])), None)
         if uses is None:
-            uses = next((d["uses"] for k, d in domains.items() if manifests.within(f, f"{METHODS}/{k}")), [])
+            uses = next((d["uses"] for k, d in domains.items() if manifests.within(f, f"{qml_modules.METHODS}/{k}")), [])
         allowed = {"QtQuick", "qs.components.methods", *(f"qs.components.methods.{u}" for u in uses)}
-        code = _code(text)
+        code = qml_modules.blank_comments(text)
         found = [(m.start(1), m.group(1)) for m in IMPORT.finditer(code) if m.group(1) not in allowed]
         hits.add_at(f, "purity", text, found + _matches(text, PURITY))
 
@@ -330,14 +252,14 @@ def _dag(hits, engines, domains):
         hits.add(MANIFEST, "dag", _cycle_symbol(cycle))
     for name, entry in engines.items():
         files = _expand([entry["folder"]], ".qml") if entry["folder"] else []
-        code = {Path(f).stem: _code((ROOT / f).read_text()) for f in files}
+        code = {Path(f).stem: qml_modules.blank_comments((ROOT / f).read_text()) for f in files}
         inner = {s: [o for o in code if o != s and re.search(rf"\b{o}(?:\.| \{{)", code[s])] for s in code}
         for cycle in _cycles(inner):
             hits.add(next(f for f in files if Path(f).stem == cycle[0]), "dag", _cycle_symbol(cycle))
         stages = graphs[name][0]
         for f in _expand([*entry["owners"], *entry["adapters"]], ".qml"):
             text = (ROOT / f).read_text()
-            called = [(m.start(), m.group(1)) for m in re.finditer(rf"\b{entry['facade']}\.(\w+)\(", _code(text)) if m.group(1) in stages]
+            called = [(m.start(), m.group(1)) for m in re.finditer(rf"\b{entry['facade']}\.(\w+)\(", qml_modules.blank_comments(text)) if m.group(1) in stages]
             seen = sorted({s for _, s in called})
             for i, a in enumerate(seen):
                 for b in seen[i + 1:]:
@@ -395,17 +317,17 @@ def _trace(hits, engines):
         if not path.exists() or f == TRACE_FILE:
             continue
         text = (ROOT / f).read_text()
-        found = [(m.start(), f"EngineTrace.{m.group(1)}") for m in TRACE.finditer(_code(text))
+        found = [(m.start(), f"EngineTrace.{m.group(1)}") for m in TRACE.finditer(qml_modules.blank_comments(text))
                  if f in inside or (m.group(1), m.group(2)) not in TRACE_USES]
         hits.add_at(f, "trace", text, found)
 
 
 def _apply(hits, engines):
-    for f in _expand([p for e in engines.values() for p in (*e["adapters"], *e["itemPaths"])], ".qml"):
+    for f in _expand(manifests.adapter_paths(engines), ".qml"):
         text = (ROOT / f).read_text()
         lines = text.split("\n")
         found = [(at, token) for at, token in _matches(text, APPLY)
-                 if token != "Qt.callLater" or not ALLOWED.search(lines[_code(text).count("\n", 0, at)])]
+                 if token != "Qt.callLater" or not ALLOWED.search(lines[qml_modules.blank_comments(text).count("\n", 0, at)])]
         hits.add_at(f, "apply", text, found)
 
 
@@ -559,7 +481,7 @@ def _shape(hits, engines):
             for m in gen_docs.parse_qml(ROOT / f)[1]:
                 if m["kind"] == "function" and m["end"] - m["line"] + 1 > FUNCTION_LINES:
                     hits.add(f, "shape", f"{m['name']}:lines")
-            found = [(at, "ternary") for at, expr in _expressions(_code(text)) if len(re.findall(r"(?<!\?)\?(?![?.])", expr)) >= 2]
+            found = [(at, "ternary") for at, expr in _expressions(qml_modules.blank_comments(text)) if len(re.findall(r"(?<!\?)\?(?![?.])", expr)) >= 2]
             hits.add_at(f, "shape", text, found)
 
 
@@ -581,8 +503,8 @@ def _axes_of(file):
 def _tables_of(engines, flat, domains):
     """[(owner, tables, files, folder, entry)] of every rules-table owner: the engines, `$flat` and `$domains`."""
     owners = [(name, e["tables"], _engine_files(e), "", e) for name, e in engines.items()]
-    owners += [(f"$flat.{k}", v["tables"], None, METHODS, None) for k, v in flat.items()]
-    owners += [(f"$domains.{k}", v["tables"], None, f"{METHODS}/{k}", None) for k, v in domains.items()]
+    owners += [(f"$flat.{k}", v["tables"], None, qml_modules.METHODS, None) for k, v in flat.items()]
+    owners += [(f"$domains.{k}", v["tables"], None, f"{qml_modules.METHODS}/{k}", None) for k, v in domains.items()]
     return owners
 
 
@@ -642,7 +564,7 @@ def _tables(hits, engines, flat, domains):
             named = set().union(*(t[5] for t in good)) | {m["name"] for f in files for m in gen_docs.parse_qml(ROOT / f)[1] if m["kind"] == "function"}
             for f in files:
                 text = (ROOT / f).read_text()
-                found = [(m.start(), f"rule {m.group(1)}") for m in RULE_LITERAL.finditer(_code(text)) if m.group(1) not in named]
+                found = [(m.start(), f"rule {m.group(1)}") for m in RULE_LITERAL.finditer(qml_modules.blank_comments(text)) if m.group(1) not in named]
                 hits.add_at(f, "tables", text, found)
 
 
@@ -664,7 +586,7 @@ def _alone(hits, engines):
                 if not path.exists() or any(manifests.within(f, p) for p in item.get("only", [])):
                     continue
                 text = path.read_text()
-                hits.add_at(f, "alone", text, [(m.start(), m.group()) for m in pattern.finditer(_code(text)) if m.group()])
+                hits.add_at(f, "alone", text, [(m.start(), m.group()) for m in pattern.finditer(qml_modules.blank_comments(text)) if m.group()])
 
 
 def _contract(hits, engines):
@@ -686,7 +608,7 @@ def _contract(hits, engines):
             if key not in called:
                 hits.add(file, "contract", f"api.{key}:no row")
         files = _engine_files(entry)
-        rules = {m.group(1) for f in files for m in RULE_LITERAL.finditer(_code((ROOT / f).read_text()))}
+        rules = {m.group(1) for f in files for m in RULE_LITERAL.finditer(qml_modules.blank_comments((ROOT / f).read_text()))}
         if isinstance(entry["tables"], dict):
             rules |= set().union(*(t[5] for t in _table_entries(entry["tables"], files)[0]))
         for rule in sorted(rules):
@@ -730,7 +652,7 @@ def survey():
     """({file: {rule: [symbol]}} past the exceptions, errors): every hit of every rule."""
     engines, errors = manifests.engines()
     domains, flat = manifests.domains(), manifests.flat()
-    hits = Hits()
+    hits = qml_modules.Hits()
     _placed(hits, engines, domains)
     _purity(hits, engines, domains)
     _dag(hits, engines, domains)
@@ -746,18 +668,7 @@ def survey():
     _doc(hits, engines)
     found = hits.found()
     exceptions, more = qml_modules.load_exceptions(EXCEPTIONS, set(RULES))
-    errors += more
-    for pattern, entry in sorted(exceptions.items()):
-        for rule in entry["rules"]:
-            if not any(fnmatch.fnmatch(file, pattern) and rule in found[file] for file in found):
-                errors.append(f"scripts/engines-exceptions.json: {pattern} lists {rule}, which no file under it hits")
-    for pattern, entry in sorted(exceptions.items()):
-        for file in list(found):
-            if fnmatch.fnmatch(file, pattern):
-                for rule in entry["rules"]:
-                    found[file].pop(rule, None)
-                if not found[file]:
-                    del found[file]
+    errors += more + qml_modules.waive(found, exceptions, "scripts/engines-exceptions.json")
     return found, errors
 
 
@@ -778,7 +689,7 @@ def main():
             new_rules = _new_rules(base)
             found, errors = survey()
             if not errors:
-                print(f"{qml_modules.add_to_baseline(found, BASELINE, new_rules)} entries in {BASELINE}")
+                print(f"{qml_modules.add_to_baseline(found, BASELINE, new_rules, base=base)} entries in {BASELINE}")
                 return
         else:
             errors = check(base)
@@ -786,6 +697,8 @@ def main():
         errors = [str(e)]
     if errors:
         print("\n".join(errors))
+        for line in qml_modules.rule_statements(errors, RULES):
+            print(line)
         print(f"\n{len(errors)} engine check failure(s) ({DOC} > Checks)")
         sys.exit(1)
     print("engines ok")

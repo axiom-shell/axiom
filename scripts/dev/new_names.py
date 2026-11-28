@@ -18,7 +18,8 @@ only it lists what they define:
 edit or rename). `also defined:` lists up to 5 other places in the tracked
 tree where the same name is defined the same way; for a string, the I18n.tr
 calls with the same text ignoring case, spacing, digits and placeholders.
-Generated files are skipped. It informs, it never gates: exit 0.
+A QML name, or `Stem.name`, that is a key of scripts/names.json > retired prints `is retired: use <new>`
+(`retired` in --json: the new name, else null). Generated files are skipped. It informs, it never gates: exit 0.
 
   scripts/dev/new_names.py [--base REF] [--files PATH ...] [--json]
 """
@@ -28,6 +29,9 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import manifests  # noqa: E402
 
 SKIP = ("docs/dev/generated/", "docs/dev/config/", "qml/config/i18n/",
         "qml/config/json/config.schema.json", "qml/config/themes/template/")
@@ -169,7 +173,17 @@ def build_index(root):
     return defs, strings
 
 
+def retired_names(root):
+    """The scratch tree's `scripts/names.json` retired keys ({old: {new, why}}), none when it has no list."""
+    try:
+        text = (root / "scripts" / "names.json").read_text()
+    except OSError:
+        return {}
+    return manifests.retired(text)[0]
+
+
 def collect(root, base, only):
+    retired = retired_names(root)
     changes = change_set(root, base, only)
     defs, strings = build_index(root)
     out = []
@@ -192,9 +206,11 @@ def collect(root, base, only):
             else:
                 also = [p for p in defs.get((lang, kind, name), [])
                         if p != here and not (kind == "component" and p.startswith(path + ":"))]
+            entry = None if kind == "string" or lang not in ("qml", "js") else retired.get(name) or retired.get(f"{Path(path).stem}.{name}")
             out.append({"file": path, "kind": kind, "name": name, "line": n,
                         "moved": (kind, name) in gone and kind != "component",
-                        "also": also[:MAX_ALSO]})
+                        "also": also[:MAX_ALSO],
+                        "retired": entry["new"] if entry else None})
     return out
 
 
@@ -219,7 +235,8 @@ def main():
             print(last)
         tail = f"  also defined: {', '.join(r['also'])}" if r["also"] else ""
         moved = " (moved)" if r["moved"] else ""
-        print(f"  {r['kind']} {r['name']}{moved}  {r['file']}:{r['line']}{tail}")
+        old = f"  {r['name']} is retired: use {r['retired']}" if r["retired"] is not None else ""
+        print(f"  {r['kind']} {r['name']}{moved}  {r['file']}:{r['line']}{old}{tail}")
     print(f"{len(rows)} names, {sum(1 for r in rows if r['also'])} also defined elsewhere")
     return 0
 

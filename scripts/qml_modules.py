@@ -16,9 +16,15 @@ declared as such, which qs's own VFS leaves out). Point a tool at it with
                                      needs, the LAYOUT_SERVICES files) over the
                                      stubs in tests-layout/stubs
 
-As a library it also holds the checks' shared baseline compare: `baseline_diff`
-for counted baselines, `ratchet` for symbol baselines that only shrink.
+As a library it also holds the checks' shared pieces: `baseline_diff` for counted
+baselines, `ratchet` and `add_to_baseline` for symbol baselines that only shrink,
+`Source` (one QML file's code and declarations), `Hits` (with `MEMBER`, a root declaration, `DECLARATION`, one at any depth, `blank_comments`,
+`blank_strings`) for a run's hits,
+`new_rules`, `waive` and `rule_statements` for a check's `RULES` and exceptions.
 """
+import ast
+import collections
+import fnmatch
 import json
 import os
 import re
@@ -31,6 +37,7 @@ ROOT = Path(__file__).resolve().parent.parent
 # The shell's QML: `qs.` module names are relative to it
 QML_ROOT = ROOT / "qml"
 QML_DIRS = ["components", "shell", "services", "config"]
+METHODS = "qml/components/methods"
 
 # The colour calls a bar widget may not make (check_structure T2): the shell's colour functions and raw colours
 WIDGET_COLOR_CALLS = re.compile(
@@ -67,6 +74,24 @@ def load_exceptions(path, rules, section=None):
         entries[key] = dict(entry, rules=listed, reason=entry.get("reason", ""))
     return entries, errors
 
+
+
+_DECLARATION = (r"(?:(?:(readonly|required|default)\s+)*property\s+(\S+)\s+(\w+)[ \t]*(?::[ \t]*(.*))?$"
+                r"|signal\s+(\w+)[ \t]*(\([^)]*\))?"
+                r"|function\s+(\w+)[ \t]*(\([^)]*\))[ \t]*(?::[ \t]*([\w.<>]+))?)")
+MEMBER = re.compile("^  " + _DECLARATION)
+DECLARATION = re.compile("^[ \t]*" + _DECLARATION, re.M)
+
+
+def blank_comments(text):
+    """`text` with its // comments removed and each /* */ comment that opens a line blanked (the line count stays)."""
+    text = re.sub(r"^[ \t]*/\*.*?\*/", lambda m: re.sub(r"[^\n]", " ", m.group()), text, flags=re.M | re.S)
+    return re.sub(r"//[^\n]*", "", text)
+
+
+def blank_strings(code):
+    """`code` with each string literal emptied (same lines)."""
+    return re.sub(r'"(?:[^"\\\n]|\\.)*"', '""', code)
 
 
 def baseline_diff(found, known):
@@ -136,43 +161,207 @@ def _baseline_entries(baseline):
     return {(f, r, s) for f, rules in baseline.items() for r, syms in rules.items() for s in syms}
 
 
-def ratchet(found, path, base, new_rules, root=ROOT):
+def _entries_at(base, path, root):
+    """The baseline entries of `path` at `base`; none when the file is absent there; ValueError as `file_at`'s."""
+    at_base = file_at(base, path, root)
+    return _baseline_entries(_baseline(at_base) or {}) if at_base is not None else set()
+
+
+def _moved(before, listed, added):
+    """The entries of `added` that are moves: per (rule, symbol with a trailing `#k` stripped, since `numbered`
+    renumbers a repeat per file), when `added` holds no more of it than the base's entries of it no longer
+    in `listed` (any file), all of them are, else none: the count per rule and symbol never grows. A member
+    part that is the file's own name is ignored, so a renamed file's entries pair with the old file's."""
+    def rule_symbol(entry):
+        member, colon, token = entry[2].partition(":")
+        return entry[1], ("" if colon and member == Path(entry[0]).stem else member) + colon + re.sub(r"#\d+$", "", token)
+    gone = collections.Counter(rule_symbol(e) for e in before - listed)
+    count = collections.Counter(rule_symbol(e) for e in added)
+    return {e for e in added if count[rule_symbol(e)] <= gone[rule_symbol(e)]}
+
+
+def _old(new_rules, entries):
+    """The entries whose rule and file are not in `new_rules`."""
+    return {e for e in entries if e[1] not in new_rules and e[0] not in new_rules}
+
+
+def ratchet(found, path, base, new_rules, root=ROOT, files=None):
     """Hold found {file: {rule: [symbol]}} to the baseline at `path` (repo-relative) in `root`:
     error lines for a hit not in the baseline, a baselined one that's gone, and an entry added
-    since `base` whose rule and file aren't in `new_rules`. The base is read on every call."""
+    since `base` whose rule and file aren't in `new_rules` and that isn't a move. The base is read
+    on every call. With `files` (repo-relative paths) every compare keeps only the entries of those
+    files. A move is an entry whose rule and symbol the base listed under a file where it no longer
+    is, while the count of that rule and symbol doesn't grow (the pairing reads the whole baseline)."""
     try:
-        at_base = file_at(base, path, root)
+        before = _entries_at(base, path, root)
     except ValueError as e:
         return [str(e)]
     file = Path(root) / path
     known = _baseline(file.read_text()) if file.exists() else {}
     if known is None:
         return [f"{path}: not a {{file: {{rule: [symbol]}}}} baseline"]
-    before = _baseline_entries(_baseline(at_base) or {}) if at_base is not None else set()
     hits, listed = _baseline_entries(found), _baseline_entries(known)
+    whole_before, whole_listed = before, listed
+    if files is not None:
+        hits, listed, before = ({e for e in entries if e[0] in files} for entries in (hits, listed, before))
+    added = (listed & hits) - before
+    old = _old(new_rules, added)
+    moved = _moved(whole_before, whole_listed, old)
     errors = []
     for f, r, s in sorted(hits - listed):
         errors.append(f"{f}: {r} {s}: not in the baseline (fix it, or add an exception with its reason to {Path(path).name.replace('-baseline', '-exceptions')})")
     for f, r, s in sorted(listed - hits):
         errors.append(f"{f}: {r} {s}: fixed, still baselined (delete the entry)")
-    for f, r, s in sorted((listed & hits) - before):
-        if r not in new_rules and f not in new_rules:
-            errors.append(f"{f}: {r} {s}: added to the baseline since {base} (a baseline only shrinks)")
+    for f, r, s in sorted(old - moved):
+        errors.append(f"{f}: {r} {s}: added to the baseline since {base} (a baseline only shrinks)")
     return errors
 
 
-def add_to_baseline(found, path, new_rules, root=ROOT):
+def add_to_baseline(found, path, new_rules, root=ROOT, base=None):
     """Write the baseline at `path`: its entries still found, plus found ones whose rule or file
-    is in `new_rules`. Returns the entry count."""
+    is in `new_rules`, plus with `base` the found ones that moved (paired against the base's
+    entries as `ratchet` does). Returns the entry count; ValueError when the base can't be read."""
     file = Path(root) / path
     old = (_baseline(file.read_text()) if file.exists() else None) or {}
     keep = _baseline_entries(old)
+    entries = _baseline_entries(found)
+    kept = {e for e in entries if e in keep} | (entries - _old(new_rules, entries))
+    if base is not None:
+        kept |= _moved(_entries_at(base, path, root), kept, entries - kept)
     out = {}
-    for f, r, s in sorted(_baseline_entries(found)):
-        if (f, r, s) in keep or r in new_rules or f in new_rules:
-            out.setdefault(f, {}).setdefault(r, []).append(s)
+    for f, r, s in sorted(kept):
+        out.setdefault(f, {}).setdefault(r, []).append(s)
     file.write_text(json.dumps(out, indent=2) + "\n")
     return sum(len(syms) for rules in out.values() for syms in rules.values())
+
+
+ID = re.compile(r"\bid\s*:\s*(\w+)")
+
+
+def _params(raw):
+    """The parameter names of a parameter list's text (parens included): `name`, `name: type`, `name = value`
+    or `type name`."""
+    return [m.group(1) for part in raw.strip("()").split(",") if (m := re.search(r"(\w+)\s*(?:[:=].*)?$", part))]
+
+
+class Source:
+    """One QML file: its text, the same without comments (`stripped`), and with string literals emptied too
+    (`code`, same lines); its declared properties, functions, signals and ids."""
+
+    def __init__(self, rel, text):
+        self.rel, self.stem, self.text = rel, Path(rel).stem, text
+        self.stripped = blank_comments(text)
+        self.code = blank_strings(self.stripped)
+        self.starts = [0] + [m.end() for m in re.finditer("\n", self.stripped)]
+        self.properties, self.functions, self.signals = [], [], []
+        for m in DECLARATION.finditer(self.code):
+            at = self.at(m.start())
+            if m.group(3):
+                self.properties.append((m.group(2), m.group(3), at))
+            elif m.group(5):
+                self.signals.append((m.group(5), _params(m.group(6) or ""), at))
+            else:
+                self.functions.append((m.group(7), _params(m.group(8)), at))
+        self.ids = [(m.group(1), self.at(m.start())) for m in ID.finditer(self.code)]
+
+    def at(self, offset):
+        """`offset` in `code` as the offset of the same place in `stripped`."""
+        line = self.code.count("\n", 0, offset)
+        return self.starts[line] + offset - (self.code.rfind("\n", 0, offset) + 1)
+
+    def declared(self):
+        """[(name, offset)] of every declared name: properties, functions, signals, their parameters, ids;
+        the file's stem last with no offset."""
+        names = [(name, at) for _, name, at in self.properties]
+        for name, params, at in self.functions + self.signals:
+            names += [(name, at)] + [(p, at) for p in params]
+        return names + self.ids + [(self.stem, None)]
+
+
+class Hits:
+    """The hits of a run, {file: {rule: [symbol]}} once numbered."""
+
+    def __init__(self):
+        self.pending = {}
+
+    def add(self, file, rule, symbol, at=0):
+        """A hit; `at` orders the hits of one file and rule (a repeat is numbered in that order)."""
+        self.pending.setdefault((file, rule), []).append((at, symbol))
+
+    def add_at(self, rel, rule, text, found):
+        """The hits of `rel`'s text: `found` is [(offset in the code, token)]."""
+        lines = text.split("\n")
+        code = blank_comments(text)
+        for at, token in found:
+            line = code.count("\n", 0, at)
+            member = Path(rel).stem
+            for raw in lines[: line + 1]:
+                m = MEMBER.match(raw)
+                if m:
+                    member = m.group(3) or m.group(5) or m.group(7)
+                elif re.match(r"  \S", raw) and raw[2] not in "})]":
+                    member = Path(rel).stem
+            self.add(rel, rule, f"{member}:{token}", at)
+
+    def found(self):
+        out = {}
+        for (file, rule), hits in sorted(self.pending.items()):
+            out.setdefault(file, {})[rule] = numbered([s for _, s in sorted(hits, key=lambda h: h[0])])
+        return out
+
+
+def new_rules(base, path, rules, root=ROOT):
+    """The ids of `rules` the `RULES` assignment in the base's copy of the check at `path` lacks: a dict literal's
+    keys or, for a base from before RULES was a dict, a list literal; all of them when the file is absent at the
+    base or has no RULES; ValueError when the base can't be read or RULES is assigned twice or isn't a literal."""
+    text = file_at(base, path, root)
+    if text is None:
+        return set(rules)
+    try:
+        values = [ast.literal_eval(n.value) for n in ast.parse(text).body
+                  if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "RULES" for t in n.targets)]
+    except (SyntaxError, ValueError):
+        values = [None, None]
+    if len(values) > 1 or any(not isinstance(v, (dict, list)) for v in values):
+        raise ValueError(f"{path}: can't read RULES at the base {base}")
+    return set(rules) - set(values[0] if values else [])
+
+
+def _waives(key, file, symbol):
+    """Whether an exceptions key waives the hit `symbol` of `file`: a glob key (it holds `/` or `*`) by file;
+    a name key by the token after the last `:` of the symbol (`#k` stripped); a dotted `Owner.member` also
+    every hit of the file `Owner.qml` whose member part (before the first `:`) or token is `member`."""
+    if "/" in key or "*" in key:
+        return fnmatch.fnmatch(file, key)
+    token = re.sub(r"#\d+$", "", symbol.rpartition(":")[2])
+    owner, dot, member = key.partition(".")
+    return token == key or bool(dot) and Path(file).stem == owner and member in (symbol.partition(":")[0], token)
+
+
+def waive(found, entries, path):
+    """Drop from found {file: {rule: [symbol]}} the hits an exceptions file's `entries` (load_exceptions)
+    waive; error lines for each entry rule that waives nothing (`path` names the file in them)."""
+    errors, dropped = [], set()
+    for key, entry in sorted(entries.items()):
+        for rule in entry["rules"]:
+            sites = {(f, rule, s) for f, rules in found.items() for s in rules.get(rule, ()) if _waives(key, f, s)}
+            if not sites:
+                errors.append(f"{path}: {key} lists {rule}, which no {'file under it' if '/' in key or '*' in key else 'site of it'} hits")
+            dropped |= sites
+    for f, r, s in dropped:
+        found[f][r].remove(s)
+        if not found[f][r]:
+            del found[f][r]
+        if not found[f]:
+            del found[f]
+    return errors
+
+
+def rule_statements(errors, rules):
+    """["<rule>: <statement>"] for each key of `rules` that is the second word of an error line
+    (`<file>: <rule> …`), once, in `rules`' order."""
+    named = {line.split(" ", 2)[1] for line in errors if line.count(" ") >= 1}
+    return [f"{rule}: {statement}" for rule, statement in rules.items() if rule in named]
 
 
 SINGLETON = re.compile(r"^\s*pragma\s+Singleton\b", re.M)

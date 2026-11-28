@@ -8,7 +8,7 @@
 #      change touches what they're recorded from)
 #   1. formats changed QML with Qt 6's qmlformat, writing in place so the
 #      file keeps its inode and the running shell still reloads it
-#   2. check_structure, check_engines, check_sizes, check_icons, check_docs
+#   2. check_structure, check_names, check_engines, check_sizes, check_icons, check_docs
 #      and check_packages (a few seconds) on every change, then those of
 #      check_all.sh's other checks
 #      the change reaches, a deletion or a check script's own change
@@ -135,18 +135,19 @@ for f in "${changed[@]}"; do
   scripts/dev/fixtures.py) script_tests+=(FixturesGolden) ;;
   scripts/run_tests.sh) script_tests+=(RunTests) ;;
   scripts/check_icons.py) script_tests+=(CheckIcons) ;;
-  scripts/check_structure.py | scripts/quickshell-io-allowlist.json | scripts/chrome-drawing-allowlist.json | scripts/bar-widget-exceptions.json) script_tests+=(CheckStructure CheckStyle) ;;
-  scripts/qml_modules.py) script_tests+=(CheckStructure CheckStyle Ratchet CheckQmllint CheckEngines) ;;
+  scripts/check_structure.py | scripts/structure-baseline.json | scripts/structure-exceptions.json | scripts/quickshell-io-allowlist.json | scripts/chrome-drawing-allowlist.json | scripts/bar-widget-exceptions.json) script_tests+=(CheckStructure CheckStyle) ;;
+  scripts/qml_modules.py) script_tests+=(CheckStructure CheckStyle Ratchet CheckQmllint CheckEngines CheckNames CheckDocs) ;;
   scripts/check_engines.py) script_tests+=(CheckEngines GenDocsEngines) ;;
+  scripts/check_names.py | scripts/names.json | scripts/names-exceptions.json | scripts/names-baseline.json) script_tests+=(CheckNames CheckStructure CheckDocs NewNames) ;;
   docs/dev/core/engines.md | scripts/engines.json | scripts/engines-baseline.json | scripts/engines-exceptions.json) script_tests+=(CheckEngines) ;;
-  scripts/manifests.py) script_tests+=(Manifests CheckEngines GenDocsEngines) ;;
+  scripts/manifests.py) script_tests+=(Manifests CheckEngines CheckNames CheckDocs NewNames GenDocsEngines) ;;
   scripts/check_style.py | scripts/style-exceptions.json) script_tests+=(CheckStyle) ;;
   scripts/check_docs.py) script_tests+=(CheckDocs) ;;
   scripts/check_i18n.py) script_tests+=(CheckI18n) ;;
   scripts/check_qmllint.py) script_tests+=(CheckQmllint Ratchet) ;;
   scripts/check_packages.py) script_tests+=(CheckPackages) ;;
   scripts/check_shaders.py) script_tests+=(CheckShaders) ;;
-  scripts/gen_docs.py) script_tests+=(RpcShapes ConfigUsage CheckEngines GenDocsEngines) ;;
+  scripts/gen_docs.py) script_tests+=(RpcShapes ConfigUsage CheckEngines CheckStructure GenDocsEngines) ;;
   tests/scripts/test_scripts.py) script_tests+=(all) ;;
   esac
 done
@@ -189,6 +190,7 @@ if [[ $qmlformat -eq 1 ]]; then
   step "qmlformat (every file)" scripts/check_qmlformat.sh
 fi
 step "structure" python3 scripts/check_structure.py
+step "names" python3 scripts/check_names.py
 step "engines" python3 scripts/check_engines.py
 step "sizes" python3 scripts/check_sizes.py
 step "style" python3 scripts/check_style.py

@@ -33,7 +33,7 @@ import re
 import sys
 from pathlib import Path
 
-from qml_modules import QML_ROOT, ROOT, qml_files
+from qml_modules import MEMBER, QML_ROOT, ROOT, qml_files
 
 import check_engines
 import manifests
@@ -101,11 +101,7 @@ def first_sentence(text, limit=220):
 
 # ---------------------------------------------------------------- QML parsing
 
-MEMBER = re.compile(
-    r"^  (?:(readonly|required|default)\s+)*property\s+(\S+)\s+(\w+)\s*(?::\s*(.*))?$"
-    r"|^  signal\s+(\w+)\s*(\([^)]*\))?"
-    r"|^  function\s+(\w+)\s*(\([^)]*\))\s*(?::\s*([\w.<>]+))?")
-ROOT_OBJECT = re.compile(r"^[A-Z][\w.]*\s*\{")
+ROOT_OBJECT = re.compile(r"^([A-Z][\w.]*)\s*\{", re.M)
 
 
 def parse_qml(path):
@@ -820,7 +816,7 @@ def _skip_string(text, i):
         if text[i] == "\\":
             i += 1
         elif quote == "`" and text.startswith("${", i):
-            i = _skip_balanced(text, i + 1)
+            i = skip_balanced(text, i + 1)
             continue
         i += 1
     return i + 1
@@ -833,7 +829,7 @@ def _comment_end(text, i):
     return len(text) if end < 0 else end + (0 if line else 2)
 
 
-def _skip_balanced(text, i):
+def skip_balanced(text, i):
     """The index past the bracket opened at text[i] and its contents."""
     stack = [_CLOSE[text[i]]]
     i += 1
@@ -862,7 +858,7 @@ def split_top(text, start, end):
         if c in "\"'`":
             i = _skip_string(text, i)
         elif c in _CLOSE:
-            i = _skip_balanced(text, i)
+            i = skip_balanced(text, i)
         elif text.startswith("//", i) or text.startswith("/*", i):
             i = _comment_end(text, i)
         elif c == ",":
@@ -881,7 +877,7 @@ def _strip_comments(src):
 
 def call_args(text, open_paren):
     """The arguments of the call whose ( is at text[open_paren]."""
-    end = _skip_balanced(text, open_paren)
+    end = skip_balanced(text, open_paren)
     return split_top(text, open_paren + 1, end - 1)
 
 
@@ -1008,7 +1004,7 @@ def qml_helper_lines(text):
         if brace < 0:
             continue
         first = text.count("\n", 0, helper.end()) + 1
-        last = text.count("\n", 0, _skip_balanced(text, brace)) + 1
+        last = text.count("\n", 0, skip_balanced(text, brace)) + 1
         lines.update(range(first, last + 1))
     return lines
 
@@ -1327,7 +1323,7 @@ def json_property(path, name, default=_ABSENT):
             return default
         sys.exit(f"{rel(path)}: no `property var {name}: [...]`")
     start = match.end() - 1
-    return json.loads(text[start:_skip_balanced(text, start)])
+    return json.loads(text[start:skip_balanced(text, start)])
 
 
 def layers_page():

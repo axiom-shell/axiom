@@ -613,6 +613,101 @@ class CheckStructure(unittest.TestCase):
             code, out = run_check(root, "check_structure.py", files=[self.LAYER_GOOD])
             self.assertEqual([line for line in out.splitlines() if "layer-" in line], [], out)
 
+    # What a fixture of the naming rules copies: the layer contract the older rules read, and the tests the baseline lists
+    NAMING_PATHS = ("docs/dev/compositor/contract.md", "tests", "tests-layout")
+
+    @staticmethod
+    def plain(body, head="pragma ComponentBehavior: Bound\nimport QtQuick"):
+        """A fixture file whose members sit at the root's two-space indent."""
+        return f"{head}\n// A fixture.\nItem {{\n{body}\n}}\n"
+
+    def test_naming_rules(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, *self.NAMING_PATHS)
+            files = [
+                ("qml/shell/Reach.qml", self.plain('  property var claim: null\n  property var _own: null\n  function f() { claim._state = "open"; claim._own = 1; root._other = 2 }\n  property var host: null\n  function g() { const o = {"_k": 1}; return o._k + host?._drawn }\n  Timer {\n    id: _soon\n  }')),
+                ("qml/shell/RootId.qml", self.plain("  id: copies")),
+                ("qml/shell/RootOk.qml", self.plain("  id: root")),
+                ("qml/shell/WorkspaceCell.qml", self.plain("")),
+                ("qml/shell/FooPanel.qml", self.plain("")),
+                ("qml/shell/Tip.qml", "import Quickshell\n// A fixture.\nPopupWindow {\n}\n"),
+                ("qml/shell/Edge.qml", "import Quickshell\n// A fixture.\nPanelWindow {\n}\n"),
+                ("qml/shell/GoodPanel.qml", "pragma ComponentBehavior: Bound\nimport QtQuick\n// A fixture.\nPanel {\n}\n"),
+                ("qml/components/surfaces/widgets/Keep.qml", self.plain("")),
+                ("tests/tst_TypePickr.qml", self.plain("  function test_camelCase() {}\n  function test_snake_case() {}")),
+                ("qml/services/core/Tick.qml", self.plain("  Timer {}\n  Timer {}\n  PersistentProperties {}\n  property Timer _t: Timer {}", head="pragma Singleton\nimport QtQuick")),
+            ]
+            code, out = run_check(root, "check_structure.py", "--base", base, files=files)
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, [
+            "qml/shell/Reach.qml: private-reach f:claim._state: not in the baseline",
+            "qml/shell/Reach.qml: private-reach g:host._drawn: not in the baseline",
+            "qml/shell/Reach.qml: private-reach Reach:id _soon: not in the baseline",
+            "qml/shell/Edge.qml: suffix-rules Edge:Window: not in the baseline",
+            "qml/shell/RootId.qml: root-id RootId:copies: not in the baseline",
+            "qml/shell/WorkspaceCell.qml: stem-unique stem:WorkspaceCell: not in the baseline",
+            "qml/shell/FooPanel.qml: suffix-rules FooPanel:Panel: not in the baseline",
+            "qml/components/surfaces/widgets: folder-case folder:widgets: not in the baseline",
+            "tests/tst_TypePickr.qml: test-names file:tst_TypePickr: not in the baseline",
+            "tests/tst_TypePickr.qml: test-names test_camelCase: not in the baseline",
+            "qml/services/core/Tick.qml: singleton-children Timer: not in the baseline",
+            "qml/services/core/Tick.qml: singleton-children Timer#2: not in the baseline",
+        ]), [], out)
+        for quiet in ("Reach.qml: private-reach f:claim._own", "root._other", "o._k", "Tip.qml: suffix-rules", "RootOk", "GoodPanel", "tst_TypePickr.qml: test-names test_snake_case",
+                      "singleton-children PersistentProperties", "singleton-children _t"):
+            self.assertEqual([l for l in out.splitlines() if quiet in l], [], quiet + "\n" + out)
+        sys.path.insert(0, str(SCRIPTS))
+        import check_structure
+        lines = out.splitlines()
+        for rule, statement in check_structure.RULES.items():
+            self.assertEqual(lines.count(f"error    {rule}: {statement}"), 1, rule + "\n" + out)
+
+    def test_naming_baseline_and_new_rules(self):
+        def without_root_id(root):
+            path = root / "scripts/check_structure.py"
+            path.write_text("".join(l for l in path.read_text().splitlines(keepends=True) if not l.startswith('    "root-id": "')))
+        entry = {"qml/shell/RootId.qml": {"root-id": ["RootId:copies"]}}
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, *self.NAMING_PATHS)
+            edit_json(root / "scripts/structure-baseline.json", lambda data: data.update(entry))
+            code, out = run_check(root, "check_structure.py", "--base", base, files=[("qml/shell/RootId.qml", self.plain("  id: copies"))])
+            self.assertEqual(code, 1)
+            self.assertIn("qml/shell/RootId.qml: root-id RootId:copies: added to the baseline since", out)
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, *self.NAMING_PATHS, plant=without_root_id)
+            shutil.copy2(ROOT / "scripts/check_structure.py", root / "scripts/check_structure.py")
+            edit_json(root / "scripts/structure-baseline.json", lambda data: data.update(entry))
+            code, out = run_check(root, "check_structure.py", "--base", base, files=[("qml/shell/RootId.qml", self.plain("  id: copies"))])
+            self.assertEqual(code, 0, out)
+            self.assertEqual(out, "structure ok\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            def empty_base(root):
+                without_root_id(root)
+                (root / "scripts/structure-baseline.json").write_text("{}")
+            root, base = fixture_repo(tmp, *self.NAMING_PATHS, plant=empty_base)
+            shutil.copy2(ROOT / "scripts/check_structure.py", root / "scripts/check_structure.py")
+            code, out = run_check(root, "check_structure.py", "--base", base, "--update-baseline",
+                                  files=[("qml/shell/RootId.qml", self.plain("  id: copies")),
+                                         ("qml/shell/Reach.qml", self.plain("  id: root\n  Item {\n    id: _soon\n  }"))])
+            self.assertEqual(code, 0, out)
+            data = json.loads((root / "scripts/structure-baseline.json").read_text())
+            self.assertEqual(data["qml/shell/RootId.qml"], {"root-id": ["RootId:copies"]})
+            self.assertNotIn("qml/shell/Reach.qml", data)
+            self.assertEqual({r for rules in data.values() for r in rules}, {"root-id"})
+            self.assertTrue(all(isinstance(syms, list) and all(isinstance(x, str) for x in syms)
+                                for rules in data.values() for syms in rules.values()), data)
+
+    def test_naming_exceptions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, *self.NAMING_PATHS)
+            edit_json(root / "scripts/structure-exceptions.json", lambda data: data.update({
+                "qml/shell/FooPanel.qml": {"rules": ["suffix-rules"], "reason": "fixture"},
+                "qml/nowhere/*.qml": {"rules": ["root-id"], "reason": "fixture"}}))
+            code, out = run_check(root, "check_structure.py", "--base", base, files=[("qml/shell/FooPanel.qml", self.plain(""))])
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, ["scripts/structure-exceptions.json: qml/nowhere/*.qml lists root-id, which no file under it hits"]), [], out)
+        self.assertEqual([l for l in out.splitlines() if "FooPanel" in l], [], out)
+
     def test_live_tree_passes(self):
         # The real widgets break no template rule, so each plant above is what fails
         with tempfile.TemporaryDirectory() as tmp:
@@ -793,6 +888,114 @@ class Ratchet(unittest.TestCase):
         self.qm.add_to_baseline({}, self.PATH, set(), root=self.root)
         self.assertEqual(json.loads((self.root / self.PATH).read_text()), {})
 
+    def test_files(self):
+        known = {"a.qml": {"purity": ["f:Date.now"]}, "b.qml": {"purity": ["g:console"]}}
+        write(self.root, self.PATH, json.dumps(known))
+        git(self.root, self.tmp.name, "commit", "-q", "-am", "two files")
+        base = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        found = {"a.qml": {"purity": ["f:Date.now"]}}
+        self.assertEqual(self.ratchet(found, base=base), ["b.qml: purity g:console: fixed, still baselined (delete the entry)"])
+        self.assertEqual(self.qm.ratchet(found, self.PATH, base, set(), root=self.root, files={"a.qml"}), [])
+        self.assertEqual(self.qm.ratchet({}, self.PATH, base, set(), root=self.root, files={"a.qml"}),
+                         ["a.qml: purity f:Date.now: fixed, still baselined (delete the entry)"])
+
+    def test_moves(self):
+        moved = {"b.qml": {"purity": ["f:Date.now"]}}
+        write(self.root, self.PATH, json.dumps(moved))
+        self.assertEqual(self.ratchet(moved), [])
+        both = {"a.qml": {"purity": ["f:Date.now"]}, "b.qml": {"purity": ["f:Date.now"]}}
+        write(self.root, self.PATH, json.dumps(both))
+        self.assertEqual(self.ratchet(both),
+                         [f"b.qml: purity f:Date.now: added to the baseline since {self.base} (a baseline only shrinks)"])
+        write(self.root, self.PATH, json.dumps({"b.qml": {"purity": ["g:console"]}}))
+        self.assertEqual(self.ratchet({"b.qml": {"purity": ["g:console"]}}),
+                         [f"b.qml: purity g:console: added to the baseline since {self.base} (a baseline only shrinks)"])
+
+    def test_a_renamed_file_keeps_its_stem_symbols(self):
+        old = {"qml/a/Foo.qml": {"timer-name": ["Foo:_t"]}}
+        write(self.root, self.PATH, json.dumps(old))
+        git(self.root, self.tmp.name, "commit", "-q", "-am", "stem symbol")
+        base = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        renamed = {"qml/a/Bar.qml": {"timer-name": ["Bar:_t"]}}
+        write(self.root, self.PATH, json.dumps(renamed))
+        self.assertEqual(self.ratchet(renamed, base=base), [])
+        write(self.root, self.PATH, "{}")
+        self.qm.add_to_baseline(renamed, self.PATH, set(), root=self.root, base=base)
+        self.assertEqual(json.loads((self.root / self.PATH).read_text()), renamed)
+
+    def test_moves_into_a_file_that_has_it(self):
+        two = {"a.qml": {"purity": ["f:Date.now"]}, "b.qml": {"purity": ["f:Date.now"]}}
+        write(self.root, self.PATH, json.dumps(two))
+        git(self.root, self.tmp.name, "commit", "-q", "-am", "two sites")
+        base = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        moved = {"b.qml": {"purity": ["f:Date.now", "f:Date.now#2"]}}
+        write(self.root, self.PATH, json.dumps(moved))
+        self.assertEqual(self.ratchet(moved, base=base), [])
+
+    def test_add_to_baseline_moves(self):
+        found = {"b.qml": {"purity": ["f:Date.now"]}}
+        self.qm.add_to_baseline(found, self.PATH, set(), root=self.root)
+        self.assertEqual(json.loads((self.root / self.PATH).read_text()), {})
+        self.qm.add_to_baseline(found, self.PATH, set(), root=self.root, base=self.base)
+        self.assertEqual(json.loads((self.root / self.PATH).read_text()), found)
+        write(self.root, self.PATH, "{}")
+        self.assertEqual(self.qm.add_to_baseline(found, self.PATH, set(), root=self.root, base=self.base), 1)
+        self.assertEqual(json.loads((self.root / self.PATH).read_text()), found)
+        write(self.root, self.PATH, json.dumps(self.KNOWN))
+        both = {"a.qml": {"purity": ["f:Date.now"]}, "b.qml": {"purity": ["f:Date.now"]}}
+        self.qm.add_to_baseline(both, self.PATH, set(), root=self.root, base=self.base)
+        self.assertEqual(json.loads((self.root / self.PATH).read_text()), {"a.qml": {"purity": ["f:Date.now"]}})
+        with self.assertRaises(ValueError):
+            self.qm.add_to_baseline(found, self.PATH, set(), root=self.root, base="nosuchref")
+
+    def test_new_rules(self):
+        path = "scripts/check_demo.py"
+        write(self.root, path, 'RULES = ["a", "b"]\n')
+        git(self.root, self.tmp.name, "add", "-A")
+        git(self.root, self.tmp.name, "commit", "-q", "-m", "list")
+        listed = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        write(self.root, path, 'RULES = {"c": "the c rule", "d": "the d rule"}\n')
+        git(self.root, self.tmp.name, "commit", "-q", "-am", "dict")
+        dicted = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        write(self.root, path, 'X = 1\n')
+        git(self.root, self.tmp.name, "commit", "-q", "-am", "none")
+        none = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        write(self.root, path, 'RULES = ["a"]\nRULES = ["b"]\n')
+        git(self.root, self.tmp.name, "commit", "-q", "-am", "twice")
+        twice = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        write(self.root, path, 'RULES = [x for x in "ab"]\n')
+        git(self.root, self.tmp.name, "commit", "-q", "-am", "computed")
+        computed = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        self.assertEqual(self.qm.new_rules(listed, path, {"a", "b", "c"}, root=self.root), {"c"})
+        self.assertEqual(self.qm.new_rules(dicted, path, {"c", "d", "e"}, root=self.root), {"e"})
+        self.assertEqual(self.qm.new_rules(none, path, {"a", "b"}, root=self.root), {"a", "b"})
+        self.assertEqual(self.qm.new_rules(self.base, path, {"a", "b"}, root=self.root), {"a", "b"})
+        for base in (twice, computed, "nosuchref"):
+            with self.assertRaises(ValueError):
+                self.qm.new_rules(base, path, {"a"}, root=self.root)
+
+    def test_waive(self):
+        def found():
+            return {"qml/Foo.qml": {"short-params": ["outline:o", "other:o"], "spelling": ["x:centre"]},
+                    "qml/Bar.qml": {"short-params": ["outline:o", "m:Foo.outline"]}}
+        entries = {"Foo.outline": {"rules": ["short-params"]}, "qml/*.qml": {"rules": ["spelling"]},
+                   "qml/nowhere/*": {"rules": ["spelling"]}, "gone": {"rules": ["spelling"]}}
+        got = found()
+        self.assertEqual(self.qm.waive(got, entries, "scripts/x-exceptions.json"), [
+            "scripts/x-exceptions.json: gone lists spelling, which no site of it hits",
+            "scripts/x-exceptions.json: qml/nowhere/* lists spelling, which no file under it hits"])
+        self.assertEqual(got, {"qml/Foo.qml": {"short-params": ["other:o"]}, "qml/Bar.qml": {"short-params": ["outline:o"]}})
+        got = found()
+        self.assertEqual(self.qm.waive(got, {"o": {"rules": ["short-params"]}}, "x"), [])
+        self.assertEqual(got, {"qml/Foo.qml": {"spelling": ["x:centre"]}, "qml/Bar.qml": {"short-params": ["m:Foo.outline"]}})
+
+    def test_rule_statements(self):
+        rules = {"purity": "no clocks", "dag": "no cycles", "doc": "headings"}
+        errors = ["a.qml: doc x: not in the baseline", "b.qml: purity y: not in the baseline", "c.qml: purity z: again",
+                  "scripts/x.json: can't read the base"]
+        self.assertEqual(self.qm.rule_statements(errors, rules), ["purity: no clocks", "doc: headings"])
+        self.assertEqual(self.qm.rule_statements([], rules), [])
+
     def test_default_base(self):
         with mock.patch.dict(os.environ, {"GITHUB_ACTIONS": "true"}):
             self.assertEqual(self.qm.default_base(root=self.root), "HEAD^1")
@@ -911,15 +1114,21 @@ def demo_engine(root):
     doc.write_text("\n".join(lines))
 
 
-def demo_repo(tmp, *paths):
-    """The fixture engines (demo_engine) in a git copy of the tree: `qml`, engines.md and `paths`,
-    committed; (root, the commit)."""
-    root = fixture_root(tmp, "qml", "docs/dev/core/engines.md", *paths)
-    demo_engine(root)
+def fixture_repo(tmp, *paths, plant=None):
+    """A git copy of the tree: `qml` and `paths`, `plant(root)` applied when given, committed; (root, the commit)."""
+    root = fixture_root(tmp, "qml", *paths)
+    if plant:
+        plant(root)
     git(root, tmp, "init", "-q", "-b", "main")
     git(root, tmp, "add", "-A")
     git(root, tmp, "commit", "-q", "-m", "base")
     return root, git(root, tmp, "rev-parse", "HEAD")
+
+
+def demo_repo(tmp, *paths):
+    """The fixture engines (demo_engine) in a git copy of the tree: `qml`, engines.md and `paths`,
+    committed; (root, the commit)."""
+    return fixture_repo(tmp, "docs/dev/core/engines.md", *paths, plant=demo_engine)
 
 
 class Manifests(unittest.TestCase):
@@ -930,6 +1139,28 @@ class Manifests(unittest.TestCase):
         sys.path.insert(0, str(SCRIPTS))
         import manifests
         self.m = manifests
+
+    def test_retired(self):
+        good = {"retired": {"OldName": {"new": "NewName", "why": "one name"}, "Owner.old": {"new": "Owner.new", "why": "one"}}}
+        self.assertEqual(self.m.retired(json.dumps(good)),
+                         ({"OldName": {"new": "NewName", "why": "one name"}, "Owner.old": {"new": "Owner.new", "why": "one"}}, []))
+        for text, bad in (("{", "not JSON"), ("{}", "no `retired` object"), (json.dumps({"retired": []}), "no `retired` object"),
+                          (json.dumps({"retired": {"a-b": {"new": "x", "why": "y"}}}), "a-b is not an identifier"),
+                          (json.dumps({"retired": {"A.b.c": {"new": "x", "why": "y"}}}), "A.b.c is not an identifier"),
+                          (json.dumps({"retired": {"A": {"new": "x", "why": " "}}}), "A needs an object"),
+                          (json.dumps({"retired": {"A": {"new": 1, "why": "y"}}}), "A needs an object"),
+                          (json.dumps({"retired": {"A": "B"}}), "A needs an object")):
+            out, errors = self.m.retired(text)
+            self.assertEqual(out, {}, text)
+            self.assertEqual(len(errors), 1, errors)
+            self.assertIn(bad, errors[0])
+
+    def test_adapter_paths(self):
+        other = demo_entry(prefix="OTHER", adapters=["qml/components/OtherAdapter.qml"], itemPaths=["qml/components/OtherItem.qml"])
+        text = manifest_text(demo_entry(), other=other)
+        self.assertEqual(self.m.adapter_paths(self.m.engines(text=text)[0]),
+                         ["qml/components/OtherAdapter.qml", "qml/components/OtherItem.qml",
+                          "qml/components/DemoAdapter.qml", "qml/components/DemoItem.qml"])
 
     def test_tests_for(self):
         text = manifest_text(demo_entry())
@@ -1116,6 +1347,13 @@ class CheckEngines(unittest.TestCase):
         self.assertEqual([l for l in lines if "PurityRandom.qml: purity" in l], [], out)
         self.assertEqual([l for l in lines if "settled" in l], [], out)
         self.assertEqual([l for l in lines if "h:new Date" in l], [], out)
+        sys.path.insert(0, str(SCRIPTS))
+        import check_engines
+        statement = f"purity: {check_engines.RULES['purity']}"
+        self.assertEqual(lines.count(statement), 1, out)
+        self.assertGreater(lines.index(statement), max(i for i, l in enumerate(lines) if ": not in the baseline" in l), out)
+        for text in check_engines.RULES.values():
+            self.assertFalse("lone" in text and "contract" in text or "settled" in text, text)
 
     @staticmethod
     def break_manifest(data):
@@ -1244,6 +1482,190 @@ class CheckEngines(unittest.TestCase):
                         "tests": {"rows": "tests/lone/Rows.js"}, "doc": "docs/dev/core/gone.md",
                         "editPoints": [], "alone": {}}
         data["sink"]["tables"] = []
+
+
+class CheckNames(unittest.TestCase):
+    """scripts/check_names.py on a git copy of the tree: each identifier rule fails on its fixture file with its
+    statement printed once, a names-exceptions.json entry silences what it names, and a stale one fails."""
+
+    @staticmethod
+    def named(body):
+        return f"import QtQuick\n// A fixture.\nItem {{\n{body}\n}}\n"
+
+    def test_each_rule_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = demo_repo(tmp)
+            c = "qml/components"
+            files = [
+                (f"{c}/NameBool.qml", self.named("  property bool isVisibleNow: true\n  property bool isColor: true")),
+                (f"{c}/NameSide.qml", self.named('  property bool joinStart: true\n  property bool atStart: true\n  property bool canStart: true\n  readonly property var fillet: ({"filletStart": true, "filletOpen": true})')),
+                (f"{c}/NameGetter.qml", self.named("  function iconFor(name) { return 1; }\n  function iconOf(name) { return 2; }\n  function shapeOf(name) { return 3; }\n"
+                                                    "  function _screenAt(i) { return 4; }\n  function screenOf(i) { return 5; }")),
+                (f"{c}/NameSignal.qml", self.named("  property int selection: 0\n  signal togglePowerMenu()\n  signal showRequested()\n"
+                                                   "  signal closed()\n  signal saveRefused()\n  signal selectionChanged(var value)\n  signal stateChanged(var value)")),
+                (f"{c}/NameHandler.qml", self.named('  property string onAdd: "card"')),
+                (f"{c}/NameCallback.qml", self.named("  function fetch(url, callback) { return url; }")),
+                (f"{c}/NameUnit.qml", self.named("  property int delayMs: 5\n  property real part: width / 100\n  property real kilo: width / 1000\n  property real r: Math.round(width * 100) / 100")),
+                (f"{c}/NameCollection.qml", self.named("  property var idList: []\n  property int itemLength: 0\n  property bool showList: false\n  property var items: []")),
+                (f"{c}/NameShort.qml", self.named("  function outline(o, w, h) { return o; }\n  function px(n) { return n; }\n  function find(id) { return id; }\n  function _inner(o) { return o; }\n  function at(i, j) { return i; }")),
+                (f"{c}/NameAcronym.qml", self.named("  property string authURL: \"\"\n  property real OSDTile: 0\n  property string authUrl: \"\"")),
+                (f"{c}/NameSpelling.qml", self.named("  property real centreX: 0\n  property real accentRest: 0\n  signal picked(colourName: string)")),
+                (f"{c}/NameRetired.qml", self.named("  property var opts: null\n  property var other: thing.ctx\n  property var folded: SectionFolds.isOpen(a, b)\n  property var okay: ctx\n  property var d: schema.definitions.Bar")),
+                (f"{c}/methods/NameKeys.qml", self.named('  function span(first, second) { return {"lo": first, hi: second, "start": first, extent: 1, end: second}; }\n  function four(first, second, third, fourth) { return first; }')),
+                (f"{c}/methods/demo/NameArgs.qml", self.named("  function five(first, second, third, fourth, fifth) { return first; }\n  function _five(first, second, third, fourth, fifth) { return first; }")),
+                (f"{c}/DemoAdapter.qml", self.named("  property real pillClearance: placement.attachClearance\n  property real attachClearance: placement.attachClearance\n  property real sum: placement.a + 1")),
+                (f"{c}/NameTimer.qml", self.named("  property Timer _timer: Timer {}\n  property Timer doneTimeout: Timer {}\n  Timer { id: closeDelay }\n  Timer { id: openSoon }\n  Timer { id: pollTick }")),
+                (f"{c}/NameTimerRoot.qml", "import QtQuick\n// A fixture.\nTimer {\n  id: root\n}\n"),
+                (f"{c}/NameBanner.qml", "import QtQuick\n// A fixture.\n// ==== Public ====\n// -- Public --\nItem {\n  // ---- x\n  // ~~~ x\n  // a === b\n  // (\"~~~~\")\n}\n"),
+            ]
+            code, out = run_check(root, "check_names.py", "--base", base, files=files)
+        self.assertEqual(code, 1)
+        n = f"{c}/Name"
+        self.assertEqual(missed(out, [
+            f"{n}Bool.qml: bool-is-prefix isVisibleNow:isVisibleNow",
+            f"{n}Side.qml: side-order joinStart:joinStart",
+            f"{n}Side.qml: side-order fillet:filletStart",
+            f"{n}Getter.qml: getter-pairs iconFor:iconFor",
+            f"{n}Getter.qml: getter-pairs iconOf:iconOf",
+            f"{n}Getter.qml: getter-pairs _screenAt:_screenAt",
+            f"{n}Signal.qml: signal-shape togglePowerMenu:togglePowerMenu",
+            f"{n}Signal.qml: signal-shape stateChanged:stateChanged",
+            f"{n}Handler.qml: handler-shaped-property onAdd:onAdd",
+            f"{n}Callback.qml: callback-param fetch:callback",
+            f"{n}Unit.qml: unit-suffix delayMs:delayMs",
+            f"{n}Unit.qml: unit-suffix part:/ 100",
+            f"{n}Collection.qml: collection-suffix idList:idList",
+            f"{n}Short.qml: short-params outline:o",
+            f"{n}Short.qml: short-params outline:w",
+            f"{n}Short.qml: short-params outline:h",
+            f"{n}Acronym.qml: acronym-case authURL:URL",
+            f"{n}Spelling.qml: spelling centreX:centreX",
+            f"{n}Spelling.qml: spelling picked:colourName",
+            f"{n}Retired.qml: retired opts:opts",
+            f"{n}Retired.qml: retired other:ctx",
+            f"{n}Retired.qml: retired folded:SectionFolds.isOpen",
+            f"{c}/methods/NameKeys.qml: object-keys span:lo",
+            f"{c}/methods/NameKeys.qml: object-keys span:hi",
+            f"{c}/methods/NameKeys.qml: object-keys span:extent",
+            f"{c}/methods/demo/NameArgs.qml: positional-args five:five",
+            f"{c}/DemoAdapter.qml: forward-rename pillClearance:pillClearance",
+            f"{n}Timer.qml: timer-name _timer:_timer",
+            f"{n}Timer.qml: timer-name NameTimer:closeDelay",
+            f"{n}Banner.qml: banner-style NameBanner:====",
+            f"{n}Banner.qml: banner-style NameBanner:----",
+            f"{n}Banner.qml: banner-style NameBanner:~~~",
+        ]), [], out)
+        lines = out.splitlines()
+        for quiet in ("isColor", "filletOpen", "shapeOf", "showRequested", "closed", "selectionChanged", "kilo", "items",
+                      "px", "at:", "OSDTile", "authUrl", "okay", "atStart", "canStart", "saveRefused", "r:/ 100", "itemLength",
+                      "showList", "find:", "_inner:", "accentRest", "d:Bar", "span:start", "span:end", "four:", "attachClearance",
+                      "sum:", "doneTimeout", "openSoon", "pollTick", "Public --", "_five", "NameTimerRoot", "a === b", "~~~~"):
+            self.assertEqual([l for l in lines if f"/Name" in l and quiet in l], [], quiet + "\n" + out)
+        sys.path.insert(0, str(SCRIPTS))
+        import check_names
+        self.assertEqual(list(check_names.DETECTIONS), list(check_names.RULES))
+        for rule, statement in check_names.RULES.items():
+            self.assertEqual(lines.count(f"{rule}: {statement}"), 1, rule + "\n" + out)
+        self.assertGreater(lines.index(f"retired: {check_names.RULES['retired']}"), max(i for i, l in enumerate(lines) if "/Name" in l), out)
+
+    def test_type_key_site_is_its_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp)
+            code, out = run_check(root, "check_names.py", "--base", base, files=[
+                ("qml/components/StyledContainer.qml", self.named("")),
+                ("qml/components/UsesIt.qml", self.named("  StyledContainer {}"))])
+        self.assertEqual(code, 1)
+        self.assertIn("qml/components/StyledContainer.qml: retired StyledContainer:StyledContainer", out)
+        self.assertNotIn("UsesIt.qml: retired", out)
+
+    def test_exceptions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp)
+            edit_json(root / "scripts/names-exceptions.json", lambda data: data.update({
+                "centreX": {"rules": ["spelling"], "reason": "fixture"},
+                "Foo.outline": {"rules": ["short-params"], "reason": "fixture"},
+                "neverUsed": {"rules": ["spelling"], "reason": "fixture"},
+                "qml/nowhere/*.qml": {"rules": ["retired"], "reason": "fixture"}}))
+            c = "qml/components"
+            code, out = run_check(root, "check_names.py", "--base", base, files=[
+                (f"{c}/NameSpelling.qml", CheckNames.named("  property real centreX: 0\n  property real colourY: 0")),
+                (f"{c}/Foo.qml", CheckNames.named("  function outline(o, w, h) { return o; }\n  function other(o) { return o; }"))])
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, [
+            f"{c}/NameSpelling.qml: spelling colourY:colourY",
+            f"{c}/Foo.qml: short-params other:o",
+            "scripts/names-exceptions.json: neverUsed lists spelling, which no site of it hits",
+            "scripts/names-exceptions.json: qml/nowhere/*.qml lists retired, which no file under it hits"]), [], out)
+        self.assertEqual([l for l in out.splitlines() if "centreX" in l or "Foo.qml: short-params outline" in l or ": acronym-case OSD" in l
+                          or "shell/Bar.qml: retired" in l], [], out)
+
+    @staticmethod
+    def baselined(root):
+        """`Old.qml` with a `spelling` hit, listed in the baseline."""
+        write(root, "qml/components/Old.qml", CheckNames.named("  property real centreX: 0"))
+        edit_json(root / "scripts/names-baseline.json", lambda data: data.update(
+            {"qml/components/Old.qml": {"spelling": ["centreX:centreX"]}}))
+
+    def test_baseline(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, plant=self.baselined)
+            code, out = run_check(root, "check_names.py", "--base", base)
+            self.assertEqual((code, out), (0, "names ok\n"))
+            code, out = run_check(root, "check_names.py", "--base", base, files=[
+                ("qml/components/New.qml", self.named("  property real colourY: 0"))])
+            self.assertEqual(code, 1)
+            self.assertEqual(missed(out, ["qml/components/New.qml: spelling colourY:colourY: not in the baseline"]), [], out)
+            (root / "qml/components/New.qml").unlink()
+            code, out = run_check(root, "check_names.py", "--base", base, files=[
+                ("qml/components/Old.qml", self.named("  property real centerX: 0"))])
+            self.assertEqual(code, 1)
+            self.assertIn("qml/components/Old.qml: spelling centreX:centreX: fixed, still baselined", out)
+            write(root, "qml/components/Old.qml", self.named("  property real centreX: 0"))
+            edit_json(root / "scripts/names-baseline.json", lambda data: data.update(
+                {"qml/components/Other.qml": {"spelling": ["centreY:centreY"]}}))
+            code, out = run_check(root, "check_names.py", "--base", base, files=[
+                ("qml/components/Other.qml", self.named("  property real centreY: 0"))])
+            self.assertEqual(code, 1)
+            self.assertIn("qml/components/Other.qml: spelling centreY:centreY: added to the baseline since", out)
+
+    def test_new_rule_entries_and_update(self):
+        def without_spelling(root):
+            self.baselined(root)
+            path = root / "scripts/check_names.py"
+            path.write_text("".join(l for l in path.read_text().splitlines(keepends=True) if not l.startswith('    "spelling": "')))
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, plant=without_spelling)
+            shutil.copy2(ROOT / "scripts/check_names.py", root / "scripts/check_names.py")
+            write(root, "qml/components/Other.qml", self.named("  property real centreY: 0"))
+            code, out = run_check(root, "check_names.py", "--base", base, "--update-baseline")
+            self.assertEqual(code, 0, out)
+            data = json.loads((root / "scripts/names-baseline.json").read_text())
+            self.assertEqual(data["qml/components/Other.qml"], {"spelling": ["centreY:centreY"]})
+            self.assertTrue(all(isinstance(syms, list) and all(isinstance(x, str) for x in syms)
+                                for rules in data.values() for syms in rules.values()), data)
+            code, out = run_check(root, "check_names.py", "--base", base)
+            self.assertEqual((code, out), (0, "names ok\n"))
+
+    def test_files_reports_only_the_named_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, plant=self.baselined)
+            edit_json(root / "scripts/names-exceptions.json", lambda data: data.update(
+                {"neverUsed": {"rules": ["spelling"], "reason": "fixture"}}))
+            write(root, "qml/components/Old.qml", self.named("  property real centerX: 0"))
+            code, out = run_check(root, "check_names.py", "--base", base, "--files", "qml/components/New.qml", files=[
+                ("qml/components/New.qml", self.named("  property real colourY: 0"))])
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, ["qml/components/New.qml: spelling colourY:colourY"]), [], out)
+        self.assertNotIn("Old.qml", out)
+        self.assertEqual([l for l in out.splitlines() if l.startswith("scripts/names-exceptions.json")], [], out)
+
+    def test_moved_names_have_no_site(self):
+        sys.path.insert(0, str(SCRIPTS))
+        import check_names
+        moved = {"StyledContainer", "IconConfig", "PopoutConfig", "EdgeMenusConfig", "EdgeMenuManager", "EdgeMenuEditor",
+                 "EdgeMenuBody", "EdgeMenuSync", "StyledRectButton"}
+        self.assertEqual(check_names.retired_sites() & moved, set())
+        self.assertNotIn("Bar", check_names.retired_sites())
 
 
 class GenDocsEngines(unittest.TestCase):
@@ -1819,12 +2241,28 @@ class CheckDocs(unittest.TestCase):
         sys.path.insert(0, str(SCRIPTS))
         from check_docs import retired_name
         configs = {"Bar.background", "Bars.items"}
-        self.assertEqual(retired_name("PopoutConfig.openDelay", configs), "PopoutConfig")
-        self.assertIsNone(retired_name("Bar", configs))
-        self.assertIsNone(retired_name('Bar.background: "solid"', configs))
-        self.assertEqual(retired_name("Bar.enrichBarConfig", configs), "Bar")
-        self.assertEqual(retired_name("Bar.lookOf(bar)", configs), "Bar")
-        self.assertIsNone(retired_name("BarsConfig.lookOf", configs))
+        retired = {"PopoutConfig": {"new": "PopoutsConfig", "why": "x"}, "Bar": {"new": "BarsConfig", "why": "x"}}
+        self.assertEqual(retired_name("PopoutConfig.openDelay", configs, retired), "PopoutConfig")
+        self.assertIsNone(retired_name("Bar", configs, retired))
+        self.assertIsNone(retired_name('Bar.background: "solid"', configs, retired))
+        self.assertEqual(retired_name("Bar.enrichBarConfig", configs, retired), "Bar")
+        self.assertEqual(retired_name("Bar.lookOf(bar)", configs, retired), "Bar")
+        self.assertIsNone(retired_name("BarsConfig.lookOf", configs, retired))
+        self.assertIsNone(retired_name("PopoutConfig.openDelay", configs, {}))
+
+    def test_retired_list_and_sites(self):
+        """A key of names.json > retired fails with its `new`; one with an unwaived site under qml/ passes."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "docs", "qml", "CLAUDE.md", "AGENTS.md", "README.md", "CONTRIBUTING.md")
+            edit_json(root / "scripts/names.json", lambda d: d["retired"].update({
+                "ghostGone": {"new": "ghostNow", "why": "fixture"}, "ghostKept": {"new": "ghostNew", "why": "fixture"}}))
+            code, out = run_check(root, "check_docs.py", files=[
+                ("qml/components/reusable/GhostSite.qml", qml("property int ghostKept: 0")),
+                ("docs/dev/ghost.md", "`ghostGone.x`\n`ghostKept.x`\n"),
+                ("docs/dev/core/shared-ui-pieces.md", (root / "docs/dev/core/shared-ui-pieces.md").read_text() + "\nGhostSite\n")])
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, ["docs/dev/ghost.md:1: `ghostGone.x`: ghostGone was renamed to ghostNow"]), [], out)
+        self.assertNotIn("ghostKept", out)
 
     FILES = [
         ("docs/dev/ghost.md", "[a](nowhere.md)\n`services/core/GhostlyManager.qml`\n`AudioManager.noSuchMember`\n"
@@ -2324,6 +2762,29 @@ class NewNames(unittest.TestCase):
         self.assertTrue(any(r["also"] for r in rows if r["kind"] == "string" and r["file"] == "qml/B.qml"))
         self.assertEqual([r["name"] for r in rows if r["file"].endswith(".yaml")], ["newKey"])
         self.assertFalse([r for r in rows if r["file"].startswith("docs/dev/generated/")])
+
+    def test_retired_names(self):
+        write(self.repo, "scripts/names.json", json.dumps({"retired": {"joinGap": {"new": "mergeGap", "why": "one name"},
+                                                                       "SectionFolds.isOpen": {"new": "SectionFolds.isFoldOpen", "why": "x"}}}))
+        write(self.repo, "qml/A.qml", "Item {\n  property int joinGap: 1\n  property int other: 1\n}\n")
+        write(self.repo, "qml/SectionFolds.qml", "Item {\n  function isOpen() {}\n}\n")
+        rows = self.run_names()
+        self.assertEqual(self.find(rows, "function", "isOpen")["retired"], "SectionFolds.isFoldOpen")
+        self.assertTrue(all("retired" in r for r in rows), rows)
+        self.assertEqual(self.find(rows, "property", "joinGap")["retired"], "mergeGap")
+        self.assertIsNone(self.find(rows, "property", "other")["retired"])
+        out = subprocess.run([sys.executable, str(SCRIPTS / "dev" / "new_names.py")],
+                             cwd=self.repo, capture_output=True, text=True).stdout
+        self.assertIn("joinGap is retired: use mergeGap", out)
+
+    def test_retired_names_are_qml_only(self):
+        write(self.repo, "scripts/names.json", json.dumps({"retired": {"joinGap": {"new": "mergeGap", "why": "one name"},
+                                                                       "opts": {"new": "options", "why": "x"}}}))
+        write(self.repo, "qml/A.qml", "Item {\n  property int joinGap: 1\n}\n")
+        write(self.repo, "backend/x.go", "package x\n\nfunc opts() {}\n")
+        rows = self.run_names()
+        self.assertEqual(self.find(rows, "property", "joinGap")["retired"], "mergeGap")
+        self.assertIsNone(self.find(rows, "func", "opts")["retired"])
 
     def test_rename_is_moved(self):
         write(self.repo, "qml/A.qml", "Item {\n  property string oldName: \"\"\n}\n")

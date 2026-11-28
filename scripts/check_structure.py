@@ -80,8 +80,21 @@ and warns about files in the loaded directories that nothing registers or
 uses. A new rule gets its breaking file in tests/scripts/test_scripts.py's
 CheckStructure.
 
-  scripts/check_structure.py        errors (exit 1) and warnings
+The naming and structure rules in `RULES` (one statement each, printed under
+the failures) are held to scripts/structure-baseline.json, which only shrinks:
+a hit not in it fails, a fixed entry left behind fails, and an entry added
+since the base fails unless its rule is new there or it moved to another
+file. A hit is `<file>: <rule> <symbol>`; scripts/structure-exceptions.json
+waives one (a file glob, or a name; rules and reason; an entry that waives
+nothing fails).
+
+  scripts/check_structure.py                    errors (exit 1) and warnings
+  scripts/check_structure.py --base REF         read the base from REF (default: HEAD^1 in CI, else the
+                                                merge-base with origin/main)
+  scripts/check_structure.py --update-baseline  add the hits of a rule the same change adds, re-key a moved
+                                                entry, drop the fixed ones
 """
+import argparse
 import difflib
 import json
 import re
@@ -93,6 +106,18 @@ import qml_modules
 from qml_modules import qml_files
 
 ROOT = Path(__file__).resolve().parent.parent
+SELF = "scripts/check_structure.py"
+BASELINE = "scripts/structure-baseline.json"
+EXCEPTIONS = ROOT / "scripts" / "structure-exceptions.json"
+RULES = {
+    "private-reach": "a `_name` member is its own file's: never read as `other._name`, never an `id: _name`",
+    "root-id": "a file's root object is `id: root`",
+    "stem-unique": "a file's name is unique across qml/, tests/ and tests-layout/; a singleton never takes a plug-in's file name",
+    "suffix-rules": "a suffix says what the file is: Manager and Editor in services/, Window makes a window, Panel extends Panel, Layer is the layer model's",
+    "folder-case": "grouping folders are lowercase words joined; a folder of one kind under surfaces/ or content/parts/ is singular",
+    "test-names": "test functions are `test_snake_case`; a `tst_<X>` tests exactly the stem <X>, never a near-stem of another",
+    "singleton-children": "a singleton's members are properties, functions and signals: its child objects hang off a property",
+}
 # The shell's QML: `qs.` module names are relative to it
 QML_ROOT = ROOT / "qml"
 SCHEMA = QML_ROOT / "config" / "json" / "config.schema.json"
@@ -122,6 +147,16 @@ OSD_DEFINITION_IMPORTS = {"QtQuick", "qs.components.methods", OSD_ENGINE}
 POPOUT_DIR = "qml/components/content"
 # Beside the type folders, the folders of what they share (lowercase)
 SHARED_FOLDERS = {"base", "parts"}
+# The words a file name ends in to say what the file is: a test name ending in one is a near-stem
+STEM_SUFFIXES = ("Manager", "Config", "Engine", "Window", "Panel", "Pane", "Host", "Editor", "Surface", "Screen",
+                 "Layer", "Card", "Base", "State", "Entry")
+# The files that are the layer model (the only `*Layer` stems)
+LAYER_MODEL = {"LayerManager", "LayerStack", "LayerSlot", "LayerOrigin", "LayerArrange"}
+# The directories that hold the tests
+TEST_DIRS = ("tests", "tests-layout")
+# The folders whose child folders are grouping folders: lowercase and singular
+GROUPING_PARENTS = ("qml/components/surfaces", "qml/components/content/parts")
+WINDOW_TYPE = re.compile(r"(?<![\w.])\w+Window\s*\{")
 # Directories retired by restructuring: nothing may live or be imported there
 RETIRED = ["qml/components/widgets", "qml/components/stolen"]
 # Quickshell.Io's side effects, frozen to the files that use them now
@@ -230,11 +265,6 @@ def binding(code, start):
     return code[start:i]
 
 
-def blank_strings(code):
-    """`code` with each string literal emptied (same lines)."""
-    return re.sub(r'"(?:[^"\\\n]|\\.)*"', '""', code)
-
-
 def qml_blocks(text, type_name):
     """Each `<type_name> { … }` in a QML file: (where its body starts, its body)."""
     blocks = []
@@ -272,7 +302,7 @@ def bar_widget_template(schema, sources, errors):
         files = sorted(folder.rglob("*.qml"))
         raw = {f: f.read_text() for f in files}
         code = {f: re.sub(r"//[^\n]*", "", text) for f, text in raw.items()}
-        plain = {f: blank_strings(c) for f, c in code.items()}
+        plain = {f: qml_modules.blank_strings(c) for f, c in code.items()}
         main_file = folder / f"{t}.qml"
 
         if main_file in raw:
@@ -482,9 +512,117 @@ def popout_modules(schema, sources, errors):
                         errors.append(f"{path}: a PopoutAnchor's fromWidget keys ({', '.join(sorted(keys)) or 'none'}) differ from {t}'s popoutModule.fromWidget ({', '.join(sorted(module.get('fromWidget', []))) or 'none'})")
 
 
+def words(name):
+    """The camel-case words of a name (`OSDSystems` → OSD, Systems)."""
+    return re.findall(r"[A-Z]+(?![a-z])|[A-Z][a-z0-9]*|[a-z0-9]+", name)
+
+
+def is_plugin_main(path):
+    """Whether `path` is a plug-in's main file: <root>/<Type>/<prefix><Type>.qml of one of LOADERS' roots."""
+    p = Path(path)
+    return any(p.parent.parent.as_posix() == directory and p.stem == prefix + p.parent.name
+               for _, directory, prefix in LOADERS)
+
+
+def harness_files():
+    """The test harnesses' QML (not the layout stubs), {repo-relative path: text}."""
+    return {rel(f): f.read_text() for d in TEST_DIRS for f in sorted((ROOT / d).rglob("*.qml"))
+            if not f.is_relative_to(qml_modules.LAYOUT_STUBS)}
+
+
+def near_stem(name, stems):
+    """Whether the test name `name` is a near-stem of one of `stems`: a truncation of a stem of 2+ words, a
+    name ending in a STEM_SUFFIXES word after another word, or 2+ words close to a longer stem's same-length
+    prefix."""
+    parts = words(name)
+    if len(parts) < 2:
+        return False
+    if parts[-1] in STEM_SUFFIXES:
+        return True
+    return any(len(stem) > len(name) and (stem.startswith(name) and len(words(stem)) >= 2
+                                          or difflib.SequenceMatcher(None, name, stem[:len(name)]).ratio() >= 0.85)
+               for stem in stems)
+
+
+def naming_hits(sources, tests):
+    """({file: {rule: [symbol]}} past the exceptions, errors): the hits of RULES over the shell's `sources`
+    and the `tests` harnesses ({path: text} each)."""
+    hits = qml_modules.Hits()
+    stems = {}
+    for path in (*sources, *tests):
+        stems.setdefault(Path(path).stem, []).append(path)
+    plugin_stems = {Path(path).stem for path in sources if is_plugin_main(path)}
+    window_pieces = {Path(p).stem for p in sources if re.fullmatch(r"\w+Window", Path(p).stem)}
+    for path, text in {**sources, **tests}.items():
+        stem = Path(path).stem
+        src = qml_modules.Source(path, text)
+        code = src.code
+        plugin = is_plugin_main(path)
+        if not plugin and (any(p != path and not is_plugin_main(p) for p in stems[stem])
+                           or qml_modules.SINGLETON.search(code) and stem in plugin_stems):
+            hits.add(path, "stem-unique", f"stem:{stem}")
+        if path in tests:
+            for m in re.finditer(r"\bfunction\s+(test_\w+)", code):
+                if not re.fullmatch(r"test_[a-z0-9_]+", m.group(1)):
+                    hits.add(path, "test-names", m.group(1), m.start())
+            if stem.startswith("tst_") and stem[4:] not in stems and near_stem(stem[4:], stems):
+                hits.add(path, "test-names", f"file:{stem}")
+            continue
+        declared = {name for name, _ in src.declared()}
+        keys = set(re.findall(r"[{,]\s*[\"']?(_\w+)[\"']?\s*:", src.stripped))
+        found = []
+        for m in re.finditer(r"(?<![\w.])(\w+)\??\._(\w+)", code):
+            if m.group(1) != "root" and f"_{m.group(2)}" not in declared | keys:
+                found.append((src.at(m.start()), f"{m.group(1)}._{m.group(2)}"))
+        found += [(at, f"id {name}") for name, at in src.ids if name.startswith("_")]
+        hits.add_at(path, "private-reach", text, found)
+        root = gen_docs.ROOT_OBJECT.search(code)
+        root_type = root.group(1) if root else None
+        body = code[root.end():] if root else ""
+        if (m := re.search(r"^  id\s*:\s*(\w+)", body, re.M)) and m.group(1) != "root":
+            hits.add(path, "root-id", f"{stem}:{m.group(1)}")
+        if plugin or path in tests:
+            continue
+        if (m := re.fullmatch(r"\w+(Manager|Editor)", stem)) and not path.startswith("qml/services/"):
+            hits.add(path, "suffix-rules", f"{stem}:{m.group(1)}")
+        window_root = root_type is not None and (root_type in ("PanelWindow", "FloatingWindow") or root_type in window_pieces)
+        if stem.endswith("Window") and not WINDOW_TYPE.search(code) or window_root and not stem.endswith("Window"):
+            hits.add(path, "suffix-rules", f"{stem}:Window")
+        if re.fullmatch(r"\w+Panel", stem) and root_type != "Panel":
+            hits.add(path, "suffix-rules", f"{stem}:Panel")
+        if re.fullmatch(r"\w+Layer", stem) and stem not in LAYER_MODEL:
+            hits.add(path, "suffix-rules", f"{stem}:Layer")
+        if qml_modules.SINGLETON.search(code):
+            for m in re.finditer(r"^  ([A-Z][\w.]*)\s*\{", code, re.M):
+                if m.group(1) != "PersistentProperties":
+                    hits.add(path, "singleton-children", m.group(1), m.start())
+    for folder in sorted(p for p in QML_ROOT.rglob("*") if p.is_dir()):
+        name, path = folder.name, rel(folder)
+        if re.fullmatch(r"[a-z]\w*[A-Z]\w*", name) or rel(folder.parent) in GROUPING_PARENTS and re.fullmatch(r"[a-z]\w*s", name):
+            hits.add(path, "folder-case", f"folder:{name}")
+    found = hits.found()
+    exceptions, errors = qml_modules.load_exceptions(EXCEPTIONS, set(RULES))
+    return found, errors + qml_modules.waive(found, exceptions, "scripts/structure-exceptions.json")
+
+
 def main():
+    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    parser.add_argument("--base", default=None)
+    parser.add_argument("--update-baseline", action="store_true")
+    args = parser.parse_args()
+    base = args.base or qml_modules.default_base()
     schema = json.loads(SCHEMA.read_text())
     sources = {rel(f): f.read_text() for f in qml_files()}
+    named, hit_errors = naming_hits(sources, harness_files())
+    if args.update_baseline:
+        try:
+            if not hit_errors:
+                print(f"{qml_modules.add_to_baseline(named, BASELINE, qml_modules.new_rules(base, SELF, RULES), base=base)} entries in {BASELINE}")
+                return 0
+        except ValueError as e:
+            hit_errors = [str(e)]
+        print("\n".join(hit_errors))
+        return 1
     everything = "\n".join(sources.values())
     imports = set(re.findall(r"^import (qs(?:\.\w+)+)", everything, re.M))
 
@@ -1095,8 +1233,14 @@ def main():
             if len(sources_of) > 1:
                 errors.append(f"{path}: {name} is defined in {' and '.join(sorted(sources_of))}; import only one")
 
+    try:
+        errors.extend(hit_errors + qml_modules.ratchet(named, BASELINE, base, qml_modules.new_rules(base, SELF, RULES)))
+    except ValueError as e:
+        errors.append(str(e))
     for e in errors:
         print(f"error    {e}")
+    for line in qml_modules.rule_statements(errors, RULES):
+        print(f"error    {line}")
     for w in warnings:
         print(f"warning  {w}")
     if not errors and not warnings:
