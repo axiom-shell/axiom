@@ -11,7 +11,7 @@
 - The **command line**: `axiom config …`, named commands and `axiom ipc <target> <fn>` passthrough to the shell.
 - **`axiom uninstall`**: takes axiom out of the home and session, without a daemon ([Uninstall](uninstall.md)).
 - Later, the side effects that need a Wayland connection (idle, gamma, clipboard).
-- **The direction:** Quickshell ends up only drawing Wayland windows (layer shell, popups, the session lock, focus grab, screencopy) and running the QML. Next to move here are Quickshell.Io's side effects (processes, file views, sockets, IPC handlers): `scripts/quickshell-io-allowlist.json` lists the files still using them, and `check_structure` keeps the list from growing. D-Bus services (notifications, tray, UPower, Mpris, Polkit, networking; Bluetooth moved: `internal/bluez`) and native-library ones (Pipewire, PAM, which would need cgo) are planned, not scheduled.
+- **The direction:** Quickshell ends up only drawing Wayland windows (layer shell, popups, the session lock, focus grab, screencopy) and running the QML. Next to move here are Quickshell.Io's side effects (processes, file views, sockets, IPC handlers): `scripts/structure-baseline.json` lists the files still using them (`quickshell-use`; the files allowed a Quickshell API are in `scripts/quickshell-exceptions.json`), and `check_structure` keeps the list from growing. D-Bus services (notifications, tray, UPower, Mpris, Polkit, networking; Bluetooth moved: `internal/bluez`) and native-library ones (Pipewire, PAM, which would need cgo) are planned, not scheduled.
 
 ### What exists now
 - **`axiom run [--dev] [--tree DIR]`**: the daemon for `$WAYLAND_DISPLAY`.

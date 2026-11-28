@@ -135,7 +135,7 @@ for f in "${changed[@]}"; do
   scripts/dev/fixtures.py) script_tests+=(FixturesGolden) ;;
   scripts/run_tests.sh) script_tests+=(RunTests) ;;
   scripts/check_icons.py) script_tests+=(CheckIcons) ;;
-  scripts/check_structure.py | scripts/structure-baseline.json | scripts/structure-exceptions.json | scripts/quickshell-io-allowlist.json | scripts/quickshell-exceptions.json | scripts/chrome-drawing-allowlist.json | scripts/bar-widget-exceptions.json | scripts/ui-local-exceptions.json) script_tests+=(CheckStructure CheckStyle) ;;
+  scripts/check_structure.py | scripts/structure-baseline.json | scripts/structure-exceptions.json | scripts/quickshell-exceptions.json | scripts/chrome-drawing-allowlist.json | scripts/bar-widget-exceptions.json | scripts/ui-local-exceptions.json) script_tests+=(CheckStructure CheckStyle) ;;
   scripts/qml_modules.py) script_tests+=(CheckStructure CheckStyle Ratchet CheckQmllint CheckEngines CheckNames CheckDocs) ;;
   scripts/check_engines.py) script_tests+=(CheckEngines GenDocsEngines) ;;
   scripts/check_names.py | scripts/names.json | scripts/names-exceptions.json | scripts/names-baseline.json) script_tests+=(CheckNames CheckStructure CheckDocs NewNames) ;;
