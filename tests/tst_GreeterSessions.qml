@@ -5,7 +5,7 @@ import qs.components.methods
 TestCase {
   name: "GreeterSessions"
 
-  function test_execArgv_data() {
+  function test_exec_argv_data() {
     return [
       {
         "tag": "plain",
@@ -40,7 +40,7 @@ TestCase {
     ];
   }
 
-  function test_execArgv(data) {
+  function test_exec_argv(data) {
     compare(GreeterSessions.execArgv(data.exec), data.expected);
   }
 

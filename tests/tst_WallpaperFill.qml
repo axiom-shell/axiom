@@ -33,7 +33,7 @@ TestCase {
     }, "fit");
   }
 
-  function test_stretchAndCenter() {
+  function test_stretch_and_center() {
     near(WallpaperFill.rect("stretch", 10, 500, 2000, 1000, 0, 0, 0), {
       "x": 0,
       "y": 0,
@@ -78,7 +78,7 @@ TestCase {
     }, "the shift is clamped");
   }
 
-  function test_parallaxSamePx() {
+  function test_parallax_same_px() {
     // A 16:10 image on a 16:9 screen: its crop overflow is no travel
     near(slide("crop", 1600, 1000, 1920, 1080, 0.04), {
       "x": 60,
@@ -104,7 +104,7 @@ TestCase {
     }, "fit");
   }
 
-  function test_parallaxFitKeepsWhatItCovered() {
+  function test_parallax_fit_keeps_what_it_covered() {
     // An image a pixel off the screen's shape: no more than its half pixel
     // of letterbox at either end of a vertical slide (it was 13.6 px)
     const first = WallpaperFill.rect("fit", 1920, 1079, 1920, 1080, 0.04, 0, -1);
@@ -124,7 +124,7 @@ TestCase {
     }, "small centred");
   }
 
-  function test_notLoaded() {
+  function test_not_loaded() {
     compare(WallpaperFill.rect("crop", 0, 0, 2000, 1000, 0, 0, 0), {
       "x": 0,
       "y": 0,
@@ -133,7 +133,7 @@ TestCase {
     });
   }
 
-  function test_decodeSize() {
+  function test_decode_size() {
     compare(WallpaperFill.decodeSize("crop", 1920, 1080, 0), {
       "width": 1920,
       "height": 1080
@@ -156,14 +156,14 @@ TestCase {
     compare(WallpaperFill.decodeSize("crop", 0, 0, 0), null, "no screen yet");
   }
 
-  function test_fillMode() {
+  function test_fill_mode() {
     compare(WallpaperFill.fillMode("crop"), Image.PreserveAspectCrop);
     compare(WallpaperFill.fillMode("fit"), Image.PreserveAspectFit);
     compare(WallpaperFill.fillMode("stretch"), Image.Stretch);
     compare(WallpaperFill.fillMode("center"), Image.Pad);
   }
 
-  function test_parallaxShift() {
+  function test_parallax_shift() {
     compare(WallpaperFill.parallaxShift(0, 1), 0);
     compare(WallpaperFill.parallaxShift(0, 5), -1);
     compare(WallpaperFill.parallaxShift(2, 5), 0);
@@ -171,7 +171,7 @@ TestCase {
     compare(WallpaperFill.parallaxShift(-1, 5), 0, "unknown");
   }
 
-  function test_parallaxGrid() {
+  function test_parallax_grid() {
     const grid = {
       "grid": true,
       "columns": 3,
@@ -193,7 +193,7 @@ TestCase {
     }, "another output's");
   }
 
-  function test_parallaxGridEqualSteps() {
+  function test_parallax_grid_equal_steps() {
     // 5x3: four steps across span the travel; the rows take the same step
     const grid = {
       "grid": true,
@@ -219,7 +219,7 @@ TestCase {
     }, "bottom right");
   }
 
-  function test_parallaxRow() {
+  function test_parallax_row() {
     const row = {
       "base": 1,
       "size": 5
@@ -234,7 +234,7 @@ TestCase {
     }, "past the last: clamped");
   }
 
-  function test_parallaxDynamic() {
+  function test_parallax_dynamic() {
     const column = {
       "dynamic": true,
       "vertical": true,
@@ -302,7 +302,7 @@ TestCase {
         }));
   }
 
-  function test_stripShift() {
+  function test_strip_shift() {
     compare(WallpaperFill.stripShift(strip(0), false, 1920), -1, "the first column");
     compare(WallpaperFill.stripShift(strip(2), false, 1920), 1, "the last");
     fuzzyCompare(WallpaperFill.stripShift(strip(1), false, 1920), 0, 1e-9, "the middle");
@@ -322,7 +322,7 @@ TestCase {
     compare(WallpaperFill.stripShift(column, true, 1080), 1, "a vertical strip");
   }
 
-  function test_parallaxStrip() {
+  function test_parallax_strip() {
     // niri: workspaces stacked, every output a horizontal strip
     const niri = {
       "dynamic": true,

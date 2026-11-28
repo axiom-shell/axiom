@@ -132,7 +132,7 @@ ColumnLayout {
           }
         }
 
-        // --- The command, typed ---
+        // -- The command, typed --
 
         RowLayout {
           visible: row.commandShown

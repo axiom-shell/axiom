@@ -37,7 +37,7 @@ TestCase {
     root.now = 0;
   }
 
-  function test_neverWhenZero() {
+  function test_never_when_zero() {
     const t = make({});
     t.next = root.now + 5000;
     compare(armed(t), 5000);
@@ -48,7 +48,7 @@ TestCase {
     compare(root.fired.length, 0);
   }
 
-  function test_nanIsNever() {
+  function test_nan_is_never() {
     const t = make({});
     t.next = NaN;
     compare(armed(t), 0);
@@ -57,7 +57,7 @@ TestCase {
     compare(root.fired.length, 0);
   }
 
-  function test_timerFiresAtNext() {
+  function test_timer_fires_at_next() {
     const t = make({});
     t.next = root.now + 50;
     compare(armed(t), 50);
@@ -66,7 +66,7 @@ TestCase {
     compare(armed(t), 0);
   }
 
-  function test_nextMovedEarlierWhileArmed() {
+  function test_next_moved_earlier_while_armed() {
     const t = make({});
     t.next = root.now + 30000;
     compare(armed(t), 30000);
@@ -74,7 +74,7 @@ TestCase {
     compare(armed(t), 5000);
   }
 
-  function test_samePastNextAgainFiresAgain() {
+  function test_same_past_next_again_fires_again() {
     const t = make({});
     root.now = 2000;
     t.next = 1000;
@@ -86,7 +86,7 @@ TestCase {
     compare(root.fired.length, 2);
   }
 
-  function test_changedAgainBeforeTheTurnIsNotStale() {
+  function test_changed_again_before_the_turn_is_not_stale() {
     root.now = 1000;
     const t = make({});
     t.next = 500;
@@ -95,19 +95,19 @@ TestCase {
     compare(root.fired.length, 0);
   }
 
-  function test_armsForTheWait() {
+  function test_arms_for_the_wait() {
     const t = make({});
     t.next = root.now + 5000;
     compare(armed(t), 5000);
   }
 
-  function test_armsNoLongerThanRecheck() {
+  function test_arms_no_longer_than_recheck() {
     const t = make({});
     t.next = root.now + 3600000;
     compare(armed(t), 60000);
   }
 
-  function test_suspendFiresOnCheck() {
+  function test_suspend_fires_on_check() {
     const t = make({});
     t.next = 3600000;
     compare(armed(t), 60000);
@@ -118,7 +118,7 @@ TestCase {
     compare(armed(t), 0);
   }
 
-  function test_passedNextFiresOnTheNextTurn() {
+  function test_passed_next_fires_on_the_next_turn() {
     root.now = 1000;
     const t = make({});
     t.next = 500;
@@ -129,7 +129,7 @@ TestCase {
     compare(root.fired[0], 1000);
   }
 
-  function test_oneDuePerNext() {
+  function test_one_due_per_next() {
     const t = make({});
     t.next = 1000;
     root.now = 2000;
@@ -138,7 +138,7 @@ TestCase {
     compare(root.fired.length, 1);
   }
 
-  function test_nextMovedOnArmsAgain() {
+  function test_next_moved_on_arms_again() {
     const t = make({});
     t.next = 1000;
     root.now = 2000;
@@ -148,7 +148,7 @@ TestCase {
     compare(armed(t), 5000);
   }
 
-  function test_negativeNextNever() {
+  function test_negative_next_never() {
     const t = make({});
     t.next = -5;
     compare(armed(t), 0);

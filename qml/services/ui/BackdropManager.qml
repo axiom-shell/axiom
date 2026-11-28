@@ -2,17 +2,15 @@ pragma Singleton
 import QtQuick
 import qs.services.compositor
 
-/**
- * The dim backgrounds full-screen surfaces ask for (the overlay, launcher,
- * power menu, workspace overview, onboarding: reusable/BackdropRequest).
- * Each screen has one backdrop window (surfaces/backdrop/ScreenBackdrop,
- * built by shell/Backdrops), showing the request that showed last there. One
- * window rather than one per surface keeps it in its place in the stack
- * where the compositor stacks by map order alone: it stays mapped there
- * (docs/dev/compositor/layer-arrangement.md). Without a native focus
- * grab, the same windows catch the click outside a grabbing surface
- * (FocusGrab, `catching`).
- */
+// The dim backgrounds full-screen surfaces ask for (the overlay, launcher,
+// power menu, workspace overview, onboarding: reusable/BackdropRequest).
+// Each screen has one backdrop window (surfaces/backdrop/ScreenBackdrop,
+// built by shell/Backdrops), showing the request that showed last there. One
+// window rather than one per surface keeps it in its place in the stack
+// where the compositor stacks by map order alone: it stays mapped there
+// (docs/dev/compositor/layer-arrangement.md). Without a native focus
+// grab, the same windows catch the click outside a grabbing surface
+// (FocusGrab, `catching`).
 QtObject {
   id: root
 
@@ -51,7 +49,7 @@ QtObject {
     return best;
   }
 
-  // --- Catching clicks for a focus grab the compositor doesn't have ---
+  // -- Catching clicks for a focus grab the compositor doesn't have --
 
   // Every FocusGrab active now, native grab or not (uids, oldest first),
   // but one a click ended under a newer native grab (FocusGrab)

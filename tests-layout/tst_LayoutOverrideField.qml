@@ -84,7 +84,7 @@ TestCase {
 
   // The stepper takes the schema's `multipleOf` as its step, as SchemaField's
   // automatic number does
-  function test_multipleOf_is_the_step() {
+  function test_multiple_of_is_the_step() {
     const host = createTemporaryObject(hostComp, root);
     waitForRendering(host);
     host.field.fieldSchema = {

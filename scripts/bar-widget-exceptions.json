@@ -3,12 +3,12 @@
   "types": {
     "Workspaces": {
       "reason": "segmented cells: interactive cells with their own state, hover, click and run shape, window strips and a gliding indicator, not icon-plus-label parts; colours still come from the core through CellLook",
-      "rules": ["T5", "T6"],
+      "rules": ["base-output", "folder-files"],
       "fieldsReadIn": ["qml/config/BarsConfig.qml"]
     },
     "CustomWidget": {
       "reason": "external colour: a user script names the state colour (`stateColorName`), which the base resolves",
-      "rules": ["T8"]
+      "rules": ["state-color-name"]
     }
   }
 }

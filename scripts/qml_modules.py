@@ -39,7 +39,7 @@ QML_ROOT = ROOT / "qml"
 QML_DIRS = ["components", "shell", "services", "config"]
 METHODS = "qml/components/methods"
 
-# The colour calls a bar widget may not make (check_structure T2): the shell's colour functions and raw colours
+# The colour calls a bar widget may not make (check_structure › resolved-color): the shell's colour functions and raw colours
 WIDGET_COLOR_CALLS = re.compile(
     r"\bTheme\.|resolveColor|Qt\.(?:rgba|hsla|hsva|alpha|lighter|darker|tint|color)\s*\(|\bBarWidgetStyle\.|"
     r"\bBarsConfig\.\w*Colors?\(|\bBarColors\.(?:widgetColors|pulseLadder|resolve)\s*\(|[\"']#[0-9a-fA-F]{3,8}[\"']|"

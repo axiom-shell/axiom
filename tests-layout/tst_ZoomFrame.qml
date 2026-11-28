@@ -57,12 +57,12 @@ TestCase {
     fuzzyCompare(scaled.x, 300, 0.5, "centred");
   }
 
-  function test_declares_contentZoom() {
+  function test_declares_content_zoom() {
     const frame = make(100, 400);
     fuzzyCompare(frame.children[0].contentZoom, 0.25, 0.001);
   }
 
-  function test_maxZoom_scales_up() {
+  function test_max_zoom_scales_up() {
     const frame = make(800, 800, {
       "maxZoom": Infinity
     });
@@ -70,7 +70,7 @@ TestCase {
     fuzzyCompare(frame.children[0].contentZoom, 2, 0.001);
   }
 
-  function test_minZoom_floors() {
+  function test_min_zoom_floors() {
     const frame = make(20, 400, {
       "minZoom": 0.2
     });

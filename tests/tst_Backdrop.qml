@@ -59,7 +59,7 @@ TestCase {
     }), null);
   }
 
-  function test_insideOneCell() {
+  function test_inside_one_cell() {
     // The first cell: x 0-0.25, y 0-0.5
     const r = Backdrop.region(grid, full, {
       "x": 0.05,
@@ -72,7 +72,7 @@ TestCase {
     compare(r.high, 30);
   }
 
-  function test_acrossCells() {
+  function test_across_cells() {
     // The top row: dark, dark, bright, bright. The mean is of the luminances
     const r = Backdrop.region(grid, full, {
       "x": 0,
@@ -86,7 +86,7 @@ TestCase {
     compare(r.high, 250);
   }
 
-  function test_percentilesSkipASmallPatch() {
+  function test_percentiles_skip_a_small_patch() {
     // 20 equal cells of 10 and one bright of 255: p90 of the highs stays low
     const cells = 21;
     const big = {
@@ -114,7 +114,7 @@ TestCase {
     compare(r.high, 200);
   }
 
-  function test_partialBlur() {
+  function test_partial_blur() {
     // One cell (mean 200, low 100, high 250)
     const cell = {
       "x": 0.5,
@@ -149,7 +149,7 @@ TestCase {
     compare(Backdrop.shade("bogus").minContrast, Tone.textContrast);
   }
 
-  function test_shadeAlpha() {
+  function test_shade_alpha() {
     compare(Backdrop.shadeAlpha(Backdrop.shade("medium"), 1), 0.8);
     compare(Backdrop.shadeAlpha(Backdrop.shade("medium"), 0.3), 0.3);
     compare(Backdrop.shadeAlpha(Backdrop.shade("strong"), 1), 1);
@@ -190,7 +190,7 @@ TestCase {
     verify(edge.low < 255);
   }
 
-  function test_travelWidens() {
+  function test_travel_widens() {
     // A rect on the dark half; the wallpaper may move 0.5 toward the bright half
     const rect = {
       "x": 0.1,
@@ -207,7 +207,7 @@ TestCase {
     verify(moving.high > 30);
   }
 
-  function test_noGridIsTheLetterbox() {
+  function test_no_grid_is_the_letterbox() {
     compare(Backdrop.region(null, full, full, none, false, 9).mean, 9);
   }
 

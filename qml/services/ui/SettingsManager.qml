@@ -9,15 +9,15 @@ import qs.services.session
 import qs.services.system
 import qs.services.apps
 
-/* The settings page's working copy of the config. Edits show live as
- * they're made, each setting a preview (ConfigManager.setPreview) and never
- * part of the running config, so another save doesn't carry them;
- * saveChanges() persists them, resetChanges() drops them. Only the
- * settings actually edited are saved, onto the latest config, so changes
- * made elsewhere meanwhile (a theme, a wallpaper, the bar editor) survive.
- *
- * Also keeps the page's own state (category, search), since the page is
- * unloaded `keptFor` after the overlay closes. */
+// The settings page's working copy of the config. Edits show live as
+// they're made, each setting a preview (ConfigManager.setPreview) and never
+// part of the running config, so another save doesn't carry them;
+// saveChanges() persists them, resetChanges() drops them. Only the
+// settings actually edited are saved, onto the latest config, so changes
+// made elsewhere meanwhile (a theme, a wallpaper, the bar editor) survive.
+//
+// Also keeps the page's own state (category, search), since the page is
+// unloaded `keptFor` after the overlay closes.
 QtObject {
   id: root
 
@@ -568,7 +568,7 @@ QtObject {
     return [];
   }
 
-  // --- Setting single values from outside the page (the launcher's /config) ---
+  // -- Setting single values from outside the page (the launcher's /config) --
 
   // Never offered, whatever the schema says: the bar and overlay editors
   // own these

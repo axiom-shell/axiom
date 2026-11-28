@@ -18,7 +18,7 @@ func (d *Daemon) newDrives() {
 		SystemBus: func(ctx context.Context) (*dbus.Conn, error) {
 			return dbus.Dial(ctx, dbus.SystemAddress(d.opts.Getenv), dbus.Options{Log: log})
 		},
-		// The dev fixtures (scripts/dev/drive-fixtures.sh) are loop devices
+		// The dev fixtures (scripts/dev/drive_fixtures.sh) are loop devices
 		IncludeLoop: d.opts.Getenv("AXIOM_DRIVES_INCLUDE_LOOP") == "1",
 		OnChange: func(st udisks.State) {
 			if d.server != nil {

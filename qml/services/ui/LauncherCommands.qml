@@ -9,24 +9,22 @@ import qs.services.session
 import qs.services.system
 import qs.services.apps
 
-/*
- * The launcher's slash commands, one per shell feature. LauncherManager
- * filters and runs them; each entry is
- *   { name, aliases, glyph, description, usage,
- *     needsArg,   Enter without an argument completes "/name " instead
- *     confirm,    asks for a second Enter first (what can't be undone:
- *                 destructive session actions, clearing notifications,
- *                 installing an update)
- *     available() whether it's listed at all
- *     status()    current state, shown on the command's row
- *     options(arg) completion rows [{ title, subtitle, glyph, image, value,
- *                  matched: already matched to arg, so not scored by title }]
- *     run(arg, value) value is the picked option's, else undefined;
- *                     returns false to keep the launcher open (where the
- *                     change shows, so several can be tried), or a string
- *                     to search for instead }
- * Descriptions are read when listed, so they follow the language.
- */
+// The launcher's slash commands, one per shell feature. LauncherManager
+// filters and runs them; each entry is
+//   { name, aliases, glyph, description, usage,
+//     needsArg,   Enter without an argument completes "/name " instead
+//     confirm,    asks for a second Enter first (what can't be undone:
+//                 destructive session actions, clearing notifications,
+//                 installing an update)
+//     available() whether it's listed at all
+//     status()    current state, shown on the command's row
+//     options(arg) completion rows [{ title, subtitle, glyph, image, value,
+//                  matched: already matched to arg, so not scored by title }]
+//     run(arg, value) value is the picked option's, else undefined;
+//                     returns false to keep the launcher open (where the
+//                     change shows, so several can be tried), or a string
+//                     to search for instead }
+// Descriptions are read when listed, so they follow the language.
 QtObject {
   id: root
 
@@ -35,9 +33,9 @@ QtObject {
   property LauncherConfigBrowser _config: LauncherConfigBrowser {}
 
   readonly property var list: [
-    // --- Session ---
+    // -- Session --
     root._action("lock", "lock", ["lock-screen"], "Lock the screen"), root._action("suspend", "suspend", ["sleep"], "Suspend to RAM"), root._action("hibernate", "hibernate", [], "Hibernate to disk"), root._action("logout", "logout", ["exit"], "End the session"), root._action("reboot", "reboot", ["restart"], "Restart the computer"), root._action("poweroff", "poweroff", ["shutdown"], "Turn the computer off"),
-    // --- Surfaces ---
+    // -- Surfaces --
     root._action("power", "powerMenu", ["powermenu"], "Open the power menu"), root._action("workspaces", "workspaceOverview", ["overview"], "Open or close the workspace overview"),
     {
       name: "overlay",
@@ -55,7 +53,7 @@ QtObject {
       }
     },
     root._page("settings", ["prefs", "options"], "Settings", "Open the settings"), root._page("themes", [], "Themes", "Open the themes page"), root._page("bar", ["bareditor"], "BarEditor", "Open the bar editor"), root._page("keybinds", ["keys", "shortcuts"], "Keybinds", "Show the keybinds"), root._page("rules", ["windowrules", "window-rules"], "WindowRules", "Edit the window rules"), root._pageUnlessGreeter(root._page("rule", ["newrule"], "WindowRules", "Make a rule for the focused window", () => WindowRulesManager.newFromFocused())), root._page("layouts", ["editor", "overlay-editor"], "Layouts", "Edit the overlay pages and menus", () => OverlayManager.editPages()), root._page("menus", ["edge-menus", "menu-editor"], "Layouts", "Edit the menus", () => OverlayManager.editMenus()), root._page("monitors", ["displays", "screens"], "Monitors", "Arrange and set up monitors"), root._page("widgets", ["custom-widgets", "waybar"], "CustomWidgets", "Make widgets from scripts"),
-    // --- Appearance ---
+    // -- Appearance --
     {
       name: "theme",
       aliases: ["colors"],
@@ -130,7 +128,7 @@ QtObject {
           ThemeManager.generateThemesFromWallpaper(wallpaper);
       }
     },
-    // --- Audio & media ---
+    // -- Audio & media --
     {
       name: "volume",
       aliases: ["vol"],
@@ -158,7 +156,7 @@ QtObject {
     }), Object.assign(root._action("mic", "toggleMicMute", ["microphone"], "Mute or unmute the microphone"), {
       glyph: "mic"
     }), root._device("output", ["sink", "speakers"], "speaker", "Choose the audio output", () => AudioManager.sinks, () => AudioManager.defaultSink), root._device("input", ["source"], "mic", "Choose the audio input", () => AudioManager.sources, () => AudioManager.defaultSource), root._media("play", ["pause"], "Play or pause", "mediaPlayPause"), root._media("next", ["skip"], "Next track", "mediaNext"), root._media("prev", ["previous", "back"], "Previous track", "mediaPrevious"),
-    // --- Connectivity ---
+    // -- Connectivity --
     root._switch("wifi", "wifi", ["wlan"], "Turn wifi on or off"), root._switch("bluetooth", "bluetooth", ["bt"], "Turn bluetooth on or off"), root._switch("airplane", "airplane", ["flight", "airplane-mode"], "Turn airplane mode on or off"),
     {
       name: "vpn",
@@ -225,7 +223,7 @@ QtObject {
         return false;
       }
     },
-    // --- Notifications & idle ---
+    // -- Notifications & idle --
     Object.assign(root._switch("dnd", "toggleDnd", ["quiet"], "Turn do not disturb on or off"), {
       glyph: "notifications_off"
     }), Object.assign(root._action("clear", "clearNotifications", ["clear-notifications"], "Clear all notifications"), {
@@ -286,7 +284,7 @@ QtObject {
         return false;
       }
     },
-    // --- Workspaces & shell ---
+    // -- Workspaces & shell --
     {
       name: "ws",
       aliases: ["workspace"],
@@ -529,10 +527,10 @@ QtObject {
       description: () => I18n.tr("Reload the shell"),
       run: () => LockManager.reload()
     },
-    // --- Other searches ---
+    // -- Other searches --
     root._prefix("calc", ["math"], "calculate", "Calculate (or start with =)", "=", () => LauncherConfig.calculator), root._prefix("run", ["exec", "sh"], "terminal", "Run a shell command (or start with >)", ">", () => LauncherConfig.runCommands), root._prefix("web", ["search"], "web", "Search the web (or start with ?)", "?", () => LauncherConfig.webSearch), root._prefix("clipboard", ["clip", "paste"], "content_paste", "Search the clipboard history (or start with :)", ":", () => LauncherConfig.clipboard), root._prefix("emoji", ["emojis", "emoticon"], "mood", "Search emoji (or start with ;)", ";", () => LauncherConfig.emoji), root._prefix("files", ["find"], "folder_open", "Search your files (or start with ~)", "~", () => LauncherConfig.files), root._prefix("help", ["commands"], "help", "List every command", "/", () => true)]
 
-  // --- Builders for families of alike commands ---
+  // -- Builders for families of alike commands --
 
   // Runs one of the shell's actions (ActionsManager: the keybind table's,
   // as its key would) with `call` ("toggle" when missing); its glyph is the
@@ -664,7 +662,7 @@ QtObject {
     };
   }
 
-  // --- Option lists ---
+  // -- Option lists --
 
   function _onOffOptions() {
     return [

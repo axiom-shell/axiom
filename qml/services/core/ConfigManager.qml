@@ -5,19 +5,19 @@ import Quickshell
 
 import qs.components.methods
 
-/* The config, as axiom (the binary, the shell's parent: `axiom run`) has
- * it. axiom owns config.json: it loads it (converting older files),
- * normalizes it and writes it. The shell reads the snapshot axiom wrote for
- * its start ($AXIOM_CONFIG) and the pushes after (config.changed); a write
- * is applied at once and sent, and axiom's answer stands (it validates).
- * The greeter runs on the snapshot `axiom greeter` made from the exported
- * bundle, and writes nothing. Without axiom (qs started by hand) there is
- * no config: the shell shows only a notice (shell.qml, `available`).
- * docs/dev/core/config-manager.md */
+// The config, as axiom (the binary, the shell's parent: `axiom run`) has
+// it. axiom owns config.json: it loads it (converting older files),
+// normalizes it and writes it. The shell reads the snapshot axiom wrote for
+// its start ($AXIOM_CONFIG) and the pushes after (config.changed); a write
+// is applied at once and sent, and axiom's answer stands (it validates).
+// The greeter runs on the snapshot `axiom greeter` made from the exported
+// bundle, and writes nothing. Without axiom (qs started by hand) there is
+// no config: the shell shows only a notice (shell.qml, `available`).
+// docs/dev/core/config-manager.md
 QtObject {
   id: root
 
-  // --- Public ---
+  // -- Public --
   readonly property var config: _config
   readonly property var configSchema: _configSchema
   // axiom handed this shell a config (false: started by hand)
@@ -188,7 +188,7 @@ QtObject {
     });
   }
 
-  // --- Private Implementation ---
+  // -- Private Implementation --
   Component.onCompleted: {
     if (root.greeter)
       console.log("[ConfigManager] Greeter config from the", root.greeterSource || "defaults");

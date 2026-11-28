@@ -6,7 +6,7 @@ A launcher command is a `/name` typed into the app launcher: `/wifi on`, `/theme
 **Background:** [features/launcher](../dev/features/launcher.md); the entry's fields are documented in the comment at the top of `LauncherCommands.qml`.
 
 ## Files
-1. `qml/services/ui/LauncherCommands.qml`: an entry in `list`, under its group comment (`// --- Session ---`, `// --- Surfaces ---`, …).
+1. `qml/services/ui/LauncherCommands.qml`: an entry in `list`, under its group comment (`// -- Session --`, `// -- Surfaces --`, …).
 2. `docs/usage.md`: the launcher command table, in the group's row.
 
 New translation keys are added by the pre-commit hook.

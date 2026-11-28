@@ -5,26 +5,24 @@ import Quickshell
 import qs.config
 import qs.services.ui
 
-/**
- * Drop this into any bar widget that wants to open a bar popout on hover
- * (or, given a `menu`, an edge menu).
- * Handles hover detection, open-delay timing, position/size computation,
- * and the popoutOpen guard flag.
- *
- * Usage:
- *   PopoutAnchor {
- *     id: anchor
- *     popoutName: "WorkspaceGrid"
- *     extraData: ({ output: root.output, vertical: root.isVertical })
- *   }
- * A popout that shows an overlay module (a widget with x-popoutModule) hands
- * the module's keys the widget supplies itself by `fromWidget` instead, in
- * the module key's unit; `extraData` is for popout-only content.
- *
- * The content-type name travels as a `name` field inside the payload
- * (not a separate argument) so Popout.qml's open/close/queue logic can
- * stay fully generic — see PopoutWrapperBase.qml.
- */
+// Drop this into any bar widget that wants to open a bar popout on hover
+// (or, given a `menu`, an edge menu).
+// Handles hover detection, open-delay timing, position/size computation,
+// and the popoutOpen guard flag.
+//
+// Usage:
+//   PopoutAnchor {
+//     id: anchor
+//     popoutName: "WorkspaceGrid"
+//     extraData: ({ output: root.output, vertical: root.isVertical })
+//   }
+// A popout that shows an overlay module (a widget with x-popoutModule) hands
+// the module's keys the widget supplies itself by `fromWidget` instead, in
+// the module key's unit; `extraData` is for popout-only content.
+//
+// The content-type name travels as a `name` field inside the payload
+// (not a separate argument) so Popout.qml's open/close/queue logic can
+// stay fully generic — see PopoutWrapperBase.qml.
 Item {
   id: root
 

@@ -49,7 +49,7 @@ TestCase {
     StyledVolumeBar {}
   }
 
-  function test_troughIsOneRole() {
+  function test_trough_is_one_role() {
     verify(Qt.colorEqual(Style.trough, Style.surfaceHighest));
     const slider = createTemporaryObject(sliderComp, root);
     const level = createTemporaryObject(levelComp, root);
@@ -71,7 +71,7 @@ TestCase {
     compare(trough.radius, Style.radius);
   }
 
-  function test_noOutline() {
+  function test_no_outline() {
     for (const comp of [sliderComp, levelComp, segmentComp, ringComp, barComp]) {
       const item = createTemporaryObject(comp, root);
       verify(item);
@@ -80,7 +80,7 @@ TestCase {
     }
   }
 
-  function test_segmentBlocksHaveNoBorder() {
+  function test_segment_blocks_have_no_border() {
     const segments = createTemporaryObject(segmentComp, root);
     verify(segments);
     const blocks = findAll(segments, it => it.objectName === "block");
@@ -104,7 +104,7 @@ TestCase {
   // The trough reads against the OSD's own fill (Style.surfacePage, what
   // EdgePopout draws) and against Style.surface (the tile it sits on), with
   // the highest-vs-surface floors of tst_StyleTokens
-  function test_troughReadsAgainstWhatItSitsOn_data() {
+  function test_trough_reads_against_what_it_sits_on_data() {
     return [
       {
         "tag": "dark mocha",
@@ -129,7 +129,7 @@ TestCase {
     ];
   }
 
-  function test_troughReadsAgainstWhatItSitsOn(data) {
+  function test_trough_reads_against_what_it_sits_on(data) {
     harness.configure({
       "theme": data.theme
     });
@@ -141,7 +141,7 @@ TestCase {
     harness.configure({});
   }
 
-  function test_mutedTroughReadsOnHighest() {
+  function test_muted_trough_reads_on_highest() {
     const bar = createTemporaryObject(barComp, root, {
       "isMuted": true
     });
@@ -152,7 +152,7 @@ TestCase {
   }
 
   // Pomodoro's dots: four, two done
-  function test_segmentsAsPomodoroSetsThem() {
+  function test_segments_as_pomodoro_sets_them() {
     const dots = createTemporaryObject(segmentComp, root, {
       "count": 4,
       "share": 2 / 4,

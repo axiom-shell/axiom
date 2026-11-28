@@ -61,7 +61,7 @@ QtObject {
   // The Keybinds page shows the editor instead of the list
   property bool editing: false
 
-  // --- The reference (the page's list, the Cheatsheet) ---
+  // -- The reference (the page's list, the Cheatsheet) --
 
   // How it's shown, remembered: "list" | "keyboard", "comfortable" |
   // "compact", and modifiers as glyphs (⇧ ⌃ ⌥) or words

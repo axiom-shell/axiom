@@ -55,7 +55,7 @@ TestCase {
     });
   }
 
-  function test_fromSaved_reads_the_old_shapes() {
+  function test_from_saved_reads_the_old_shapes() {
     compare(SectionFolds.fromSaved({
       "keybindsFolded": ["a", 3]
     }), {

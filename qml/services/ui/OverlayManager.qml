@@ -7,18 +7,18 @@ import qs.services.core
 import qs.services.compositor
 import qs.services.session
 
-/* OverlayManager holds the layouts editor's working copy of Overlay.items
- * (the editor is the pinned last page). Edits only affect localViews and
- * the editor's canvas; the real overlay pages and config.json are
- * untouched until saveChanges(). Mirrors BarManager.
- *
- * Also keeps the page's own state, since the page is unloaded `keptFor`
- * after the overlay closes: whether it's editing a page, an edge menu or the lock
- * screen (`editTarget`; the menus are `menus`' (MenuEditor) and the lock
- * screen LockManager's), the selected
- * page, and each overlay's room (for the canvas's "fits" line). The
- * selected page's modules are edited through `layout` (GridEditor, which
- * also holds the selected module). */
+// OverlayManager holds the layouts editor's working copy of Overlay.items
+// (the editor is the pinned last page). Edits only affect localViews and
+// the editor's canvas; the real overlay pages and config.json are
+// untouched until saveChanges(). Mirrors BarManager.
+//
+// Also keeps the page's own state, since the page is unloaded `keptFor`
+// after the overlay closes: whether it's editing a page, an edge menu or the lock
+// screen (`editTarget`; the menus are `menus`' (MenuEditor) and the lock
+// screen LockManager's), the selected
+// page, and each overlay's room (for the canvas's "fits" line). The
+// selected page's modules are edited through `layout` (GridEditor, which
+// also holds the selected module).
 QtObject {
   id: root
 
@@ -142,7 +142,7 @@ QtObject {
     });
   }
 
-  // --- What the editor shows ---
+  // -- What the editor shows --
 
   function editPage(index) {
     root._editTarget = "page";
@@ -169,7 +169,7 @@ QtObject {
     GreeterManager.editor.ensureLoaded();
   }
 
-  // --- Links to a page (`x-link`'s and `x-links`' `page`) ---
+  // -- Links to a page (`x-link`'s and `x-links`' `page`) --
 
   // A page link is a view type ("Themes"), or the layouts editor on what it
   // edits ("Layouts:lockscreen", "Layouts:greeter", "Layouts:desktop").
@@ -251,7 +251,7 @@ QtObject {
     root._editTarget = "menu";
   }
 
-  // --- Room on each screen ---
+  // -- Room on each screen --
 
   // { screenName: { width, height, screenWidth, screenHeight } }: the room
   // each overlay has for a page (drawn px, before the page is shrunk to fit
@@ -320,7 +320,7 @@ QtObject {
     });
   }
 
-  // --- Pages ---
+  // -- Pages --
 
   function selectedView() {
     return root.localViews?.[root.selectedViewIndex] || null;
@@ -434,7 +434,7 @@ QtObject {
     applyChanges();
   }
 
-  // --- How a page opens ---
+  // -- How a page opens --
 
   // Whether `view` is saved under its page key: bar buttons and keybinds
   // are saved by other editors, so they may only open a saved page
@@ -548,7 +548,7 @@ QtObject {
     ShellManager.followLink("Layouts");
   }
 
-  // --- Save / reset ---
+  // -- Save / reset --
 
   // Merged onto the latest real config; stays dirty if rejected
   function saveChanges() {

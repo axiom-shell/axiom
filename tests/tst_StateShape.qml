@@ -5,7 +5,7 @@ import qs.components.methods
 TestCase {
   name: "StateShape"
 
-  function test_acceptSameKind() {
+  function test_accept_same_kind() {
     compare(StateShape.accept([1], []), [1]);
     compare(StateShape.accept({
       "a": 1
@@ -17,7 +17,7 @@ TestCase {
     compare(StateShape.accept(true, false), true);
   }
 
-  function test_acceptOtherKind() {
+  function test_accept_other_kind() {
     compare(StateShape.accept({}, []), [], "object for array");
     compare(StateShape.accept([], {}), {}, "array for object");
     compare(StateShape.accept(null, {}), {}, "null for object");
@@ -26,7 +26,7 @@ TestCase {
     compare(StateShape.accept(null, []), [], "null for array");
   }
 
-  function test_nullFallback() {
+  function test_null_fallback() {
     compare(StateShape.accept({
       "a": 1
     }, null), {
@@ -38,7 +38,7 @@ TestCase {
     compare(StateShape.accept(null, null), null);
   }
 
-  function test_undefinedFallback() {
+  function test_undefined_fallback() {
     compare(StateShape.accept({
       "a": 1
     }, undefined), {
@@ -55,7 +55,7 @@ TestCase {
     compare(StateShape.parse("null", undefined).value, undefined);
   }
 
-  function test_clearShapedFallback() {
+  function test_clear_shaped_fallback() {
     const clear = {
       "failures": 0,
       "lastHash": ""
@@ -68,7 +68,7 @@ TestCase {
     });
   }
 
-  function test_parseEmpty() {
+  function test_parse_empty() {
     compare(StateShape.parse(null, {}), {
       "value": {},
       "corrupt": false
@@ -83,7 +83,7 @@ TestCase {
     });
   }
 
-  function test_parseBadJson() {
+  function test_parse_bad_json() {
     compare(StateShape.parse("{oops", {
       "a": 1
     }), {
@@ -94,7 +94,7 @@ TestCase {
     });
   }
 
-  function test_parseOk() {
+  function test_parse_ok() {
     compare(StateShape.parse("{\"a\": 2}", {}), {
       "value": {
         "a": 2
@@ -103,7 +103,7 @@ TestCase {
     });
   }
 
-  function test_parseWrongKindIsNotCorrupt() {
+  function test_parse_wrong_kind_is_not_corrupt() {
     compare(StateShape.parse("[1]", {}), {
       "value": {},
       "corrupt": false

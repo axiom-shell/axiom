@@ -23,7 +23,7 @@ OnboardingPage {
   title: I18n.tr("Look")
   intro: I18n.tr("Pick a wallpaper and a theme. Themes can also be generated from a wallpaper: pick one, and a matching light and dark theme appear in the list.")
 
-  // --- Wallpaper folder ---
+  // -- Wallpaper folder --
 
   readonly property string folder: Appearance.wallpaperFolder
   // WallpaperManager.folderImages: -1 checking, -2 missing
@@ -76,7 +76,7 @@ OnboardingPage {
     }
   }
 
-  // --- Bar ---
+  // -- Bar --
 
   // As saved (ScreenEdgeManager.bars turns `edge` into an edge enum)
   readonly property var bar: BarsConfig.savedBars?.[0] ?? null
@@ -182,7 +182,7 @@ OnboardingPage {
     paths: ["Appearance.shape.screenBorder"]
   }
 
-  // --- Example setups ---
+  // -- Example setups --
 
   SectionHeading {
     Layout.topMargin: Widget.spacing

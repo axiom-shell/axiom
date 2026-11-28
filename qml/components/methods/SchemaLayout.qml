@@ -1,15 +1,13 @@
 pragma Singleton
 import QtQuick
 
-/**
- * Turns the config schema into the settings page's layout: categories
- * (`x-category` on each top-level section, ordered by the root's
- * `x-categories`), each made of
- * groups (the section's own fields, then one per nested object), each made
- * of form rows for SchemaField. Keys marked `x-settings: false` are
- * skipped (edited elsewhere: the bar editor, the Themes page, ...).
- * Depends on the schema only, so it's safe as a Repeater model.
- */
+// Turns the config schema into the settings page's layout: categories
+// (`x-category` on each top-level section, ordered by the root's
+// `x-categories`), each made of
+// groups (the section's own fields, then one per nested object), each made
+// of form rows for SchemaField. Keys marked `x-settings: false` are
+// skipped (edited elsewhere: the bar editor, the Themes page, ...).
+// Depends on the schema only, so it's safe as a Repeater model.
 QtObject {
   id: root
 

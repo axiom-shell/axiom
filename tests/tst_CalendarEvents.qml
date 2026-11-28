@@ -46,7 +46,7 @@ TestCase {
     }, extra ?? {});
   }
 
-  function test_dayKeys() {
+  function test_day_keys() {
     compare(CalendarEvents.dayKey(new Date(2026, 0, 5, 23, 59)), "2026-01-05");
     compare(CalendarEvents.addDays("2026-12-31", 1), "2027-01-01");
     compare(CalendarEvents.addDays("2026-03-01", -1), "2026-02-28");
@@ -56,7 +56,7 @@ TestCase {
     compare(CalendarEvents.addDays("2026-10-24", 3), "2026-10-27");
   }
 
-  function test_daysOf() {
+  function test_days_of() {
     compare(CalendarEvents.daysOf(timed("a", ms(2026, 10, 5, 9), ms(2026, 10, 5, 10))), ["2026-10-05"]);
     compare(CalendarEvents.daysOf(timed("night", ms(2026, 10, 5, 22), ms(2026, 10, 6, 2))), ["2026-10-05", "2026-10-06"]);
     compare(CalendarEvents.daysOf(timed("to midnight", ms(2026, 10, 5, 22), ms(2026, 10, 6))), ["2026-10-05"], "an end at midnight stays on its day");
@@ -65,7 +65,7 @@ TestCase {
     compare(CalendarEvents.daysOf(allDay("one", "2026-10-05", "2026-10-06")), ["2026-10-05"]);
   }
 
-  function test_byDay_orders_and_filters() {
+  function test_by_day_orders_and_filters() {
     const events = [timed("late", ms(2026, 10, 5, 15), ms(2026, 10, 5, 16)), timed("early", ms(2026, 10, 5, 9), ms(2026, 10, 5, 10)), allDay("holiday", "2026-10-05", "2026-10-06"), timed("hidden", ms(2026, 10, 5, 8), ms(2026, 10, 5, 9), {
         "calendar": "b|other"
       })];
@@ -75,7 +75,7 @@ TestCase {
     compare(CalendarEvents.byDay(events, null)["2026-10-05"].length, 4, "no filter shows every calendar");
   }
 
-  function test_dotColors() {
+  function test_dot_colors() {
     const colors = {
       "a|cal": "#ff0000",
       "b|cal": "#00ff00",
@@ -95,7 +95,7 @@ TestCase {
     compare(CalendarEvents.dotColors(day, named, 3), ["accent", "base0D", "#ff0000"], "colour names pass through and dedupe as strings");
   }
 
-  function test_spanOn() {
+  function test_span_on() {
     const night = timed("night", ms(2026, 10, 5, 22), ms(2026, 10, 7, 2));
     compare(CalendarEvents.spanOn(night, "2026-10-05"), "starts");
     compare(CalendarEvents.spanOn(night, "2026-10-06"), "through");
@@ -104,7 +104,7 @@ TestCase {
     compare(CalendarEvents.spanOn(allDay("h", "2026-10-05", "2026-10-06"), "2026-10-05"), "allDay");
   }
 
-  function test_nextEvent() {
+  function test_next_event() {
     const now = ms(2026, 10, 5, 12);
     const events = [timed("past", ms(2026, 10, 5, 9), ms(2026, 10, 5, 10)), timed("now", ms(2026, 10, 5, 11, 30), ms(2026, 10, 5, 12, 30)), timed("later", ms(2026, 10, 5, 15), ms(2026, 10, 5, 16)), allDay("today", "2026-10-05", "2026-10-06")];
     compare(CalendarEvents.nextEvent(events, now, 3600000, false).title, "now", "an event under way counts");
@@ -113,7 +113,7 @@ TestCase {
     compare(CalendarEvents.nextEvent([events[0]], now, 3600000, false), null);
   }
 
-  function test_nextAlarm() {
+  function test_next_alarm() {
     const now = ms(2026, 10, 5, 12);
     const events = [timed("a", ms(2026, 10, 5, 13), ms(2026, 10, 5, 14), {
         "alarms": [ms(2026, 10, 5, 12, 50), ms(2026, 10, 5, 11)]
@@ -183,7 +183,7 @@ TestCase {
     compare(CalendarEvents.onDay(ms(2026, 10, 5, 9, 30), "2026-12-01"), ms(2026, 12, 1, 9, 30));
   }
 
-  function test_parseTime() {
+  function test_parse_time() {
     compare(CalendarEvents.parseTime("9"), {
       "hour": 9,
       "minute": 0
@@ -218,7 +218,7 @@ TestCase {
     compare(CalendarEvents.parseTime("noon"), null);
   }
 
-  function test_parseQuickAdd() {
+  function test_parse_quick_add() {
     // Monday 5 October 2026, noon
     const now = ms(2026, 10, 5, 12);
     const parse = text => CalendarEvents.parseQuickAdd(text, now, words, 60);

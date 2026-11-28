@@ -34,7 +34,7 @@ TestCase {
     }), "all", "A", 1), "hidden");
   }
 
-  function test_pinnedFirstInOrder() {
+  function test_pinned_first_in_order() {
     const windows = [win("0x1", "kitty"), win("0x2", "firefox"), win("0x3", "discord")];
     const items = DockLayout.buildItems(["firefox", "files", "kitty"], windows, byClass, true);
     compare(items.map(i => i.key), ["firefox", "files", "kitty", "discord"]);
@@ -42,17 +42,17 @@ TestCase {
     compare(items[1].windows.length, 0, "a pinned app with no windows");
   }
 
-  function test_runningHidden() {
+  function test_running_hidden() {
     const items = DockLayout.buildItems(["firefox"], [win("0x1", "kitty"), win("0x2", "firefox")], byClass, false);
     compare(items.map(i => i.key), ["firefox"]);
   }
 
-  function test_duplicatePinsOnce() {
+  function test_duplicate_pins_once() {
     const items = DockLayout.buildItems(["a", "a", ""], [], byClass, true);
     compare(items.map(i => i.key), ["a"]);
   }
 
-  function test_windowsGroupedRecentFirst() {
+  function test_windows_grouped_recent_first() {
     const windows = [win("0x1", "kitty", {
         "focusRank": 4
       }), win("0x2", "kitty", {
@@ -65,12 +65,12 @@ TestCase {
     compare(items[0].windows.map(w => w.id), ["0x2", "0x3", "0x1"]);
   }
 
-  function test_unresolvedSkipped() {
+  function test_unresolved_skipped() {
     const items = DockLayout.buildItems([], [win("0x1", "")], w => w.appId, true);
     compare(items.length, 0);
   }
 
-  function test_clickTarget() {
+  function test_click_target() {
     const windows = [win("0x2", "k"), win("0x1", "k"), win("0x3", "k")];
     compare(DockLayout.clickTarget([], ""), "");
     compare(DockLayout.clickTarget(windows, "0x9"), "0x2", "most recent when none is focused");
@@ -79,12 +79,12 @@ TestCase {
     compare(DockLayout.clickTarget(windows, "0x3"), "0x1", "wraps");
   }
 
-  function test_magnifyOff() {
+  function test_magnify_off() {
     compare(DockLayout.magnifiedSizes(3, null, 48, 80, 3, 6), [48, 48, 48]);
     compare(DockLayout.magnifiedSizes(3, 30, 48, 48, 3, 6), [48, 48, 48], "max not above base");
   }
 
-  function test_magnifyPeakAndFalloff() {
+  function test_magnify_peak_and_falloff() {
     // Icon 2's centre at rest: 2 * 54 + 24
     const sizes = DockLayout.magnifiedSizes(7, 132, 48, 80, 2, 6);
     compare(sizes[2], 80, "peak under the pointer");
@@ -95,7 +95,7 @@ TestCase {
     compare(sizes[6], 48);
   }
 
-  function test_magnifyBeforeRow() {
+  function test_magnify_before_row() {
     // Left of the first icon (the grown box reaching past the row at rest)
     // still magnifies, falling off as it does past the last icon
     const before = DockLayout.magnifiedSizes(3, -10, 48, 80, 2, 6);

@@ -98,7 +98,7 @@ Item {
     Qt.callLater(() => root.focusAt(at.block, at.pos));
   }
 
-  // --- Find ---
+  // -- Find --
 
   function _matches(query) {
     const q = String(query ?? "").toLowerCase();
@@ -249,7 +249,7 @@ Item {
     memory.key = root.note ? "Notes/" + root.note.path : "";
   }
 
-  // --- From the blocks ---
+  // -- From the blocks --
 
   function blockEdited(index, text) {
     const block = root.doc.blocks[index];
@@ -328,7 +328,7 @@ Item {
     return true;
   }
 
-  // --- The toolbar ---
+  // -- The toolbar --
 
   function _focused() {
     return root.focusBlock >= 0 && root.focusBlock < root.blockCount ? root.focusBlock : -1;

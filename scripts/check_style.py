@@ -2,36 +2,9 @@
 """The style lint: keep colours, text sizes, weights and text rendering on the Style roles.
 
 Every hit fails (docs/dev/core/style.md; the checks are listed in
-docs/dev/testing.md > The checks). Rules:
+docs/dev/testing.md > The checks). The rules are `RULES`: each id and what it fails.
 
-  R1   `Theme.` reads (but the pickers' passthroughs), `Theme.resolveColor(` included
-  R2   Qt.alpha/rgba/hsla/hsva/lighter/darker/tint, a quoted hex or CSS colour
-  R3   a fractional opacity (a property named opacity or ...Opacity, an animation on it)
-  R4   fontSizeBy(, fontSizeLarge, Appearance.fontSize as a text/icon size, a numeric
-       textSize, a fitted size without its Style.type floor
-  R5   font.bold; font.weight set to anything but a role's weight
-  R6   a colour function called in UI (Tone., StyleTokens., Qt.color(, Utils.contrast(, ...);
-       in a service or reader: a stored resolved colour
-  R7   a colour property set to anything but a Style role, an ink, "transparent" or a
-       property of the file itself
-  R8   a ClippingRectangle with no color (its default is white)
-  R9   a Qt Quick Controls visual that leaves a part to the Qt palette
-  R10  a Canvas painting from Style with no Style.revision in its repaint key
-  R11  a block re-declaring a property its type or a base of it declares (every .qml)
-  R12  a global text role (or a tone its ink lacks) inside a Surface of a non-reading tone
-  R13  font.bold on a StyledText or a type derived from it (every .qml)
-  R14  wrapMode/elide/maximumLineCount on a StyledText: overflow:/maxLines:
-  R15  a dead elide: an eliding StyledText in a Row(Layout) with no bound on it
-  R16  a raw Text-family block with no TextRender renderType (every .qml)
-  R17  layer.enabled / layer.effect over content
-  R18  a scale over content with no `contentZoom` host
-  R19  `Widget.radius` read in UI: use Style.radius / Style.radiusInner
-  R20  a colour with a glide (ColorGlide / Behavior / ColorAnimation) bound to a bare
-       "transparent": the fade passes through black; rest on Tone.cleared(<fill>)
-  R21  `Style.trough` read outside the trough pieces (StyledVolumeBar, StyledSlider,
-       LevelMeter, SegmentMeter, PercentageCircle): draw the bar with one of them
-
-Every hit fails; a line is waived with `// style-exempt: <reason>`, a file with an
+A line is waived with `// style-exempt: <reason>`, a file with an
 entry in scripts/style-exceptions.json (rules and reason; an entry no longer needed
 fails). A public `Style` member nothing reads fails too.
 
@@ -52,13 +25,35 @@ ROOT = qml_modules.ROOT
 QML = qml_modules.QML_ROOT
 EXCEPTIONS = ROOT / "scripts" / "style-exceptions.json"
 
-RULES = [f"R{n}" for n in range(1, 22)]
-EVERYWHERE = {"R11", "R13", "R16"}
+RULES = {
+    "theme-read": "a `Theme.` read (but the pickers' passthroughs), `Theme.resolveColor(` included",
+    "raw-color": "Qt.alpha/rgba/hsla/hsva/lighter/darker/tint, a quoted hex or CSS colour",
+    "fractional-opacity": "a fractional opacity (a property named opacity or ...Opacity, an animation on it)",
+    "text-size": "fontSizeBy(, fontSizeLarge, Appearance.fontSize as a text/icon size, a numeric textSize, a fitted size without its Style.type floor",
+    "font-weight": "font.bold; font.weight set to anything but a role's weight",
+    "color-function": "a colour function called in UI (Tone., StyleTokens., Qt.color(, Utils.contrast(, ...); in a service or reader: a stored resolved colour",
+    "color-property": "a colour property set to anything but a Style role, an ink, \"transparent\" or a property of the file itself",
+    "clip-color": "a ClippingRectangle with no color (its default is white)",
+    "palette-part": "a Qt Quick Controls visual that leaves a part to the Qt palette",
+    "canvas-revision": "a Canvas painting from Style with no Style.revision in its repaint key",
+    "redeclared-property": "a block re-declaring a property its type or a base of it declares (every .qml)",
+    "global-text-role": "a global text role (or a tone its ink lacks) inside a Surface of a non-reading tone",
+    "bold-styled-text": "font.bold on a StyledText or a type derived from it (every .qml)",
+    "styled-text-overflow": "wrapMode/elide/maximumLineCount on a StyledText: overflow:/maxLines:",
+    "dead-elide": "a dead elide: an eliding StyledText in a Row(Layout) with no bound on it",
+    "text-render-type": "a raw Text-family block with no TextRender renderType (every .qml)",
+    "layer-over-content": "layer.enabled / layer.effect over content",
+    "unhosted-scale": "a scale over content with no `contentZoom` host",
+    "widget-radius": "`Widget.radius` read in UI: use Style.radius / Style.radiusInner",
+    "transparent-glide": "a colour with a glide (ColorGlide / Behavior / ColorAnimation) bound to a bare \"transparent\": the fade passes through black; rest on Tone.cleared(<fill>)",
+    "trough-read": "`Style.trough` read outside the trough pieces (StyledVolumeBar, StyledSlider, LevelMeter, SegmentMeter, PercentageCircle): draw the bar with one of them",
+}
+EVERYWHERE = {"redeclared-property", "bold-styled-text", "text-render-type"}
 TROUGH_PIECES = {"StyledVolumeBar", "StyledSlider", "LevelMeter", "SegmentMeter", "PercentageCircle"}
 STYLE_LAYER_PIECES = {"Surface", "StateLayer", "FocusRing", "Skeleton", "StyledScrollIndicator", "BackdropScrim"}
 STYLE_LAYER_CONFIG = {"Style", "StyleInk", "StyleTextRole", "BarColors", "Theme", "Appearance", "BarsConfig", "BarStyle"}
 
-# The CSS colour names R2 refuses quoted ("transparent" stays allowed)
+# The CSS colour names raw-color refuses quoted ("transparent" stays allowed)
 CSS_NAMES = """aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood
 cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkgrey
 darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkslategrey
@@ -72,13 +67,13 @@ peru pink plum powderblue purple rebeccapurple red rosybrown royalblue saddlebro
 slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow
 yellowgreen""".split()
 
-R1 = re.compile(r"(?<![\w.])Theme\.(?!(?:baseColorNames|roles|name|stringToColorMap)\b)")
-R2 = re.compile(r"Qt\.(?:alpha|rgba|hsla|hsva|lighter|darker|tint)\(|[\"']#[0-9a-fA-F]{3,8}[\"']|[\"'](?:" + "|".join(CSS_NAMES) + r")[\"']")
-R4_CALLS = re.compile(r"fontSizeBy\(|fontSizeLarge")
-R4_SIZE_NAMES = ("textSize", "font.pixelSize", "iconSize")
-R6_CALLS = re.compile(r"(?<![\w.])(?:Tone|StyleTokens|BarWidgetStyle)\.|Style\.shadow(?:Base)?Color\(|BarColors\.(?:widgetColors|pulseLadder)\(|"
+THEME_READ = re.compile(r"(?<![\w.])Theme\.(?!(?:baseColorNames|roles|name|stringToColorMap)\b)")
+RAW_COLOR = re.compile(r"Qt\.(?:alpha|rgba|hsla|hsva|lighter|darker|tint)\(|[\"']#[0-9a-fA-F]{3,8}[\"']|[\"'](?:" + "|".join(CSS_NAMES) + r")[\"']")
+TEXT_SIZE_CALLS = re.compile(r"fontSizeBy\(|fontSizeLarge")
+TEXT_SIZE_NAMES = ("textSize", "font.pixelSize", "iconSize")
+COLOR_FUNCTION_CALLS = re.compile(r"(?<![\w.])(?:Tone|StyleTokens|BarWidgetStyle)\.|Style\.shadow(?:Base)?Color\(|BarColors\.(?:widgetColors|pulseLadder)\(|"
                       r"Qt\.color\(|Utils\.(?:contrast|luminance|getContrastColor|isColorDark|fadeable)\(")
-R6_STORED = re.compile(r"String\(.*?(?:(?<![\w.])(?:Theme|Style)\.|\w+Config\.\w*(?:[Cc]olor|[Bb]order))")
+COLOR_FUNCTION_STORED = re.compile(r"String\(.*?(?:(?<![\w.])(?:Theme|Style)\.|\w+Config\.\w*(?:[Cc]olor|[Bb]order))")
 COLOUR_PROPS = {"textColor", "color", "border.color", "iconColor", "fillColor", "litColor", "lineColor", "valueColor", "statusColor"}
 READING_TONES = {"page", "sunken", "surface", "raised"}
 GLOBAL_ROLES = re.compile(r"Style\.(?:text|textMuted|textFaint|textDisabled|textAccent|(?:success|warning|error|info)Text|divider|accent|accentAlt|"
@@ -305,7 +300,7 @@ def fill_body(node, s, t, starts):
             node.props.append((p.group(1), line, p.group(2).strip()))
 
 
-# ---- values: the operand algorithm of R5 and R7 ----
+# ---- values: the operand algorithm of font-weight and color-property ----
 
 def top_split(expr, op):
     """Split `expr` at the top-level occurrences of `op` (outside brackets and strings)."""
@@ -540,14 +535,14 @@ class Index:
 # ---- scope ----
 
 def scope_of(rel):
-    """The rules that apply to a file (every file gets R11, R13 and R16)."""
+    """The rules that apply to a file (every file gets `EVERYWHERE`)."""
     p = rel
     rules = set(EVERYWHERE)
     name = Path(p).stem
     if p.startswith(("qml/services/", "qml/config/")):
         if name in STYLE_LAYER_CONFIG or p == "qml/services/core/ThemeManager.qml":
             return rules
-        return rules | {"R1", "R2", "R6"}
+        return rules | {"theme-read", "raw-color", "color-function"}
     ui = p.startswith(("qml/components/", "qml/shell/")) or p in ("qml/shell.qml", "qml/greeter.qml")
     if not ui:
         return rules
@@ -558,10 +553,10 @@ def scope_of(rel):
     m = re.match(r"qml/components/bar/widgets/([^/]+)/", p)
     if m and m.group(1) != "base":
         return rules
-    rules |= {f"R{n}" for n in range(4, 11)} | {"R12", "R14", "R15", "R17", "R18", "R19", "R20", "R21"}
+    rules |= {"text-size", "font-weight", "color-function", "color-property", "clip-color", "palette-part", "canvas-revision", "global-text-role", "styled-text-overflow", "dead-elide", "layer-over-content", "unhosted-scale", "widget-radius", "transparent-glide", "trough-read"}
     if p.startswith(("qml/components/bar/look/", "qml/components/bar/widgets/base/")):
-        return rules - {"R6"}  # the bar's drawing kit draws the palette's colours (check.md: exempt from R1-R3 and R6)
-    return rules | {"R1", "R2", "R3", "R6"}
+        return rules - {"color-function"}  # the bar's drawing kit draws the palette's colours (`check_style` › `color-function`)
+    return rules | {"theme-read", "raw-color", "fractional-opacity", "color-function"}
 
 
 def all_files():
@@ -586,129 +581,129 @@ def scan(rel, index):
 
     # per-line regex rules
     for i, line in enumerate(slines, 1):
-        if "R1" in rules:
-            for _ in R1.finditer(line):
-                add(hits, i, "R1", line.strip())
-        if "R19" in rules and re.search(r"(?<![\w.])Widget\.radius\b", line):
-            add(hits, i, "R19", "Widget.radius: use Style.radius / Style.radiusInner")
-        if "R21" in rules and re.search(r"(?<![\w.])Style\.trough\b", line) and not (rel.startswith("qml/components/reusable/") and Path(rel).stem in TROUGH_PIECES):
-            add(hits, i, "R21", "Style.trough outside the trough pieces: draw the bar with StyledVolumeBar, StyledSlider, LevelMeter, SegmentMeter or PercentageCircle")
-        if "R2" in rules:
-            for _ in R2.finditer(line):
-                add(hits, i, "R2", line.strip())
-        if "R4" in rules:
+        if "theme-read" in rules:
+            for _ in THEME_READ.finditer(line):
+                add(hits, i, "theme-read", line.strip())
+        if "widget-radius" in rules and re.search(r"(?<![\w.])Widget\.radius\b", line):
+            add(hits, i, "widget-radius", "Widget.radius: use Style.radius / Style.radiusInner")
+        if "trough-read" in rules and re.search(r"(?<![\w.])Style\.trough\b", line) and not (rel.startswith("qml/components/reusable/") and Path(rel).stem in TROUGH_PIECES):
+            add(hits, i, "trough-read", "Style.trough outside the trough pieces: draw the bar with StyledVolumeBar, StyledSlider, LevelMeter, SegmentMeter or PercentageCircle")
+        if "raw-color" in rules:
+            for _ in RAW_COLOR.finditer(line):
+                add(hits, i, "raw-color", line.strip())
+        if "text-size" in rules:
             fitted = re.search(r"//\s*fitted:", raw[i - 1]) if i - 1 < len(raw) else None
             if fitted:
                 m = re.match(r"^\s*(?:textSize|font\.pixelSize|iconSize)\s*:\s*(.*)$", slines[i - 1])
                 if m and not re.search(r"Style\.(?:type|icon)\w+", m.group(1)):
-                    add(hits, i, "R4", "a fitted size without its Style.type floor")
+                    add(hits, i, "text-size", "a fitted size without its Style.type floor")
             skip_calls = bool(fitted and m)
             if not skip_calls:
-                for _ in R4_CALLS.finditer(line):
-                    add(hits, i, "R4", line.strip())
-        if "R5" in rules:
+                for _ in TEXT_SIZE_CALLS.finditer(line):
+                    add(hits, i, "text-size", line.strip())
+        if "font-weight" in rules:
             for _ in re.finditer(r"(?<![\w.])font\.bold\b", line):
-                add(hits, i, "R5", line.strip())
-        if "R6" in rules:
+                add(hits, i, "font-weight", line.strip())
+        if "color-function" in rules:
             if not rel.startswith(("qml/services/", "qml/config/")):
-                for _ in R6_CALLS.finditer(line):
-                    add(hits, i, "R6", line.strip())
-            if rel.startswith(("qml/services/", "qml/config/")) and R6_STORED.search(line):
-                add(hits, i, "R6", line.strip())
-        if "R17" in rules:
+                for _ in COLOR_FUNCTION_CALLS.finditer(line):
+                    add(hits, i, "color-function", line.strip())
+            if rel.startswith(("qml/services/", "qml/config/")) and COLOR_FUNCTION_STORED.search(line):
+                add(hits, i, "color-function", line.strip())
+        if "layer-over-content" in rules:
             m = re.match(r"^\s*layer\.enabled\s*:\s*(.*)$", line)
             if m and m.group(1).strip() != "false":
-                add(hits, i, "R17", line.strip())
+                add(hits, i, "layer-over-content", line.strip())
             if re.match(r"^\s*layer\.effect\s*:", line):
-                add(hits, i, "R17", line.strip())
-        if "R16" in rules:
+                add(hits, i, "layer-over-content", line.strip())
+        if "text-render-type" in rules:
             m = re.match(r"^\s*renderType\s*:\s*(.*)$", line)
             if m and not m.group(1).strip().startswith("TextRender."):
-                add(hits, i, "R16", line.strip())
+                add(hits, i, "text-render-type", line.strip())
 
-    # a text-size line's own value: Appearance.fontSize as a size, a numeric textSize (R4)
-    if "R4" in rules:
+    # a text-size line's own value: Appearance.fontSize as a size, a numeric textSize (text-size)
+    if "text-size" in rules:
         for node in nodes:
             for name, line, value in node.props:
-                if name in R4_SIZE_NAMES and (re.search(r"Appearance\.fontSize\b(?!By|Large)", value) or re.fullmatch(r"\d+(?:\.\d+)?", value.strip())):
+                if name in TEXT_SIZE_NAMES and (re.search(r"Appearance\.fontSize\b(?!By|Large)", value) or re.fullmatch(r"\d+(?:\.\d+)?", value.strip())):
                     if "fitted:" not in raw[line - 1]:
-                        add(hits, line, "R4", f"{name}: {value}")
+                        add(hits, line, "text-size", f"{name}: {value}")
             if node.kind == "obj" and node.has("fontSizeMode") and (node.prop("fontSizeMode") or "").strip() != "Text.FixedSize" \
                     and not re.search(r"Style\.type\w+", node.prop("minimumPixelSize") or ""):
-                add(hits, node.line, "R4", "a fontSizeMode block without minimumPixelSize: Style.type*")
+                add(hits, node.line, "text-size", "a fontSizeMode block without minimumPixelSize: Style.type*")
 
     for node in nodes:
         if node.kind == "group":
-            if "R13" in rules and node.type == "font" and node.has("bold") and node.parent and node.parent.kind == "obj" \
+            if "bold-styled-text" in rules and node.type == "font" and node.has("bold") and node.parent and node.parent.kind == "obj" \
                     and index.derives(node.parent.type, rel, "StyledText"):
-                add(hits, node.line, "R13", "font { bold }")
+                add(hits, node.line, "bold-styled-text", "font { bold }")
             continue
         styled = index.derives(node.type, rel, "StyledText")
         animated = {c.on for c in node.children if c.kind == "obj" and c.on and (c.type in ("ColorGlide", "ColorAnimation")
                     or (c.type == "Behavior" and any(g.type == "ColorAnimation" for g in c.children)))}
         for name, line, value in node.props:
-            if "R3" in rules and re.search(r"(?:^|\.)\w*[oO]pacity$", name):
+            if "fractional-opacity" in rules and re.search(r"(?:^|\.)\w*[oO]pacity$", name):
                 if any(float(x) not in (0.0, 1.0) for x in re.findall(r"(?<![\w.])(\d*\.\d+)", value)):
-                    add(hits, line, "R3", f"{name}: {value}")
-            if "R5" in rules and name == "font.weight":
+                    add(hits, line, "fractional-opacity", f"{name}: {value}")
+            if "font-weight" in rules and name == "font.weight":
                 if not all(weight_leaf_ok(x) for x in leaves(value)):
-                    add(hits, line, "R5", f"font.weight: {value}")
-            if "R7" in rules and name in COLOUR_PROPS:
+                    add(hits, line, "font-weight", f"font.weight: {value}")
+            if "color-property" in rules and name in COLOUR_PROPS:
                 if not all(colour_leaf_ok(x, ids) for x in leaves(value)):
-                    add(hits, line, "R7", f"{name}: {value}")
-            if "R13" in rules and name == "font.bold" and styled:
-                add(hits, line, "R13", "font.bold on a StyledText")
-            if "R14" in rules and name in ("wrapMode", "elide", "maximumLineCount") and styled:
-                add(hits, line, "R14", f"{name}: {value}")
-            if "R20" in rules and name in animated and name not in node.decls and any(x.strip() in ('"transparent"', "'transparent'") for x in leaves(value)):
-                add(hits, line, "R20", f"{name}: {value}: a glide to transparent black; rest on Tone.cleared(<fill>)")
-            if "R18" in rules and name == "scale" and not zoom_host(node):
+                    add(hits, line, "color-property", f"{name}: {value}")
+            if "bold-styled-text" in rules and name == "font.bold" and styled:
+                add(hits, line, "bold-styled-text", "font.bold on a StyledText")
+            if "styled-text-overflow" in rules and name in ("wrapMode", "elide", "maximumLineCount") and styled:
+                add(hits, line, "styled-text-overflow", f"{name}: {value}")
+            if "transparent-glide" in rules and name in animated and name not in node.decls and any(x.strip() in ('"transparent"', "'transparent'") for x in leaves(value)):
+                add(hits, line, "transparent-glide", f"{name}: {value}: a glide to transparent black; rest on Tone.cleared(<fill>)")
+            if "unhosted-scale" in rules and name == "scale" and not zoom_host(node):
                 try:
                     one = float(value) == 1.0
                 except ValueError:
                     one = False
                 if not one:
-                    add(hits, line, "R18", f"scale: {value}")
-        if "R3" in rules and node.type and node.type.endswith("Animation"):
+                    add(hits, line, "unhosted-scale", f"scale: {value}")
+        if "fractional-opacity" in rules and node.type and node.type.endswith("Animation"):
             on_opacity = (node.on == "opacity") or (node.prop("property") or "").strip('"\'') == "opacity" \
                 or any(a.on == "opacity" for a in ancestors(node))
             if on_opacity:
                 for name, line, value in node.props:
                     if name in ("from", "to") and re.fullmatch(r"\d*\.\d+", value.strip()) and float(value) not in (0.0, 1.0):
-                        add(hits, line, "R3", f"{name}: {value}")
-        if "R18" in rules and not zoom_host(node):
+                        add(hits, line, "fractional-opacity", f"{name}: {value}")
+        if "unhosted-scale" in rules and not zoom_host(node):
             if node.type == "Scale" and node.header.strip().startswith("transform"):
-                add(hits, node.line, "R18", "transform: Scale")
+                add(hits, node.line, "unhosted-scale", "transform: Scale")
             prop_v = (node.prop("property") or "").strip().strip("\"'")
             props_v = (node.prop("properties") or "")
             if prop_v == "scale" or re.search(r"\bscale\b", props_v):
-                add(hits, node.line, "R18", "an animation on scale")
-        if "R8" in rules and node.type == "ClippingRectangle" and not node.has("color"):
-            add(hits, node.line, "R8", "ClippingRectangle with no color")
-        if "R9" in rules and node.type in NEEDS:
+                add(hits, node.line, "unhosted-scale", "an animation on scale")
+        if "clip-color" in rules and node.type == "ClippingRectangle" and not node.has("color"):
+            add(hits, node.line, "clip-color", "ClippingRectangle with no color")
+        if "palette-part" in rules and node.type in NEEDS:
             need = NEEDS[node.type]
             if node.type == "ScrollView":
                 ok = any(x in s[node.open_at:node.close_at] for x in need)
             else:
                 ok = any(node.has(x) for x in need)
             if not ok:
-                add(hits, node.line, "R9", f"{node.type} leaves a part to the Qt palette")
-        if "R10" in rules and node.type == "Canvas" and "Style.revision" not in text:
+                add(hits, node.line, "palette-part", f"{node.type} leaves a part to the Qt palette")
+        if "canvas-revision" in rules and node.type == "Canvas" and "Style.revision" not in text:
             for c in node.children:
                 if c.kind == "js" and c.header.strip().endswith("onPaint:") and re.search(r"\bStyle\.\w", s[c.open_at:c.close_at]):
-                    add(hits, node.line, "R10", "a Canvas painting from Style with no Style.revision")
-        if "R16" in rules and node.type in TEXT_BLOCKS and not any(n == "renderType" and v.strip().startswith("TextRender.") for n, _, v in node.props):
-            add(hits, node.line, "R16", f"{node.type} without a TextRender renderType")
-        if "R15" in rules and styled and node.parent and node.parent.kind == "obj" and node.parent.type in ("RowLayout", "Row"):
+                    add(hits, node.line, "canvas-revision", "a Canvas painting from Style with no Style.revision")
+        if "text-render-type" in rules and node.type in TEXT_BLOCKS and not any(n == "renderType" and v.strip().startswith("TextRender.") for n, _, v in node.props):
+            add(hits, node.line, "text-render-type", f"{node.type} without a TextRender renderType")
+        if "dead-elide" in rules and styled and node.parent and node.parent.kind == "obj" and node.parent.type in ("RowLayout", "Row"):
             overflow = (node.prop("overflow") or "").strip()
             elide = (node.prop("elide") or "").strip()
             eliding = overflow == '"line"' or (elide and elide != "Text.ElideNone")
             bounded = (node.prop("Layout.fillWidth") or "").strip() == "true" or any(node.has(x) for x in ("Layout.maximumWidth", "Layout.preferredWidth", "width"))
             if eliding and not bounded:
-                add(hits, node.line, "R15", "an eliding text with no bound in a row")
+                add(hits, node.line, "dead-elide", "an eliding text with no bound in a row")
 
-    # R11: a block re-declaring what its type or a base declares
-    if "R11" in rules:
+    # redeclared-property: a block re-declaring what its type or a base declares
+    if "redeclared-property" in rules:
         for node in nodes:
             if node.kind != "obj" or not node.decls:
                 continue
@@ -718,10 +713,10 @@ def scan(rel, index):
                 base = index.decls_of(key)
                 for d, line in node.decls.items():
                     if d in base:
-                        add(hits, line, "R11", f"`{d}` re-declares {name}.{d}")
+                        add(hits, line, "redeclared-property", f"`{d}` re-declares {name}.{d}")
 
-    # R12: a global role inside a Surface of a non-reading tone
-    if "R12" in rules:
+    # global-text-role: a global role inside a Surface of a non-reading tone
+    if "global-text-role" in rules:
         surfaces = [n for n in nodes if n.kind == "obj" and index.derives(n.type, rel, "Surface")]
 
         def tone_of(node):
@@ -750,10 +745,10 @@ def scan(rel, index):
                 if owner:
                     lit = re.findall(r'"(\w+)"', line)
                     if any(x in INK_LACKS or (x == "onAccent" and tones != {"accent"}) for x in lit):
-                        add(hits, i, "R12", line.strip())
+                        add(hits, i, "global-text-role", line.strip())
                 continue
             if GLOBAL_ROLES.search(line):
-                add(hits, i, "R12", line.strip())
+                add(hits, i, "global-text-role", line.strip())
     return hits
 
 

@@ -6,7 +6,7 @@ the standard order) and CLDR's English annotations (search keywords), and
 keeps the fully-qualified emoji without skin tones. The result is committed:
 nothing downloads at runtime. Run it again for a new Unicode release.
 
-  scripts/generate_emoji.py [--version latest|16.0]
+  scripts/gen_emoji.py [--version latest|16.0]
 
 Each entry is {"e": emoji, "n": name, "g": group, "k": [keywords]}, one per
 line so a regeneration diffs readably.

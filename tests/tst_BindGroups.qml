@@ -22,7 +22,7 @@ TestCase {
     }, extra ?? {});
   }
 
-  function test_runKey() {
+  function test_run_key() {
     verify(BindGroups.runKey(test.table, bind("SUPER + 1", "workspaceNth", "1")) !== "");
     compare(BindGroups.runKey(test.table, bind("SUPER + 1", "workspaceNth", "1")), BindGroups.runKey(test.table, bind("SUPER + 5", "workspaceNth", "5")));
     compare(BindGroups.runKey(test.table, bind("SUPER + 0", "workspaceNth", "10")), BindGroups.runKey(test.table, bind("SUPER + 1", "workspaceNth", "1")));
@@ -50,14 +50,14 @@ TestCase {
     compare(BindGroups.runKeys(binds, [3, 1, 4]), "1–3");
   }
 
-  function test_groupsOnlyShown() {
+  function test_groups_only_shown() {
     const binds = [bind("SUPER + 1", "workspaceNth", "1"), bind("SUPER + 2", "workspaceNth", "2"), bind("SUPER + Q", "terminal")];
     const groups = BindGroups.groups(test.table, binds, [1, 2], ["Workspace", "Workspace", "Apps"], []);
     compare(groups.map(g => g.key), ["Apps", "Workspace"]);
     compare(groups[1].rows, [[1]]);
   }
 
-  function test_runText() {
+  function test_run_text() {
     const binds = [bind("SUPER + 1", "workspaceNth", "1"), bind("SUPER + 2", "workspaceNth", "2"), bind("SUPER + 4", "workspaceNth", "4"), bind("SUPER + 0", "workspaceNth", "10")];
     compare(BindGroups.runNumbers(binds, [0, 1, 2]), "1 2 4");
     compare(BindGroups.runKeys(binds, [0, 1, 2]), "1 2 4");

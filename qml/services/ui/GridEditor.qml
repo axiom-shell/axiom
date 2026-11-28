@@ -5,25 +5,25 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 
-/* Editing of one grid of modules (each with a `place` { x, y, w, h } in
- * quarter cards), shared by the layouts editor's overlay pages and edge
- * menus. Not a singleton: OverlayManager and its MenuEditor each own one,
- * point `modulesOf` at the live modules array in their draft and run their
- * draft's changed() on `edited`.
- *
- * Also holds the selection, since the editor page is unloaded `keptFor`
- * after the overlay closes. Every edit keeps the selection on its module and shifts
- * the grid so its top left module sits at 0, 0: a place left of or above
- * the grid (negative x or y) makes room there. A grid with an `area` (the
- * lock screen's) is bounded instead: places are absolute, inside it,
- * unless it still `shiftsBack` (a custom widget's elements).
- * Required module types (`x-required`) are never removed or duplicated.
- *
- * Drops, moves and resizes are worked out first as a plan (planAdd,
- * planMove, planResize), which the canvas shows while dragging and
- * applyPlan() makes: a module put onto others pushes them along `pushDir`.
- * Every edit can be undone (undo/redo; the owner calls clearHistory()
- * when it reloads the modules). */
+// Editing of one grid of modules (each with a `place` { x, y, w, h } in
+// quarter cards), shared by the layouts editor's overlay pages and edge
+// menus. Not a singleton: OverlayManager and its MenuEditor each own one,
+// point `modulesOf` at the live modules array in their draft and run their
+// draft's changed() on `edited`.
+//
+// Also holds the selection, since the editor page is unloaded `keptFor`
+// after the overlay closes. Every edit keeps the selection on its module and shifts
+// the grid so its top left module sits at 0, 0: a place left of or above
+// the grid (negative x or y) makes room there. A grid with an `area` (the
+// lock screen's) is bounded instead: places are absolute, inside it,
+// unless it still `shiftsBack` (a custom widget's elements).
+// Required module types (`x-required`) are never removed or duplicated.
+//
+// Drops, moves and resizes are worked out first as a plan (planAdd,
+// planMove, planResize), which the canvas shows while dragging and
+// applyPlan() makes: a module put onto others pushes them along `pushDir`.
+// Every edit can be undone (undo/redo; the owner calls clearHistory()
+// when it reloads the modules).
 QtObject {
   id: root
 
@@ -128,7 +128,7 @@ QtObject {
     return OverlayConfig.minSize(type).map(n => Math.min(GridPlacement.maxSpan, n * root.sizeScale));
   }
 
-  // --- Selection ---
+  // -- Selection --
 
   function select(index) {
     root._group = [];
@@ -174,7 +174,7 @@ QtObject {
     return root.module(root.selected);
   }
 
-  // --- Reading ---
+  // -- Reading --
 
   function _modules() {
     return root.modulesOf() ?? null;
@@ -379,7 +379,7 @@ QtObject {
     return !!place && root.planResize(index, root._place(place.x, place.y, w, h)).valid;
   }
 
-  // --- History ---
+  // -- History --
 
   // Snapshots of the edited modules (plus the owner's `snapshotExtra()`)
   // before each edit
@@ -430,7 +430,7 @@ QtObject {
     root._history.clear();
   }
 
-  // --- Editing ---
+  // -- Editing --
 
   // Runs an edit. `edit` returns the module to select, false for no
   // change, or undefined to keep the selection on its module. Then

@@ -10,32 +10,30 @@ import qs.services.compositor
 import qs.services.system
 import qs.services.apps
 
-/*
- * LauncherManager turns the launcher's search text into result rows and
- * runs them. The first character picks what's searched:
- *   /  shell commands (LauncherCommands)   =  calculator (qalc)
- *   >  run a shell command                 ?  web search
- *   @  ask the chat                        :  clipboard history
- *   ;  emoji (EmojiManager)                ~  files (LauncherFiles)
- * and anything else searches apps and open windows, with a calculator row
- * when the text is math, the best few files after them and a web search
- * row last. Every row is
- *   { kind, image, glyph, title, usage, subtitle, hint, complete, run(shift),
- *     crop, copy(), key }
- * where image is an icon path or url (crop: a picture that fills its tile),
- * glyph a Material Symbols name, complete the text Tab puts in the search
- * field, and run() returns true to close the launcher, false to keep it
- * open, or a string to search for instead; copy(), when a row has it, is
- * Ctrl+C's (a file's path); key, when a row has it, names what it shows
- * (a file's path), so rows rebuilt for the same text keep the selected one
- * selected however they moved.
- * App launches and commands run are counted (with their last time) for
- * frecency sorting.
- */
+// LauncherManager turns the launcher's search text into result rows and
+// runs them. The first character picks what's searched:
+//   /  shell commands (LauncherCommands)   =  calculator (qalc)
+//   >  run a shell command                 ?  web search
+//   @  ask the chat                        :  clipboard history
+//   ;  emoji (EmojiManager)                ~  files (LauncherFiles)
+// and anything else searches apps and open windows, with a calculator row
+// when the text is math, the best few files after them and a web search
+// row last. Every row is
+//   { kind, image, glyph, title, usage, subtitle, hint, complete, run(shift),
+//     crop, copy(), key }
+// where image is an icon path or url (crop: a picture that fills its tile),
+// glyph a Material Symbols name, complete the text Tab puts in the search
+// field, and run() returns true to close the launcher, false to keep it
+// open, or a string to search for instead; copy(), when a row has it, is
+// Ctrl+C's (a file's path); key, when a row has it, names what it shows
+// (a file's path), so rows rebuilt for the same text keep the selected one
+// selected however they moved.
+// App launches and commands run are counted (with their last time) for
+// frecency sorting.
 QtObject {
   id: root
 
-  // --- Public Properties ---
+  // -- Public Properties --
   property var results: []
   // What the search text is: "apps" | "commands" | "calc" | "run" | "web" |
   // "chat" | "clipboard" | "emoji" | "files"
@@ -57,7 +55,7 @@ QtObject {
     return times;
   }, {})
 
-  // --- Public Methods ---
+  // -- Public Methods --
 
   function query(text) {
     root.text = text;
@@ -155,7 +153,7 @@ QtObject {
     }
   }
 
-  // --- Apps & windows ---
+  // -- Apps & windows --
 
   readonly property int _searchLimit: 50
 
@@ -258,7 +256,7 @@ QtObject {
     return frequentIds().slice(0, LauncherConfig.maxResults).map(id => _appRow(DesktopEntries.byId(id)));
   }
 
-  // --- Files ---
+  // -- Files --
 
   property LauncherFiles _files: LauncherFiles {
     active: root.shown && root.mode === "files"
@@ -277,7 +275,7 @@ QtObject {
       root._afterClose = [];
   }
 
-  // --- Commands ---
+  // -- Commands --
 
   property LauncherCommands _commands: LauncherCommands {}
   // A command waiting for its confirming second Enter
@@ -406,7 +404,7 @@ QtObject {
     return true;
   }
 
-  // --- Calculator ---
+  // -- Calculator --
 
   readonly property bool _qalc: CalculatorManager.qalc === true
   // The expression the search wants answered
@@ -458,7 +456,7 @@ QtObject {
     }
   }
 
-  // --- Run & web ---
+  // -- Run & web --
 
   function _runRow(command) {
     return {
@@ -513,7 +511,7 @@ QtObject {
     };
   }
 
-  // --- Clipboard ---
+  // -- Clipboard --
 
   function _clipboardRows(query) {
     if (ClipboardManager.unsupported)
@@ -585,12 +583,12 @@ QtObject {
     }
   }
 
-  // --- Emoji ---
+  // -- Emoji --
 
   // EmojiManager.search: most used first with no text, else by name
   function _emojiRows(query) {
     if (EmojiManager.entries().length === 0)
-      return [_infoRow(I18n.tr("No emoji list"), I18n.tr("Run scripts/generate_emoji.py"))];
+      return [_infoRow(I18n.tr("No emoji list"), I18n.tr("Run scripts/gen_emoji.py"))];
     const matches = EmojiManager.search(query, _searchLimit);
     return matches.length > 0 ? matches.map(e => _emojiRow(e)) : [_infoRow(I18n.tr("No matches"), I18n.tr("Search emoji by name or keyword"))];
   }
@@ -622,7 +620,7 @@ QtObject {
     }
   }
 
-  // --- After close ---
+  // -- After close --
 
   // Runs fn once no launcher window is mapped (at once if none is): the
   // close slide outlasts `shown`, and until the windows unmap they hold the
@@ -635,7 +633,7 @@ QtObject {
       fn();
   }
 
-  // --- Private ---
+  // -- Private --
 
   readonly property bool _mapped: SurfaceManager.surfaceWindows.some(e => e.kind === "launcher" && e.window?.visible)
   property var _afterClose: []

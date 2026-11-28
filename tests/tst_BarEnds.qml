@@ -232,7 +232,7 @@ TestCase {
     compare(side.end.kind, "border");
   }
 
-  // ---- Bars stacked on one edge ----
+  // -- Bars stacked on one edge --
 
   function placed(bars, opts) {
     return BarEnds.withEnds(bars, opts);

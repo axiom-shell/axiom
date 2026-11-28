@@ -7,20 +7,18 @@ import Quickshell
 import qs.config
 import qs.services.core
 
-/*
- * The cursor theme as XCursor readers get it (the compositor's
- * xcursor-theme, XCURSOR_THEME, GTK's cursor-theme). A theme naming its
- * cursors only the X11 way (left_ptr, not default) and inheriting nothing
- * shows the "default" theme's cursors (often Adwaita's) for the standard
- * names it lacks, the arrow among them. So while the Input section's
- * cursor part is on, the daemon (cursor.theme) makes a companion theme
- * (axiom-cursor-<theme> in $XDG_DATA_HOME/icons/) inheriting it, with those names
- * linked to its own cursors, and sets GTK's cursor-theme and cursor-size
- * to what XCursor readers get. CompositorConfigManager hands that name on
- * (compositor.inputs' `xcursor`); Hyprland's setcursor keeps the theme's
- * own. GreeterManager copies the companion into the greeter's bundle, for
- * the greeter's sway (docs/dev/compositor/config-modes.md).
- */
+// The cursor theme as XCursor readers get it (the compositor's
+// xcursor-theme, XCURSOR_THEME, GTK's cursor-theme). A theme naming its
+// cursors only the X11 way (left_ptr, not default) and inheriting nothing
+// shows the "default" theme's cursors (often Adwaita's) for the standard
+// names it lacks, the arrow among them. So while the Input section's
+// cursor part is on, the daemon (cursor.theme) makes a companion theme
+// (axiom-cursor-<theme> in $XDG_DATA_HOME/icons/) inheriting it, with those names
+// linked to its own cursors, and sets GTK's cursor-theme and cursor-size
+// to what XCursor readers get. CompositorConfigManager hands that name on
+// (compositor.inputs' `xcursor`); Hyprland's setcursor keeps the theme's
+// own. GreeterManager copies the companion into the greeter's bundle, for
+// the greeter's sway (docs/dev/compositor/config-modes.md).
 Singleton {
   id: root
 

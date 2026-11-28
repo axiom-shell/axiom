@@ -24,20 +24,20 @@ The one template bar widgets are data on, the guard that keeps it so, where thei
 
 | Rule | A widget never |
 |---|---|
-| T1 | has a root other than `BarWidget` (or `AudioLevelWidget`) |
-| T2 | resolves a colour (`Theme.`, `resolveColor`, `Qt.rgba`/`lighter`/…, `BarWidgetStyle.`, `BarsConfig.…Colors`, a hex or named colour literal in either quote kind): it names a colour field and the base resolves it |
-| T3 | fades by `opacity` (only an `Image` may; a switch of 0 or 1 is fine) or dims by a `dim`: a dim is a colour the base draws (`muted`, `pulsing`) |
-| T4 | has a colour field nothing uses, or names a `*Color` that isn't one of its colour fields (`accentField`, `iconField`, `field:`, `paint.field`/`paint.line`) |
-| T5 | sets or writes what the base computes (`colors`, `paint`, `shownItems`, `splits`, `splitAt`, `contentAcross`, `pulse`, `box`, `hitArea`, `autoColors`, …) |
-| T6 | has a file in its folder besides `<Type>.qml` and `schema.yaml` |
-| T7 | reads `.box` (or a bare `box` in `<Type>.qml`): it reads `shownItems` (the host's `box` is the base's) |
-| T8 | names `stateColorName`: a state names its colour field (`accentField`) |
+| `widget-root` | has a root other than `BarWidget` (or `AudioLevelWidget`) |
+| `resolved-color` | resolves a colour (`Theme.`, `resolveColor`, `Qt.rgba`/`lighter`/…, `BarWidgetStyle.`, `BarsConfig.…Colors`, a hex or named colour literal in either quote kind): it names a colour field and the base resolves it |
+| `opacity-fade` | fades by `opacity` (only an `Image` may; a switch of 0 or 1 is fine) or dims by a `dim`: a dim is a colour the base draws (`muted`, `pulsing`) |
+| `color-field` | has a colour field nothing uses, or names a `*Color` that isn't one of its colour fields (`accentField`, `iconField`, `field:`, `paint.field`/`paint.line`) |
+| `base-output` | sets or writes what the base computes (`colors`, `paint`, `shownItems`, `splits`, `splitAt`, `contentAcross`, `pulse`, `box`, `hitArea`, `autoColors`, …) |
+| `folder-files` | has a file in its folder besides `<Type>.qml` and `schema.yaml` |
+| `box-read` | reads `.box` (or a bare `box` in `<Type>.qml`): it reads `shownItems` (the host's `box` is the base's) |
+| `state-color-name` | names `stateColorName`: a state names its colour field (`accentField`) |
 
 **Exceptions.** Each entry of `scripts/bar-widget-exceptions.json` is `{ reason, rules, fieldsReadIn? }` under `types.<Type>`:
-- Workspaces breaks T5 and T6 (segmented cells with their own state, hover, click and run shape, window strips and a gliding indicator are not icon-plus-label parts; their colours still come from the core through `CellLook`). Its `fieldsReadIn` lists `qml/config/BarsConfig.qml`, which reads colour fields the widget's own files don't (T4 counts those reads).
-- CustomWidget breaks T8: a user script names the state colour (`stateColorName`), which the base resolves.
-- The check is two-way, so an exception never outlives its need: an entry with no `reason`, naming a type with no folder or a rule that isn't T1-T8, listing a rule the widget no longer breaks, or with a `fieldsReadIn` that supplies none of its otherwise-unused colour fields is itself an error.
-- **To add one:** run `scripts/dev/verify.sh`, read which rule the widget breaks, and only if the widget really isn't icon plus label add `"<Type>": { "reason": "<what it draws instead>", "rules": ["T5"] }`. A widget that merely needs data the base lacks gets that property in `BarWidget`, not an exception.
+- Workspaces breaks `base-output` and `folder-files` (segmented cells with their own state, hover, click and run shape, window strips and a gliding indicator are not icon-plus-label parts; their colours still come from the core through `CellLook`). Its `fieldsReadIn` lists `qml/config/BarsConfig.qml`, which reads colour fields the widget's own files don't (`color-field` counts those reads).
+- CustomWidget breaks `state-color-name`: a user script names the state colour (`stateColorName`), which the base resolves.
+- The check is two-way, so an exception never outlives its need: an entry with no `reason`, naming a type with no folder or a rule that isn't in `WIDGET_RULES`, listing a rule the widget no longer breaks, or with a `fieldsReadIn` that supplies none of its otherwise-unused colour fields is itself an error.
+- **To add one:** run `scripts/dev/verify.sh`, read which rule the widget breaks, and only if the widget really isn't icon plus label add `"<Type>": { "reason": "<what it draws instead>", "rules": ["base-output"] }`. A widget that merely needs data the base lacks gets that property in `BarWidget`, not an exception.
 
 ### Sizes come from the bar
 - `BarsConfig.enrichBarConfig` hands the shell's values to the pure `BarEnrich.enrich` (`env`, `BarsConfig.enrichEnv`, which takes the theme from `BarColors.env`; tests run the same path through `tests/barstyle/Bars.js`), which derives `extent` and where the widgets sit across (`crossStart`) from `thickness` and `edgePadding` (`BarEnds.crossGeometry`: solid and pill bars alike).
@@ -100,7 +100,7 @@ Every record has every field (`tst_BarLook`), and the table's keys are `BarStyle
 ### Paint: colors over the look
 - Widgets don't draw their own backgrounds. A `BarWidget` reports two things:
   - `hasBackground`: on while it shows something (not `hidden`).
-  - `accentColor`: its color for its current state, e.g. a critical battery or a muted mic. A widget names the color field it shows (`accentField`, none by default) and `accentColor` is that field's color. A custom widget's script names its state colour instead (`stateColorName`, the guard's one exception: T8).
+  - `accentColor`: its color for its current state, e.g. a critical battery or a muted mic. A widget names the color field it shows (`accentField`, none by default) and `accentColor` is that field's color. A custom widget's script names its state colour instead (`stateColorName`, the guard's one exception: `state-color-name`).
 - One `bar/look/WidgetLook` works these out (its `accentField`, `accentColor`, `autoColors`, `barOffset`/`barLength` set through `BarWidget`; `accentAuto`, `barSpot`, `colors`, `drawnColors` and `paint` read back), so the gradient and Auto handling is written once.
 - They draw in `colors` = `BarColors.widgetColors(barConfig, accent, foreground, widget)` (memoised: one object per input set), which gives `{ fill, stroke, indicator, text, icon, iconFill, gradient, textOnFill, textBack, iconBack, iconOnFill, level }`. `widget` is what of the widget itself its look depends on: `splits` (Split), `hovered` (Fill on hover), `spot` and `auto` (the bar gradient). `BarWidgetStyle.state` makes them the `state` paint reads (`{ gradient, splits, hovered, auto, run, group, solid }`; `group`: in a merged run on a merged bar), so `BarWidgetStyle.colors(look, palette, state, accent, own)` and `cell(look, palette, state, color, own, cellState)` take one shape: the bar's `look` and its colors resolved once (`barConfig.palette`: `barText`, `background`, `override`, `labelColor`, `group`, `groupStroke`, `gradientStops`, and `separator`, `accentLine` `{from, to}`, `hoverOutline`, `cellHover`: the bar's other colours, resolved once, a user's taken as set). `BarColors.widgetColors`, `BarsConfig.cellColors`, `workspaceCellColors` and `groupColors` are thin wrappers over them.
   - Paint branches on the drawn style's traits alone: what a box paints each part in (`box`), an icon part and a label apart (`iconPart`), a run's gradient strip as a tint (`runTints`), a box kept in a merged run (`boxedInRun`), plain's colorless text (`colored`). A widget or cell that can't draw its style draws its `fallback`'s (split's filled). A widget's and a cell's boxes share one body (`_box`).
@@ -139,7 +139,7 @@ A bar that needs the wallpaper's tone (no surface, or any bar while the surfaces
 - A widget showing several items (Lock keys' keys, Privacy's indicators, Markets' symbols, ClaudeUsage's accounts) can draw one box per item: its `boxes` setting (One, or Each), which the `boxes: {variant: each}` part of its `schema.yaml` adds, with the items on the setting (`x-boxItems`: [schema annotations](../core/schema-annotations.md)).
 - With Each, `BarContainer.widgetModel` expands its entry into one per item (`methods/BarBoxes.expand`, the items from `BarsConfig.boxItems`): the same properties, the item as `box` (a Markets symbol's or ClaudeUsage account's id, `MarketMath.entries` the widget's own list too), its `configIndex` the entry's. Each is hosted by a `BarWidgetHost` of its own, so each box takes everything a widget does with no drawing code of its own: split, its own pill level, its state color, Fill on hover, its place in a powerline chain or merged run, the gradient. One item draws whole, as with One.
 - The items come from config only (an id-array setting, Markets' watchlist, ClaudeUsage's accounts), never live values: the section's Repeater models them. A box whose item the machine can't report hides itself (no size, as a hidden widget).
-- The host hands the base its `box` (T7: a widget never reads it), and the widget reads `shownItems`, which under a box is just that item: Lock keys and Privacy their key's icon with a short name (so they split), Markets one symbol (or the portfolio) without cycling, ClaudeUsage one account by its name.
+- The host hands the base its `box` (`box-read`: a widget never reads it), and the widget reads `shownItems`, which under a box is just that item: Lock keys and Privacy their key's icon with a short name (so they split), Markets one symbol (or the portfolio) without cycling, ClaudeUsage one account by its name.
 - To the bar editor it stays one widget: one chip, one form, one drag; every box shares its `configIndex`, so its selection and hover outline every box, and each box opens the widget's popout from where it is.
 - The boxes are the bar's widget spacing apart, as separate widgets are.
 
@@ -151,7 +151,7 @@ A bar that needs the wallpaper's tone (no surface, or any bar while the surfaces
 
 ### Auto colors
 - A widget color field with an `x-autoColor` role is Auto when empty, which is its default.
-- `BarsConfig.enrichBarConfig` fills Auto fields in the widgets it hands out (`BarsConfig.withAutoColors(widgets, look)`; the fields per type are in `BarsConfig.autoColorFields`, read from the schema by `BarEnrich.autoColorFields`). A widget names the field (`accentField`, `iconField`); the base resolves it (T2).
+- `BarsConfig.enrichBarConfig` fills Auto fields in the widgets it hands out (`BarsConfig.withAutoColors(widgets, look)`; the fields per type are in `BarsConfig.autoColorFields`, read from the schema by `BarEnrich.autoColorFields`). A widget names the field (`accentField`, `iconField`); the base resolves it (`resolved-color`).
 - The pure `methods/BarAutoColors` picks colors along the bar's shown widgets, every section in order. The roles are:
   - **`accent`:** the widget's own color, a base08–0F accent unlike its neighbours'. Fixed colors count as neighbours too. Every accent is used before any repeats, and an accent is kept apart from the widget's own warning/critical colors.
   - **`alt`:** a second state, as unlike its accent as possible.
@@ -186,7 +186,7 @@ How the four widget-style features meet (each decided in `BarLook`, `BarWidgetSt
 ### Which color fields show
 - A widget's color fields show in the bar editor's inspector only in the bar looks where they draw something.
   - Their `x-showIf` reads the look of the selected bar through `$bar.<key>` keys (`BarsConfig.lookContext`: `BarLook.context`): a `BarStyle` value, with shape and grouping as drawn, or a trait the user sees (`BarLook.contextTraits`, each a function of the look): `boxed`, `merged`, `underlined`, `ownColorShows`, `textColorShows`, `cellsFilled` ([Schema annotations](../core/schema-annotations.md) › Bar look). A widget's schema never lists styles: what a style shows is its traits'.
-  - `tst_SchemaLayout` (`test_real_schema_showIf_targets_exist`) checks that each such key names a `BarStyle` field or a trait, never `widgetStyle`, in a bar widget's options only; `tst_BarLook` holds each trait per style.
+  - `tst_SchemaLayout` (`test_real_schema_show_if_targets_exist`) checks that each such key names a `BarStyle` field or a trait, never `widgetStyle`, in a bar widget's options only; `tst_BarLook` holds each trait per style.
 - **The widget's own color** (`backgroundColor` titled "Color", and its state colors: the `WidgetColor` definition). It is the fill when filled, the tint or outline when tinted or outlined, the icon part's fill (and the label's tint or text) when split, the line when underlined, and the icon when merged or under colored icons.
   - Hidden under Plain text (`$bar.ownColorShows`).
   - A widget with no icon (Time, the tray's box) shows it only when boxed and not merged, or when underlined (`$bar.boxed` and not `$bar.merged`, or `$bar.underlined`).

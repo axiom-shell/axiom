@@ -24,49 +24,49 @@ TestCase {
     };
   }
 
-  function test_hypr057Special() {
+  function test_hypr057_special() {
     const w = win(-1, "special:gaming", true);
     const o = out(5, 0, "special:gaming");
     compare(OutputWindows.hasFullscreen(o, [w]), true);
     compare(OutputWindows.shown(o, [w]).length, 1, "the window shows");
   }
 
-  function test_specialClosed() {
+  function test_special_closed() {
     compare(OutputWindows.hasFullscreen(out(5, 0, ""), [win(-1, "special:gaming", true)]), false);
   }
 
-  function test_noActiveWorkspace() {
+  function test_no_active_workspace() {
     compare(OutputWindows.shown(out(-1, 0, ""), [win(-1, "special:gaming", true)]).length, 0);
   }
 
-  function test_regularUnderSpecial() {
+  function test_regular_under_special() {
     compare(OutputWindows.hasFullscreen(out(5, 0, "special:gaming"), [win(5, "5", true)]), true);
   }
 
-  function test_otherSpecial() {
+  function test_other_special() {
     compare(OutputWindows.hasFullscreen(out(5, 0, "special:gaming"), [win(-1, "special:magic", true)]), false);
   }
 
-  function test_idFallback() {
+  function test_id_fallback() {
     compare(OutputWindows.hasFullscreen(out(5, -98), [win(-98, "", true)]), true);
   }
 
-  function test_maximizedOnly() {
+  function test_maximized_only() {
     compare(OutputWindows.hasFullscreen(out(5, 0, ""), [win(5, "5", false, true)]), false);
   }
 
-  function test_swayNiriShape() {
+  function test_sway_niri_shape() {
     const o = out(2, 0);
     compare(OutputWindows.hasFullscreen(o, [win(3, "3", true)]), false, "other workspace");
     compare(OutputWindows.hasFullscreen(o, [win(2, "2", true)]), true, "active workspace");
   }
 
-  function test_nullOutput() {
+  function test_null_output() {
     compare(OutputWindows.shown(null, [win(5, "5", true)]), []);
     compare(OutputWindows.hasFullscreen(null, [win(5, "5", true)]), false);
   }
 
-  function test_workspaceKey() {
+  function test_workspace_key() {
     compare(OutputWindows.workspaceKey(out(5, 0, "special:gaming")), "5/special:gaming");
     compare(OutputWindows.workspaceKey(out(5, 0, "")), "5/0");
   }

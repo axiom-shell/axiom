@@ -25,7 +25,7 @@ import qs.services.ui
 QtObject {
   id: root
 
-  // --- The layout (Greeter.layout) and its preview ---
+  // -- The layout (Greeter.layout) and its preview --
 
   property ScreenLayoutEditor editor: ScreenLayoutEditor {
     path: ["Greeter", "layout"]
@@ -33,7 +33,7 @@ QtObject {
     name: I18n.tr("Login screen")
   }
 
-  // --- What's set up ---
+  // -- What's set up --
 
   // The last `check` (the daemon's greeter.status): { greetd, agreety,
   // compositor ("sway" | "hyprland": what the login screen runs in, "" for
@@ -158,7 +158,7 @@ QtObject {
     SettingsManager.openSetting("Greeter");
   }
 
-  // --- Private ---
+  // -- Private --
 
   readonly property string _source: Paths.packaged ? "package" : GreeterConfig.source
   readonly property string _desktopEntry: "axiom-greeter-update"
@@ -221,7 +221,7 @@ QtObject {
     });
   }
 
-  // --- Update notification ---
+  // -- Update notification --
 
   property var _state: StateManager.createStateHandler("greeterUpdates")
   // { notifiedHash }: each version of axiom the copy is behind is notified
@@ -247,7 +247,7 @@ QtObject {
     });
   }
 
-  // --- The bundle ---
+  // -- The bundle --
 
   // Not while the dev image runs (on the dev config): the login screen
   // shows the live config, and the bundle is exported again from it once
@@ -343,7 +343,7 @@ chmod -R go+rX "$dir"`, "sh", dir.replace(/\/$/, ""), root._bundleText, root._th
     });
   }
 
-  // --- Startup ---
+  // -- Startup --
 
   // A little after startup: the hash reads every file axiom ships
   property Timer _startup: Timer {

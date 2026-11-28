@@ -4,21 +4,19 @@ import qs.config
 import qs.services.compositor
 import qs.services.ui
 
-/**
- * Shared state machine for any "popout wrapper": open/close/reopen
- * queueing, switching in place, and centralized dismiss-on-hover-loss
- * timing.
- *
- * Concrete wrappers (BarPopouts, SubPopout, EdgePopout,
- * IntegratedEdgeMenu) use this as their root type and add
- * their own window, positioning, and content Loader as children, binding
- * `currentItem` to their Loader's item.
- *
- * Deliberately generic on (anchor, data) — no fixed signature per
- * subclass. If a subclass needs extra routing info (e.g. BarPopouts'
- * popout name), it travels as a field inside `data` rather than as an
- * extra positional argument, so this base never needs overriding.
- */
+// Shared state machine for any "popout wrapper": open/close/reopen
+// queueing, switching in place, and centralized dismiss-on-hover-loss
+// timing.
+//
+// Concrete wrappers (BarPopouts, SubPopout, EdgePopout,
+// IntegratedEdgeMenu) use this as their root type and add
+// their own window, positioning, and content Loader as children, binding
+// `currentItem` to their Loader's item.
+//
+// Deliberately generic on (anchor, data) — no fixed signature per
+// subclass. If a subclass needs extra routing info (e.g. BarPopouts'
+// popout name), it travels as a field inside `data` rather than as an
+// extra positional argument, so this base never needs overriding.
 Item {
   id: root
 
@@ -62,7 +60,7 @@ Item {
       requestDismiss();
   }
 
-  // ---- Centralized dismiss logic ----
+  // -- Centralized dismiss logic --
   // Content just exposes `hovered` (optionally folding in its own extra
   // "keep me alive" conditions, e.g. an active drag or an open submenu).
   // Timing and dismissal live here, once, for every popout type.
@@ -169,7 +167,7 @@ Item {
     parkTimer.stop();
     closePopout();
   }
-  // ---- end centralized dismiss logic ----
+  // -- end centralized dismiss logic --
 
   function closePopout() {
     if (isClosing)

@@ -20,7 +20,7 @@ TestCase {
     });
   }
 
-  function test_xdgVariables() {
+  function test_xdg_variables() {
     const dirs = DataDirs.xdg({
       "HOME": "/home/u",
       "XDG_CONFIG_HOME": "/cfg/",
@@ -35,7 +35,7 @@ TestCase {
     compare(dirs.cache, "/cache/axiom/");
   }
 
-  function test_ignoredVariables() {
+  function test_ignored_variables() {
     const dirs = DataDirs.xdg({
       "HOME": "/home/u/",
       "XDG_CONFIG_HOME": "relative/cfg",
@@ -47,7 +47,7 @@ TestCase {
     compare(dirs.data, "/home/u/.local/share/axiom/");
   }
 
-  function test_searchDirs() {
+  function test_search_dirs() {
     compare(DataDirs.searchDirs({
       "HOME": "/home/u"
     }), ["/home/u/.local/share", "/usr/local/share", "/usr/share"], "the spec's defaults");

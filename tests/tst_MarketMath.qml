@@ -320,7 +320,7 @@ TestCase {
     verify(flat.min < 10 && flat.max > 10, "a flat line sits mid-height");
   }
 
-  function test_trendTone() {
+  function test_trend_tone() {
     compare(MarketMath.trendTone("flat", false), "faint");
     compare(MarketMath.trendTone("flat", true), "faint");
     compare(MarketMath.trendTone("up", false), "success");

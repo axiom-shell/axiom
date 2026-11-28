@@ -6,28 +6,26 @@ import qs.services.compositor
 import qs.services.apps
 import qs.components.methods
 
-/*
- * Hooks theme integrations into their apps' configs: each ThemeIntegrations
- * switch's `x-hookup` targets (the line that loads its axiom file, where it
- * goes), checked and applied by the daemon (hookup.status, hookup.apply).
- * `check(key)` fills `status[key]` ({ targets: [...] }: per target its text, file, whether it's
- * done, the lines it would comment out, ...); `apply(key)` backs each
- * changed file up beside it and edits it, then checks again, leaving the
- * daemon's results in `results[key]`. Nothing is polled: the hookup panel
- * checks when it's shown. Only an Apply click edits a user's config (and an
- * Apply that changed something runs the integration again).
- *
- * Three keys aren't theme integrations: "compositorInclude" (the lines that
- * load axiom's module, and the autostart line), "compositorAutostart" (only the
- * latter), in the user's compositor config, for the onboarding's Compositor
- * page and the settings' Compositor card, and "compositorModule" (only the
- * former), for CompositorConfigManager's notification that the module isn't
- * loaded.
- * Their targets come from CompositorConfigManager (the daemon's writer),
- * passed with the call. "screenSharing" is the line pointing the
- * compositor's screen-share portal at axiom's picker
- * (ScreenShareManager.hookupTargets), for the Screen sharing card.
- */
+// Hooks theme integrations into their apps' configs: each ThemeIntegrations
+// switch's `x-hookup` targets (the line that loads its axiom file, where it
+// goes), checked and applied by the daemon (hookup.status, hookup.apply).
+// `check(key)` fills `status[key]` ({ targets: [...] }: per target its text, file, whether it's
+// done, the lines it would comment out, ...); `apply(key)` backs each
+// changed file up beside it and edits it, then checks again, leaving the
+// daemon's results in `results[key]`. Nothing is polled: the hookup panel
+// checks when it's shown. Only an Apply click edits a user's config (and an
+// Apply that changed something runs the integration again).
+//
+// Three keys aren't theme integrations: "compositorInclude" (the lines that
+// load axiom's module, and the autostart line), "compositorAutostart" (only the
+// latter), in the user's compositor config, for the onboarding's Compositor
+// page and the settings' Compositor card, and "compositorModule" (only the
+// former), for CompositorConfigManager's notification that the module isn't
+// loaded.
+// Their targets come from CompositorConfigManager (the daemon's writer),
+// passed with the call. "screenSharing" is the line pointing the
+// compositor's screen-share portal at axiom's picker
+// (ScreenShareManager.hookupTargets), for the Screen sharing card.
 Singleton {
   id: root
 

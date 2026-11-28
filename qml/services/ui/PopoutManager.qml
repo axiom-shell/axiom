@@ -4,23 +4,21 @@ import QtQuick
 import qs.components.methods
 import qs.services.core
 
-/**
- * Every popout showing, where it is, and which gives way to which.
- *
- * Each popout host (bar popouts, edge popouts: OSDs, floating edge menus,
- * the attached launcher; their submenus; docks) holds a
- * `PopoutClaim`, which registers here once its content is placed and it
- * wants to show, with its footprint: the rects it covers in screen px,
- * fillets included (SurfaceOutline.footprint). One that claims closes only
- * what its footprint overlaps, by rank (PopoutGeometry.ranks, lowest
- * first: pinned, dock, osd, bar, menu, launcher): lower and equal ones go,
- * a higher one refuses it. Residents (docks, pinned or previewing menus)
- * give way instead of closing, and come back once nothing covers them.
- *
- * `entries` is the location report: one plain object per registered
- * popout, { id, kind, screen, edge, barId, parentId, pinned, resident,
- * phase ("open" | "yielded"), footprint }.
- */
+// Every popout showing, where it is, and which gives way to which.
+//
+// Each popout host (bar popouts, edge popouts: OSDs, floating edge menus,
+// the attached launcher; their submenus; docks) holds a
+// `PopoutClaim`, which registers here once its content is placed and it
+// wants to show, with its footprint: the rects it covers in screen px,
+// fillets included (SurfaceOutline.footprint). One that claims closes only
+// what its footprint overlaps, by rank (PopoutGeometry.ranks, lowest
+// first: pinned, dock, osd, bar, menu, launcher): lower and equal ones go,
+// a higher one refuses it. Residents (docks, pinned or previewing menus)
+// give way instead of closing, and come back once nothing covers them.
+//
+// `entries` is the location report: one plain object per registered
+// popout, { id, kind, screen, edge, barId, parentId, pinned, resident,
+// phase ("open" | "yielded"), footprint }.
 QtObject {
   id: root
 

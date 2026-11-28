@@ -3,12 +3,12 @@ import QtQuick
 
 import qs.components.methods
 
-/* An editor's undo and redo. Not a singleton: each editor that can undo
- * owns one (GridEditor, BarManager) and points `snapshot` / `restore` at
- * what its edits change. A snapshot is taken before each edit, newest
- * last, up to `limit`; undo puts the newest back and keeps the present
- * for redo. Edits to one field in a row (typing, a stepper) join one step:
- * record(fieldKey) with the same key as the step before adds nothing. */
+// An editor's undo and redo. Not a singleton: each editor that can undo
+// owns one (GridEditor, BarManager) and points `snapshot` / `restore` at
+// what its edits change. A snapshot is taken before each edit, newest
+// last, up to `limit`; undo puts the newest back and keeps the present
+// for redo. Edits to one field in a row (typing, a stepper) join one step:
+// record(fieldKey) with the same key as the step before adds nothing.
 QtObject {
   id: root
 

@@ -140,7 +140,7 @@ TestCase {
     verify(DriveInfo.driveLocked(d));
   }
 
-  function test_mountedIds() {
+  function test_mounted_ids() {
     const mounted = vol("m", {
       "mountPoints": ["/m"]
     });
@@ -173,7 +173,7 @@ TestCase {
     compare(DriveInfo.pick(drive([])), null, "nothing");
   }
 
-  function test_clickAction() {
+  function test_click_action() {
     compare(DriveInfo.clickAction("mounted"), "open");
     compare(DriveInfo.clickAction("locked"), "unlock");
     for (const kind of ["added", "unmounted", "ejected", "removed", "pulled", "busy", "ejectFailed", undefined])

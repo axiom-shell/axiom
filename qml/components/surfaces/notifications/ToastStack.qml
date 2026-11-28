@@ -101,7 +101,7 @@ Scope {
   readonly property var grow: ToastMotion.growth(NotificationsConfig.edge, NotificationsConfig.position)
   readonly property bool vertical: NotificationsConfig.edge === ScreenEdge.Left || NotificationsConfig.edge === ScreenEdge.Right
 
-  // ---- Toasts ----
+  // -- Toasts --
 
   function show(notification) {
     if (!ShellManager.showsOn(root.screen, NotificationsConfig.screen))
@@ -153,7 +153,7 @@ Scope {
     root._heights = Utils.withEntry(root._heights, key, undefined);
   }
 
-  // ---- Layout ----
+  // -- Layout --
 
   // Each staying toast's distance from the stack's start, newest first;
   // a leaving one keeps where it was
@@ -333,7 +333,7 @@ Scope {
   // when clicked
   readonly property bool replyable: root.toasts.some(t => t.notification?.hasInlineReply ?? false)
 
-  // ---- The detached window ----
+  // -- The detached window --
 
   // The free area: anchored to every side, inside what the bars, border
   // and other panels reserve (the whole screen over a fullscreen window).
@@ -505,7 +505,7 @@ Scope {
     }
   }
 
-  // ---- Attached: one box grown out of the edge ----
+  // -- Attached: one box grown out of the edge --
 
   EdgePopout {
     id: box

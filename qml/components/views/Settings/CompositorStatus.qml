@@ -133,7 +133,7 @@ ColumnLayout {
     tone: "muted"
   }
 
-  // --- A mode change waiting for Save ---
+  // -- A mode change waiting for Save --
 
   Notice {
     id: pendingBox
@@ -144,7 +144,7 @@ ColumnLayout {
     text: root.blocked ? (CompositorConfigManager.managedBlockedBy === "elsewhere" ? CompositorConfigManager.elsewhereReason : CompositorConfigManager.managedBlockedBy === "git" ? I18n.tr("{0} is inside the git repository at {1}, so axiom won't take it over. Use Included instead.", Paths.shortenHome(CompositorConfigManager.configDir), Paths.shortenHome(CompositorConfigManager.managedBlockedRepo)) : I18n.tr("{0} is a symlink or in a git repository, so axiom won't take it over. Use Included instead.", Paths.shortenHome(CompositorConfigManager.configDir))) : root.saveSteps.map(step => "•  " + step).join("\n")
   }
 
-  // --- The mode in effect ---
+  // -- The mode in effect --
 
   // Managed waits for the user's go-ahead on this compositor
   Notice {

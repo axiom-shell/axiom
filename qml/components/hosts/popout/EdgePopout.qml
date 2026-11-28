@@ -9,32 +9,30 @@ import qs.services.ui
 import qs.components.methods
 import qs.components.hosts.window
 
-/**
- * A popout that slides out of a screen edge and joins the screen border
- * (or a bar on that edge) with the same connector + fillets as bar
- * popouts — see AttachedSurface.qml.
- *
- * Open/close/queue state and hover-loss dismissal come from
- * PopoutWrapperBase, the same as bar popouts. Unlike bar popouts, every
- * instance owns its own state, so instantiate one per screen (Variants
- * over General.screensFor(mode)) and they open independently.
- *
- * Content is a Component, loaded only while open (unless keepLoaded). It
- * can optionally expose `autoDismiss` / `dismissDelay` / `hovered`
- * exactly like bar popout content; hovering the surface or the trigger strip already
- * keeps it open without the content doing anything.
- *
- * Usage:
- *   Variants {
- *     model: General.screensFor(mode)
- *     delegate: EdgePopout {
- *       required property ShellScreen modelData
- *       screen: modelData
- *       edge: ScreenEdge.Right
- *       content: Component { MyPanel {} }
- *     }
- *   }
- */
+// A popout that slides out of a screen edge and joins the screen border
+// (or a bar on that edge) with the same connector + fillets as bar
+// popouts — see AttachedSurface.qml.
+//
+// Open/close/queue state and hover-loss dismissal come from
+// PopoutWrapperBase, the same as bar popouts. Unlike bar popouts, every
+// instance owns its own state, so instantiate one per screen (Variants
+// over General.screensFor(mode)) and they open independently.
+//
+// Content is a Component, loaded only while open (unless keepLoaded). It
+// can optionally expose `autoDismiss` / `dismissDelay` / `hovered`
+// exactly like bar popout content; hovering the surface or the trigger strip already
+// keeps it open without the content doing anything.
+//
+// Usage:
+//   Variants {
+//     model: General.screensFor(mode)
+//     delegate: EdgePopout {
+//       required property ShellScreen modelData
+//       screen: modelData
+//       edge: ScreenEdge.Right
+//       content: Component { MyPanel {} }
+//     }
+//   }
 PopoutWrapperBase {
   id: root
 
@@ -379,7 +377,7 @@ PopoutWrapperBase {
       Qt.callLater(() => root.settled = root._shown);
   }
 
-  // ---- Its submenu (SubPopout, through its SubmenuHost) ----
+  // -- Its submenu (SubPopout, through its SubmenuHost) --
   // Opened by a PopoutAnchor in its content (an edge menu's modules), on
   // the side of its box: away from a side edge, else towards the screen's
   // nearer half. On a top or bottom edge one with no room for its fillet
@@ -405,7 +403,7 @@ PopoutWrapperBase {
   // submenu (across a top or bottom one, away from its edge)
   readonly property real _stretchAlongTop: root.vertical ? slot.shownStretchTop : 0
   readonly property real _stretchAlongBottom: root.vertical ? slot.shownStretchBottom : 0
-  // ---- end submenu ----
+  // -- end submenu --
   keepAlive: surface.hovered || trigger.containsMouse || (focusGrab.active && wantsKeyboardFocus)
 
   EdgeTrigger {

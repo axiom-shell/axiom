@@ -3,13 +3,11 @@ import QtQuick
 
 import qs.services.core
 
-/*
- * The uninstall behind Settings › General's "Remove axiom from this system"
- * (docs/dev/backend/uninstall.md): the plan the daemon says an uninstall
- * would carry out (it changes nothing), and starting one. The daemon starts
- * it detached, since it quits this daemon and the shell first: the dialog
- * then ends with the shell. Nothing polls.
- */
+// The uninstall behind Settings › General's "Remove axiom from this system"
+// (docs/dev/backend/uninstall.md): the plan the daemon says an uninstall
+// would carry out (it changes nothing), and starting one. The daemon starts
+// it detached, since it quits this daemon and the shell first: the dialog
+// then ends with the shell. Nothing polls.
 QtObject {
   id: root
 

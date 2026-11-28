@@ -13,7 +13,7 @@ TestCase {
     compare(DndHold.on(true, true, true), true, "manual on and overridden");
   }
 
-  function test_byHand() {
+  function test_by_hand() {
     compare(DndHold.byHand(false, true, false), {
       "manual": false,
       "override": true

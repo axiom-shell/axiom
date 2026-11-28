@@ -283,7 +283,7 @@ TestCase {
     compare(lines.map(entry => entry.line), [0, 0, 1]);
   }
 
-  function test_blockHeights() {
+  function test_block_heights() {
     const rows = [field_in("a"), field_in("b", {
         "schema": {
           "x-beside": true

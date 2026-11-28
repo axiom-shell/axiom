@@ -8,11 +8,11 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 
-/* The running compositor, for the rest of axiom: its windows, outputs and
- * workspaces in shapes that don't depend on it, what it supports, and every
- * workspace switch and window focus (docs/dev/compositor/README.md). The
- * compositor's own work is its backend's (HyprlandManager, SwayManager); with none
- * (an unknown compositor) everything here is empty and does nothing. */
+// The running compositor, for the rest of axiom: its windows, outputs and
+// workspaces in shapes that don't depend on it, what it supports, and every
+// workspace switch and window focus (docs/dev/compositor/README.md). The
+// compositor's own work is its backend's (HyprlandManager, SwayManager); with none
+// (an unknown compositor) everything here is empty and does nothing.
 Singleton {
   id: root
 
@@ -118,7 +118,7 @@ Singleton {
     value: root.supports.blur === true && !Paths.greeter
   }
 
-  // --- State (contract.md › Shapes) ---
+  // -- State (contract.md › Shapes) --
 
   // Each list is a KeptList: the same array and objects while its content
   // is equal (as ScreenEdgeManager.bars), so a backend rebuilding one on a
@@ -233,7 +233,7 @@ Singleton {
     root.backend?.refresh();
   }
 
-  // --- Events ---
+  // -- Events --
 
   // A layer surface opened or closed
   signal layersChanged
@@ -267,7 +267,7 @@ Singleton {
     }
   }
 
-  // --- Windows ---
+  // -- Windows --
 
   // Focuses a window. One on another workspace goes through goToWorkspace,
   // to slide like any other switch.
@@ -377,7 +377,7 @@ Singleton {
     return windows.reduce((last, w) => last === null || (w.focusRank ?? Infinity) < (last.focusRank ?? Infinity) ? w : last, null);
   }
 
-  // --- Session, input, cursor ---
+  // -- Session, input, cursor --
 
   // Sets up a compositor running no config of axiom's (the greeter's) from
   // the bundle's monitor profiles and Input values (greeter.compositor):
@@ -460,7 +460,7 @@ Singleton {
     root.backend?.exitSession();
   }
 
-  // --- Outputs (the Monitors page) ---
+  // -- Outputs (the Monitors page) --
 
   // Calls back with every output in detail, disabled ones too ({ name,
   // description, width, height, refreshRate, x, y, scale, transform,
@@ -492,7 +492,7 @@ Singleton {
     });
   }
 
-  // --- Binds (the Keybinds page) ---
+  // -- Binds (the Keybinds page) --
 
   // Calls back with the compositor's binds in effect ({ modmask, key,
   // keycode, description, submap }, BindKeys), or null: the backend's own
@@ -514,7 +514,7 @@ Singleton {
       root.backend.captureKeys(on);
   }
 
-  // --- Workspaces (laid out by WorkspacesConfig) ---
+  // -- Workspaces (laid out by WorkspacesConfig) --
 
   // Goes to workspace `id`. mode: "go" (default), "move" (taking the
   // focused window along) or "moveSilent" (sending it there, staying put).

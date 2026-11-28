@@ -97,7 +97,7 @@ TestCase {
     compare(shared.calls.InputSources.xkb([xkbSource("x", " de "), xkbSource("e", "")]).layout, "de", "trimmed, an empty layout skipped");
   }
 
-  function test_typingLayout() {
+  function test_typing_layout() {
     compare(InputSources.typingLayout(test.mixed, test.mixed[1]), {
       "layout": "us",
       "variant": ""
@@ -192,7 +192,7 @@ TestCase {
 
   // The lock screen's and the greeter's layouts: the compositor's, an
   // engine's own typing layout among them while the method is on
-  function test_compositorLayouts() {
+  function test_compositor_layouts() {
     compare(InputSources.compositorLayouts(test.mixed, true).map(s => s.id), ["us", "neo", "xkb:2:jp"], "pinyin's jp is the compositor's third layout");
     const jp = InputSources.compositorLayouts(test.mixed, true)[2];
     compare([jp.kind, jp.layout, jp.variant], ["xkb", "jp", ""], "a layout, named by its own code");
@@ -212,7 +212,7 @@ TestCase {
     compare(InputSources.step([], "us", 1), "");
   }
 
-  function test_groupMatches() {
+  function test_group_matches() {
     const sources = [xkbSource("us", "us"), imeSource("mozc", "mozc")];
     verify(InputSources.groupMatches("fcitx5", sources, null, {
       "defaultLayout": "us",
@@ -265,7 +265,7 @@ TestCase {
   }
 
   // Only the engines the framework has installed are pushed, and compared
-  function test_installedEngines() {
+  function test_installed_engines() {
     const available = [
       {
         "name": "keyboard-us"
@@ -340,7 +340,7 @@ TestCase {
     }), "ibus: the same");
   }
 
-  function test_fromGroup() {
+  function test_from_group() {
     compare(InputSources.fromGroup("fcitx5", {
       "defaultLayout": "us",
       "group": [
@@ -381,7 +381,7 @@ TestCase {
     compare(InputSources.fromGroup("fcitx5", null), []);
   }
 
-  function test_searchLayouts() {
+  function test_search_layouts() {
     compare(InputSources.searchLayouts(test.registry, "german").map(r => r.layout + ":" + r.variant), ["de:", "de:neo"], "a layout before its variants");
     compare(InputSources.searchLayouts(test.registry, "NEO"), [
       {
@@ -396,7 +396,7 @@ TestCase {
     compare(InputSources.searchLayouts(null, "de"), [], "none without a registry");
   }
 
-  function test_freeId() {
+  function test_free_id() {
     compare(InputSources.freeId(test.mixed, "de"), "de");
     compare(InputSources.freeId(test.mixed, "us"), "us2", "numbered when taken");
     compare(InputSources.freeId([xkbSource("us", "us"), xkbSource("us2", "us")], "us"), "us3");
@@ -406,7 +406,7 @@ TestCase {
   }
 
   // Through Shared: render.InputMethodEnv / InputMethodCommand replay these
-  function test_methodSetup() {
+  function test_method_setup() {
     compare(shared.calls.InputSources.methodSetup("fcitx5", false), {
       "env": [
         {

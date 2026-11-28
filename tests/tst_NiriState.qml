@@ -145,7 +145,7 @@ TestCase {
   }
 
   // A strip wider than its output fills the view wherever niri scrolled it
-  function test_wideStripCoversTheOutput() {
+  function test_wide_strip_covers_the_output() {
     let state = loaded();
     const win = Object.assign({}, state.windows["2"]);
     win.layout = Object.assign({}, win.layout, {
@@ -163,7 +163,7 @@ TestCase {
     compare(cover.w, outputs[0].width);
   }
 
-  function test_fullscreenIsATileAsBigAsItsOutput() {
+  function test_fullscreen_is_a_tile_as_big_as_its_output() {
     let state = loaded();
     const win = Object.assign({}, state.windows["2"]);
     win.layout = Object.assign({}, win.layout, {
@@ -179,7 +179,7 @@ TestCase {
   }
 
   // The event stream captured while focusing, opening and closing windows
-  function test_eventStream() {
+  function test_event_stream() {
     let state = NiriState.empty();
     const lines = files.text("tests/fixtures/niri/events.jsonl").split("\n").filter(line => line !== "");
     for (const [i, line] of lines.entries()) {
@@ -213,7 +213,7 @@ TestCase {
     compare(byId(1).urgent, false);
   }
 
-  function test_reduceFocusAndWorkspaces() {
+  function test_reduce_focus_and_workspaces() {
     let state = loaded();
     state = NiriState.reduce(state, {
       "WorkspaceActivated": {
@@ -254,7 +254,7 @@ TestCase {
     }), state);
   }
 
-  function test_outputDetails() {
+  function test_output_details() {
     compare(NiriState.outputDetails(fixture("outputs")), [
       {
         "name": "winit",

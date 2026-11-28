@@ -10,7 +10,7 @@ import QtQuick
 QtObject {
   id: root
 
-  // --- Modes ---
+  // -- Modes --
 
   // "3440x1440@240.00Hz", "3440x1440@240" or "3440x1440" as
   // { width, height, rate } (rate 0 when absent), or null
@@ -78,7 +78,7 @@ QtObject {
     return list.sort((a, b) => b.width * b.height - a.width * a.height || b.width - a.width);
   }
 
-  // --- Scale and rotation ---
+  // -- Scale and rotation --
 
   // Scales that give a whole logical size (Hyprland rounds others to the
   // nearest that does, in 1/120 steps), from 0.5 to 3, plus `keep`
@@ -114,7 +114,7 @@ QtObject {
     };
   }
 
-  // --- The layout ---
+  // -- The layout --
 
   // A rect's snapped position against `others`: each axis moves to the
   // nearest line within `threshold` (edge to edge, or aligned start, end or
@@ -280,7 +280,7 @@ QtObject {
     return rects.map((_, i) => i).filter(i => !reached.includes(i));
   }
 
-  // --- Outputs and profiles ---
+  // -- Outputs and profiles --
 
   // The rule `output` for a monitor: its description, which follows it to
   // another port, unless another connected monitor has the same one

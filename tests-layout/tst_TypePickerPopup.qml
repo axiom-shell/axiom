@@ -10,7 +10,7 @@ import qs.components.reusable
 TestCase {
   id: root
 
-  name: "TypePicker"
+  name: "TypePickerPopup"
   when: windowShown
   visible: true
   width: 500
@@ -56,7 +56,7 @@ TestCase {
     }
   }
 
-  function test_listSpansTheRow() {
+  function test_list_spans_the_row() {
     harness.configure({});
     const row = createTemporaryObject(rowComp, root);
     verify(row);

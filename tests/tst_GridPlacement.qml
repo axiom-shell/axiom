@@ -62,7 +62,7 @@ TestCase {
     });
   }
 
-  function test_revealOrder() {
+  function test_reveal_order() {
     compare(GridPlacement.revealOrder([]), []);
     // Diagonals first (x + y), the higher of a diagonal first, then config order
     compare(GridPlacement.revealOrder([at(4, 0, 4, 4), at(0, 0, 4, 4), at(0, 4, 4, 4), at(4, 4, 4, 4), at(2, 2, 2, 2)]), [1, 0, 3, 4, 2]);
@@ -74,7 +74,7 @@ TestCase {
     ]), [1, 0, 2]);
   }
 
-  function test_canPlace() {
+  function test_can_place() {
     const modules = [at(0, 0, 2, 2), at(2, 0, 2, 1)];
     verify(GridPlacement.canPlace(modules, {
       "x": 2,
@@ -114,7 +114,7 @@ TestCase {
     }, -1), "no size");
   }
 
-  function test_firstFree() {
+  function test_first_free() {
     compare(GridPlacement.firstFree([], 2, 2), {
       "x": 0,
       "y": 0,
@@ -165,7 +165,7 @@ TestCase {
     }, "but nothing stays negative");
   }
 
-  function test_clearOf() {
+  function test_clear_of() {
     verify(GridPlacement.clearOf([p(0, 0, 2, 2)], p(2, 0, 1, 1), -1, null));
     verify(!GridPlacement.clearOf([p(0, 0, 2, 2)], p(1, 1, 1, 1), -1, null));
     verify(GridPlacement.clearOf([p(0, 0, 2, 2)], p(1, 1, 1, 1), 0, null), "its own place ignored");
@@ -255,7 +255,7 @@ TestCase {
     });
   }
 
-  function test_pushGroup() {
+  function test_push_group() {
     const down = {
       "x": 0,
       "y": 1
@@ -271,7 +271,7 @@ TestCase {
     compare(GridPlacement.cover([]), null);
   }
 
-  function test_fitPlace() {
+  function test_fit_place() {
     // A 2 × 2 hole at (2, 0) between two columns
     const places = [p(0, 0, 2, 4), p(4, 0, 2, 4)];
     const area = {
@@ -306,7 +306,7 @@ TestCase {
     }), p(0, 0, 4, 1));
   }
 
-  function test_resizeFrom() {
+  function test_resize_from() {
     const place = p(2, 2, 2, 2);
     compare(GridPlacement.resizeFrom(place, "se", 1, 2), p(2, 2, 3, 4));
     compare(GridPlacement.resizeFrom(place, "e", 1, 5), p(2, 2, 3, 2), "an edge moves one side");
@@ -320,7 +320,7 @@ TestCase {
     compare(GridPlacement.resizeFrom(place, "se", 50, 0), p(2, 2, 32, 2), "at most maxSpan");
   }
 
-  function test_firstFreeIn() {
+  function test_first_free_in() {
     compare(GridPlacement.firstFreeIn([], 2, 2, 4, 4), at(0, 0, 2, 2).place);
     compare(GridPlacement.firstFreeIn([at(0, 0, 2, 2)], 2, 2, 4, 4), at(2, 0, 2, 2).place);
     compare(GridPlacement.firstFreeIn([at(0, 0, 4, 2)], 2, 2, 4, 4), at(0, 2, 2, 2).place);
@@ -328,7 +328,7 @@ TestCase {
     compare(GridPlacement.firstFreeIn([], 5, 1, 4, 4), null);
   }
 
-  function test_scalePlace() {
+  function test_scale_place() {
     compare(GridPlacement.scalePlace(at(1, 2, 3, 4).place, true), at(2, 4, 6, 8).place);
     compare(GridPlacement.scalePlace(at(0, 0, 20, 1).place, true), at(0, 0, 32, 2).place);
     compare(GridPlacement.scalePlace(at(2, 4, 6, 8).place, false), at(1, 2, 3, 4).place);
@@ -346,7 +346,7 @@ TestCase {
     verify(!GridPlacement.within(null, 4, 4));
   }
 
-  function test_latticeUnit() {
+  function test_lattice_unit() {
     // 16 × 9 on 2560 × 1440 with 20 px margins: height decides, the gaps
     // `ratio` px per px of card
     const ratio = GridPlacement.cardSpacing / 500;
@@ -378,7 +378,7 @@ TestCase {
 
   // The most of a length that fits a room: 1 when it fits, floored to 3
   // decimals, at least a tenth
-  function test_fitLength() {
+  function test_fit_length() {
     compare(GridPlacement.fitLength(500, 800), 1, "fits");
     compare(GridPlacement.fitLength(500, 500), 1, "exactly");
     compare(GridPlacement.fitLength(1000, 500), 0.5);
@@ -389,7 +389,7 @@ TestCase {
 
   // The factor its cards and content shrink by until its grid fits the room,
   // cards and gaps together; 1 when it fits or has no units
-  function test_fitFactor() {
+  function test_fit_factor() {
     // One card deep, on a 1080 px screen at 150 % card size: 675 px cards
     compare(GridPlacement.fitFactor(4, 675, 1, false, 1000), 1);
     compare(GridPlacement.fitFactor(0, 675, 2, false, 1000), 1);
@@ -409,14 +409,14 @@ TestCase {
 
   // Two units of a double grid and the gap between them are one unit, so
   // any span doubled is as long (within rounding)
-  function test_fineUnit() {
+  function test_fine_unit() {
     [280, 360, 431].forEach(unit => {
       const fine = GridPlacement.fineUnit(unit);
       [1, 2, 3, 4, 8, 16].forEach(n => verify(Math.abs(GridPlacement.span(n * 2, fine) - GridPlacement.span(n, unit)) <= n, `${n} units at ${unit}`));
     });
   }
 
-  function test_screenGrid() {
+  function test_screen_grid() {
     compare(GridPlacement.screenGrid({
       "columns": 16,
       "rows": 9
@@ -464,7 +464,7 @@ TestCase {
     return GridPlacement.menuLattice(1000, 500, 10, 10, shift);
   }
 
-  function test_menuLattice() {
+  function test_menu_lattice() {
     compare(GridPlacement.stepOf(500), 130);
     const l = lattice(0);
     compare([l.origin, l.step, l.cols, l.first, l.last, l.startPad], [55, 130, 7, 0, 6, 10]);
@@ -474,7 +474,7 @@ TestCase {
     compare(GridPlacement.menuLattice(910, 500, 10, 10, 0).cols, 7, "a room exactly 7 cells long holds 7");
   }
 
-  function test_alongStart() {
+  function test_along_start() {
     const l = lattice(0);
     compare(GridPlacement.alongStart(l, 0, 2), 315, "centred: cell 2 of 7");
     compare(GridPlacement.alongStart(l, 0, 3), 315, "one longer: the same cells, not half a cell over");
@@ -488,7 +488,7 @@ TestCase {
     compare(GridPlacement.alongStart(l, 0, 8), 10, "longer than the lattice: from its start");
   }
 
-  function test_offsetRange() {
+  function test_offset_range() {
     const l = lattice(0);
     function range(units) {
       const r = GridPlacement.offsetRange(l, units);
@@ -502,7 +502,7 @@ TestCase {
       compare(GridPlacement.menuCell(l, GridPlacement.offsetFor(l, cell, 2), 2), cell, `round trip at cell ${cell}`);
   }
 
-  function test_screenBox() {
+  function test_screen_box() {
     // As [x, y, w, h] in px (a step is 130 px), as compare() doesn't
     // compare objects by value
     function box(edge, along, across) {
@@ -527,7 +527,7 @@ TestCase {
     return [r.x, r.y, r.width, r.height].map(v => Math.round(v * 100) / 100);
   }
 
-  function test_baseCard_and_zoomOf() {
+  function test_base_card_and_zoom_of() {
     // Two cards and a gap fill the short side less 80 px each side
     compare(GridPlacement.baseCard(1920, 1080), 450, "1080p");
     compare(GridPlacement.baseCard(1080, 1920), 450, "the same monitor turned");
@@ -555,7 +555,7 @@ TestCase {
 
   // A grid drawn at `zoom`, its cards and gapOf's gaps, is the grid at 1
   // scaled: every place's rect
-  function test_gapOf() {
+  function test_gap_of() {
     compare(GridPlacement.gapOf(1), GridPlacement.cardSpacing, "the layout's own");
     compare(GridPlacement.gapOf(0.5), GridPlacement.cardSpacing / 2);
     const bounds = {
@@ -574,7 +574,7 @@ TestCase {
     ["x", "y", "width", "height"].forEach(key => fuzzyCompare(b[key], a[key] * zoom, 1, key));
   }
 
-  function test_overlayLayout() {
+  function test_overlay_layout() {
     // cardSpacing 20: two cards high is two cards and a gap
     const ultrawide = GridPlacement.overlayLayout(1199, 630, 1);
     compare([ultrawide.drawn, ultrawide.unit, ultrawide.zoom], [589, 589, 1], "1440p ultrawide with a bar: two cards fill the height, never a pixel over");
@@ -604,7 +604,7 @@ TestCase {
     compare(GridPlacement.overlayLayout(1, 1, 1).drawn, 1, "never nothing");
   }
 
-  function test_screenLattice() {
+  function test_screen_lattice() {
     // card 425: unit (425 - 60) / 4 = 91.25, step 111.25
     // 17 × 9 fit: each count rounded down to even, so the centre falls
     // between units
@@ -631,12 +631,12 @@ TestCase {
     }, "never none");
   }
 
-  function test_evenCount() {
+  function test_even_count() {
     compare([1, 2, 3, 9, 10].map(count => GridPlacement.evenCount(count, false)), [1, 2, 2, 8, 10], "down");
     compare([1, 2, 3, 9, 10].map(count => GridPlacement.evenCount(count, true)), [1, 2, 4, 10, 10], "up");
   }
 
-  function test_anchorPlaces() {
+  function test_anchor_places() {
     const from = {
       "cols": 16,
       "rows": 9
@@ -698,7 +698,7 @@ TestCase {
     }), null, "too wide for the grid: null");
   }
 
-  function test_anchorPlaces_moves_touching_modules_as_one() {
+  function test_anchor_places_moves_touching_modules_as_one() {
     // A centred stack low on the screen: its parts touch, so it moves as
     // one and keeps its shape; alone, its bottom part would go to the end
     // and its top part stay centred, landing on each other
@@ -751,7 +751,7 @@ TestCase {
 
   // The default lock and login screens on an ultrawide grid: the clock
   // keeps its corner, the centred stack stays centred
-  function test_anchorPlaces_default_screens_on_ultrawide() {
+  function test_anchor_places_default_screens_on_ultrawide() {
     const from = {
       "cols": 16,
       "rows": 9
@@ -776,7 +776,7 @@ TestCase {
     compare(greeter[5].x + greeter[5].w, 21, "Power at the right");
   }
 
-  function test_screenArrangement() {
+  function test_screen_arrangement() {
     const from = {
       "cols": 16,
       "rows": 9
@@ -840,7 +840,7 @@ TestCase {
     compare([keptFine.cols, keptFine.rows], [36, 20]);
   }
 
-  function test_samePlace() {
+  function test_same_place() {
     verify(GridPlacement.samePlace(at(1, 2, 3, 4).place, at(1, 2, 3, 4).place), "equal fields, other objects");
     verify(!GridPlacement.samePlace(at(1, 2, 3, 4).place, at(1, 3, 3, 4).place));
     verify(!GridPlacement.samePlace(at(1, 2, 3, 4).place, at(1, 2, 3, 5).place));
@@ -848,7 +848,7 @@ TestCase {
     verify(!GridPlacement.samePlace(null, at(0, 0, 1, 1).place));
   }
 
-  function test_fitScale() {
+  function test_fit_scale() {
     const bounds = {
       "cols": 8,
       "rows": 4
@@ -863,7 +863,7 @@ TestCase {
     }, 10, 10, 500), 1, "nothing to fit");
   }
 
-  function test_menuPlacement_and_onScreen() {
+  function test_menu_placement_and_on_screen() {
     const frame = {
       "startPad": 10,
       "endPad": 10,
@@ -913,7 +913,7 @@ TestCase {
     compare(r4(GridPlacement.menuOnScreen(integrated, strip, 500).modules[0].rect), [1660, 10, 240, 1060], "stretched end to end");
   }
 
-  function test_menuFillsEdge_and_modules() {
+  function test_menu_fills_edge_and_modules() {
     const menu = (placement, length, edge, modules) => ({
           "placement": placement,
           "length": length,
@@ -941,7 +941,7 @@ TestCase {
     compare(GridPlacement.menuModules(menu("strip", "content", "left", [])), [], "none");
   }
 
-  function test_canvasExtent() {
+  function test_canvas_extent() {
     const bounds = {
       "cols": 2,
       "rows": 6
@@ -1025,7 +1025,7 @@ TestCase {
     }), [0, -1, 3, 3], "the grab kept inside the module");
   }
 
-  function test_edgeBand_and_edgeBar() {
+  function test_edge_band_and_edge_bar() {
     const rect = {
       "x": 10,
       "y": 20,
@@ -1048,7 +1048,7 @@ TestCase {
     compare(r4(GridPlacement.edgeBar(rect, "bottom", span, 4)), [30, 68, 20, 4]);
   }
 
-  function test_trackSizes() {
+  function test_track_sizes() {
     const natural = GridPlacement.trackSizes({
       "cols": 8,
       "rows": 4
@@ -1104,7 +1104,7 @@ TestCase {
     }, 500).width, 0);
   }
 
-  function test_rectPx() {
+  function test_rect_px() {
     const sizes = GridPlacement.trackSizes({
       "cols": 8,
       "rows": 8
@@ -1122,7 +1122,7 @@ TestCase {
     });
   }
 
-  function test_rectPxWholePixels() {
+  function test_rect_px_whole_pixels() {
     // Fractional units (a stretched menu): every edge on a whole pixel, the
     // right one where the next slot's left would be less the gap
     const sizes = {
@@ -1155,7 +1155,7 @@ TestCase {
     compare(grid.width, Math.round(grid.width), "the grid's size is whole px");
   }
 
-  function test_rectPxDrawnZoom() {
+  function test_rect_px_drawn_zoom() {
     // A page drawn scaled as a whole: every edge on a whole drawn px, so
     // each card's border falls on the screen's pixels alike
     const sizes = GridPlacement.trackSizes({
@@ -1172,7 +1172,7 @@ TestCase {
     compare(GridPlacement.rectPx(at(4, 2, 4, 2).place, sizes, 1), GridPlacement.rectPx(at(4, 2, 4, 2).place, sizes), "at 1, the layout's own");
   }
 
-  function test_guideFrame() {
+  function test_guide_frame() {
     compare(GridPlacement.guideFrame({
       "cols": 12,
       "rows": 8
@@ -1210,13 +1210,13 @@ TestCase {
     compare(GridPlacement.alignments(null, places, [], null), []);
   }
 
-  function test_centreGuides() {
+  function test_centre_guides() {
     const guides = GridPlacement.centreGuides(p(0, 0, 7, 4));
     compare(guides.map(g => [g.axis, g.at, g.from, g.to]), [["x", 3.5, 0, 4], ["y", 2, 0, 7]]);
     compare(GridPlacement.centreGuides(p(0, 0, 0, 0)), []);
   }
 
-  function test_centredIn() {
+  function test_centred_in() {
     const frame = p(0, 0, 8, 6);
     compare(GridPlacement.centredIn(p(1, 1, 2, 2), frame, "x"), 3);
     compare(GridPlacement.centredIn(p(1, 1, 2, 2), frame, "y"), 2);
@@ -1236,7 +1236,7 @@ TestCase {
       "originY": 50
     })
 
-  function test_canvasGuide() {
+  function test_canvas_guide() {
     const line = (axis, kind, at) => GridPlacement.canvasGuide(guideFit, {
         "axis": axis,
         "kind": kind,
@@ -1260,7 +1260,7 @@ TestCase {
     }, "a horizontal one, midway in the gap after unit 0");
   }
 
-  function test_canvasMargins() {
+  function test_canvas_margins() {
     const margins = GridPlacement.canvasMargins(guideFit, p(2, 0, 2, 1), p(0, 0, 6, 3));
     compare(margins.map(m => [m.side, m.units, m.even]), [["left", 2, true], ["right", 2, true], ["bottom", 2, false]], "no room above isn't shown");
     const left = margins[0];
@@ -1271,7 +1271,7 @@ TestCase {
     compare(onScreen.map(m => [m.side, m.units, m.exact, m.even]), [["left", 14, false, true], ["right", 14, false, true]], "a screen side between units: rounded, not exact, and even when centred");
   }
 
-  function test_moveTo() {
+  function test_move_to() {
     const arr = ["a", "b", "c"];
     compare(GridPlacement.moveTo(arr, 0, 2), 1);
     compare(arr, ["b", "a", "c"]);

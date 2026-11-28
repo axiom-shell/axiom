@@ -5,17 +5,15 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 
-/*
- * The Material Symbols the bundled icon font draws (Appearance.iconFamily),
- * for icon pickers (SchemaField's icon field). The catalog is
- * config/json/material-symbols.json (built with the font by
- * scripts/generate_icons.py): [name, "search words"], most popular first.
- * `search(query, limit)` ranks names (Search.rankIcons), reading the
- * catalog then if it's not read yet (a picker opened or typed in).
- * `isKnown(name)` says whether the font has it: until the catalog is read,
- * every name is, and asking schedules the read after the frame, so a page
- * of icon fields never waits on it (a binding asking runs again once read).
- */
+// The Material Symbols the bundled icon font draws (Appearance.iconFamily),
+// for icon pickers (SchemaField's icon field). The catalog is
+// config/json/material-symbols.json (built with the font by
+// scripts/gen_icons.py): [name, "search words"], most popular first.
+// `search(query, limit)` ranks names (Search.rankIcons), reading the
+// catalog then if it's not read yet (a picker opened or typed in).
+// `isKnown(name)` says whether the font has it: until the catalog is read,
+// every name is, and asking schedules the read after the frame, so a page
+// of icon fields never waits on it (a binding asking runs again once read).
 QtObject {
   id: root
 
@@ -35,7 +33,7 @@ QtObject {
     return root._entries.length === 0 || root._names[String(name ?? "").trim()] === true;
   }
 
-  // --- Private ---
+  // -- Private --
 
   property bool _loaded: false
   property var _entries: []
@@ -55,7 +53,7 @@ QtObject {
       console.warn("[IconManager] Could not parse material-symbols.json:", e);
     }
     if (entries.length === 0)
-      console.warn("[IconManager] No icon catalog: run scripts/generate_icons.py");
+      console.warn("[IconManager] No icon catalog: run scripts/gen_icons.py");
     root._entries = entries;
     const names = Object.create(null);
     entries.forEach(entry => names[entry[0]] = true);

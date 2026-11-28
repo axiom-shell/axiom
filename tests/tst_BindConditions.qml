@@ -57,7 +57,7 @@ TestCase {
     return shared.calls.BindConditions.unmet(bind, facts);
   }
 
-  function test_noConditionAlwaysHolds() {
+  function test_no_condition_always_holds() {
     verify(_holds({
       "action": "launcher"
     }, test.tiling));
@@ -86,7 +86,7 @@ TestCase {
 
   // A raw command's own compositor is BindActions.appliesUnder's, so
   // unmet doesn't turn it down for another compositor
-  function test_rawCompositorNotHere() {
+  function test_raw_compositor_not_here() {
     verify(_holds({
       "action": "raw",
       "compositor": "sway"

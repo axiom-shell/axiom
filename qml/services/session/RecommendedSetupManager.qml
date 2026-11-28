@@ -11,34 +11,32 @@ import qs.services.compositor
 import qs.services.apps
 import qs.services.ui
 
-/*
- * The Recommended setup of managed mode: one list of what axiom can run for
- * the user (managed mode, its lock screen, Idle, Polkit, the screen-sharing
- * picker, App colors for installed apps, the greeter), ticked by default
- * and applied in one go. The entries come from the schema's
- * `x-recommended` annotations and the rows (what's available, done, ticked)
- * from methods/RecommendedSetup; this keeps the facts they need, the user's
- * ticks and the run, which lives here and not in the list so it outlives the
- * page or card showing it (the greeter's password prompt and the hookups'
- * callbacks can come back after it's gone) and carries across onboarder
- * pages.
- *
- * An Apply runs RecommendedSetup.steps one at a time: the later rows (the
- * onboarder's compositor mode, applied on Finish), one commit of every
- * setting (a takeover save: an explicit user action, so nothing else may
- * commit these paths this way), the screen-sharing hookup and portal step,
- * the app hookups, and the greeter install last (its root prompt). A failed
- * commit fails every row in it and stops the run; a hookup or portal failure
- * marks only its own row.
- *
- * `offered` (the Compositor card shows the list once after a save into
- * managed mode) is kept across reloads. IPC `recommendedSetup`: rows, check,
- * apply. Created from shell.qml's `_services`.
- */
+// The Recommended setup of managed mode: one list of what axiom can run for
+// the user (managed mode, its lock screen, Idle, Polkit, the screen-sharing
+// picker, App colors for installed apps, the greeter), ticked by default
+// and applied in one go. The entries come from the schema's
+// `x-recommended` annotations and the rows (what's available, done, ticked)
+// from methods/RecommendedSetup; this keeps the facts they need, the user's
+// ticks and the run, which lives here and not in the list so it outlives the
+// page or card showing it (the greeter's password prompt and the hookups'
+// callbacks can come back after it's gone) and carries across onboarder
+// pages.
+//
+// An Apply runs RecommendedSetup.steps one at a time: the later rows (the
+// onboarder's compositor mode, applied on Finish), one commit of every
+// setting (a takeover save: an explicit user action, so nothing else may
+// commit these paths this way), the screen-sharing hookup and portal step,
+// the app hookups, and the greeter install last (its root prompt). A failed
+// commit fails every row in it and stops the run; a hookup or portal failure
+// marks only its own row.
+//
+// `offered` (the Compositor card shows the list once after a save into
+// managed mode) is kept across reloads. IPC `recommendedSetup`: rows, check,
+// apply. Created from shell.qml's `_services`.
 Singleton {
   id: root
 
-  // --- What the list has ---
+  // -- What the list has --
 
   readonly property var entries: RecommendedSetup.entries(ConfigManager.configSchema)
   // The entries' ids, which never change: a Repeater's model (the rows
@@ -120,7 +118,7 @@ Singleton {
     return result;
   }
 
-  // --- The host's hooks and the user's ticks ---
+  // -- The host's hooks and the user's ticks --
 
   // Called by a host as it shows (the list): forgets ticks and the last
   // run unless one is running, keeps the host's `later` paths (rows
@@ -166,7 +164,7 @@ Singleton {
     _persist.offered = false;
   }
 
-  // --- The run ---
+  // -- The run --
 
   // `options` ({ later, choose }, optional) are the caller's own, as
   // begin's: another host's begin since can't make this Apply commit or

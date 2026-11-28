@@ -6,23 +6,21 @@ import qs.config
 import qs.services.core
 import qs.services.system
 
-/*
- * The launcher's file search ("~", and a few files in the main search):
- * the axiom daemon keeps the index of Launcher.providers.files' folders
- * (backend/internal/fileindex, crawled at idle priority, kept current by
- * inotify) and reads those settings itself. This asks it and nothing
- * else: no polling, one call per search, thumbnails only for rows shown.
- *
- * An item is { path, name, dir, mime, icons, size, mtime (ms) }; `dir`
- * is a folder or a link to one. `state` is the index's
- * { phase: off | waiting | loading | crawling | ready, entries, watched,
- * unwatched, unreadable, truncated, unreachable, error }, pushed as it
- * changes (unreachable: network roots whose server doesn't answer).
- *
- * Searches, listings and the recent files share one sequence: an answer
- * to anything older than the newest asked is dropped, and the daemon
- * stops an older search early (the ids rise per connection).
- */
+// The launcher's file search ("~", and a few files in the main search):
+// the axiom daemon keeps the index of Launcher.providers.files' folders
+// (backend/internal/fileindex, crawled at idle priority, kept current by
+// inotify) and reads those settings itself. This asks it and nothing
+// else: no polling, one call per search, thumbnails only for rows shown.
+//
+// An item is { path, name, dir, mime, icons, size, mtime (ms) }; `dir`
+// is a folder or a link to one. `state` is the index's
+// { phase: off | waiting | loading | crawling | ready, entries, watched,
+// unwatched, unreadable, truncated, unreachable, error }, pushed as it
+// changes (unreachable: network roots whose server doesn't answer).
+//
+// Searches, listings and the recent files share one sequence: an answer
+// to anything older than the newest asked is dropped, and the daemon
+// stops an older search early (the ids rise per connection).
 QtObject {
   id: root
 
@@ -37,7 +35,7 @@ QtObject {
       "error": ""
     })
 
-  // --- Searching ---
+  // -- Searching --
 
   // The three calls only read: one cut off by a lost connection (a
   // re-exec) is sent again, as the text it answers is still shown
@@ -113,7 +111,7 @@ QtObject {
     });
   }
 
-  // --- Acting on a file ---
+  // -- Acting on a file --
 
   // Opens it with its default app, and remembers it (its rank, the recent
   // files)
@@ -142,7 +140,7 @@ QtObject {
     ClipboardManager.copyText(path);
   }
 
-  // --- Icons ---
+  // -- Icons --
 
   // An item's icon as a source the icon theme holds: its type's icons,
   // most specific first, then a folder's or a document's; "" with none
@@ -166,7 +164,7 @@ QtObject {
   // mime -> icon source; the theme doesn't change while the shell runs
   property var _icons: ({})
 
-  // --- Thumbnails ---
+  // -- Thumbnails --
 
   // key -> the thumbnail's url, "" when there's none. Replaced on each
   // answer, so bindings reading it follow
@@ -253,7 +251,7 @@ QtObject {
     root.thumbnails = next;
   }
 
-  // --- Private ---
+  // -- Private --
 
   // The newest call's id: answers to older ones are dropped
   property int _seq: 0

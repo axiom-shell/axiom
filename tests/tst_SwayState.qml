@@ -25,7 +25,7 @@ TestCase {
     compare(SwayState.quote("it's"), "\"it's\"");
   }
 
-  function test_treeListsTheWindows() {
+  function test_tree_lists_the_windows() {
     const info = SwayState.tree(fixture("get_tree"));
     compare(info.windows.map(w => w.title), ["foot", "second", "floater", "tab1", "tab2"]);
     compare(info.focusedId, "11");
@@ -36,7 +36,7 @@ TestCase {
     });
   }
 
-  function test_layoutsAreTheTiledWindowsParents() {
+  function test_layouts_are_the_tiled_windows_parents() {
     compare(SwayState.tree(fixture("get_tree")).layouts, {
       "5": "splith",
       "6": "splith",
@@ -45,7 +45,7 @@ TestCase {
     });
   }
 
-  function test_dropSplitsOnlyAcrossTheParent() {
+  function test_drop_splits_only_across_the_parent() {
     const rows = [["splith", "left", ""], ["splith", "right", ""], ["splith", "top", "v"], ["splitv", "bottom", ""], ["splitv", "left", "h"], ["tabbed", "right", "h"], ["stacked", "top", "v"], [undefined, "left", "h"]];
     for (const [layout, side, split] of rows)
       compare(SwayState.dropSplit(layout, side), split, `${layout} ${side}`);
@@ -74,14 +74,14 @@ TestCase {
     });
   }
 
-  function test_tabsBehindTheFrontOneAreHidden() {
+  function test_tabs_behind_the_front_one_are_hidden() {
     const windows = SwayState.tree(fixture("get_tree")).windows;
     compare(windows.find(w => w.title === "tab1").hidden, false);
     compare(windows.find(w => w.title === "tab2").hidden, true);
     compare(windows.find(w => w.title === "tab2").workspaceName, "3:web");
   }
 
-  function test_aFocusedFloatingWindowHidesNoTab() {
+  function test_a_focused_floating_window_hides_no_tab() {
     const leaf = (id, title) => ({
           "id": id,
           "pid": id,
@@ -116,7 +116,7 @@ TestCase {
     compare(windows.map(w => [w.title, w.hidden]), [["back", true], ["front", false], ["floating", false]]);
   }
 
-  function test_xwaylandWindowsUseTheirClass() {
+  function test_xwayland_windows_use_their_class() {
     const win = SwayState.window({
       "id": 7,
       "app_id": null,
@@ -139,7 +139,7 @@ TestCase {
     compare(win.fullscreen, true);
   }
 
-  function test_focusOrderFollowsSwaysStacks() {
+  function test_focus_order_follows_sways_stacks() {
     compare(SwayState.tree(fixture("get_tree")).order.slice(0, 5), ["11", "12", "5", "6", "9"]);
   }
 
@@ -159,7 +159,7 @@ TestCase {
     compare(SwayState.touch(null, "a"), ["a"]);
   }
 
-  function test_outputReservesWhatTheWorkspaceLeaves() {
+  function test_output_reserves_what_the_workspace_leaves() {
     const info = SwayState.tree(fixture("get_tree"));
     const out = SwayState.output({
       "name": "WL-1",
@@ -212,7 +212,7 @@ TestCase {
     });
   }
 
-  function test_outputReservesBeforeTheTreeHasItsWorkspace() {
+  function test_output_reserves_before_the_tree_has_its_workspace() {
     const info = SwayState.tree(fixture("get_tree"));
     const monitor = workspace => ({
           "name": "WL-1",
@@ -249,7 +249,7 @@ TestCase {
     });
   }
 
-  function test_outputOnANamedWorkspace() {
+  function test_output_on_a_named_workspace() {
     const out = SwayState.output({
       "name": "WL-1",
       "activeWorkspace": {
@@ -271,7 +271,7 @@ TestCase {
     }, null).activeWorkspaceId, -1, "unknown with no active workspace");
   }
 
-  function test_aWindowOnANamedWorkspace() {
+  function test_a_window_on_a_named_workspace() {
     const leaf = {
       "id": 7,
       "app_id": "mpv",
@@ -365,7 +365,7 @@ TestCase {
     compare(SwayState.keyboard([], "us"), null);
   }
 
-  function test_configInfo() {
+  function test_config_info() {
     const info = SwayState.configInfo("set $mod Mod4\n# gaps outer 99\ngaps inner 3\ngaps outer 6\ngaps vertical 2\nworkspace 2 gaps outer 40\ninput type:keyboard {\n    xkb_layout us,de\n}\ninput * xkb_layout fr\n");
     compare(info.gaps, {
       "top": 5,
@@ -402,7 +402,7 @@ TestCase {
     });
   }
 
-  function test_outputDetails() {
+  function test_output_details() {
     const details = SwayState.outputDetails(fixture("get_outputs"));
     compare(details.length, 2);
     const main = details[0];
@@ -421,7 +421,7 @@ TestCase {
     compare(off.vrr, false);
   }
 
-  function test_specialToggle() {
+  function test_special_toggle() {
     const info = SwayState.tree(fixture("get_tree"));
     const marks = SwayState.marks(fixture("get_tree"));
     compare(marks, {
@@ -441,7 +441,7 @@ TestCase {
   }
 
   // Into a group, out of any other
-  function test_specialMove() {
+  function test_special_move() {
     const marks = {
       "15": ["axiom-special-music-15", "keep"]
     };
@@ -450,7 +450,7 @@ TestCase {
   }
 
   // A window leaving its special group on a drop
-  function test_specialLeave() {
+  function test_special_leave() {
     const marks = {
       "7": ["axiom-special-term-7", "keep"]
     };
@@ -462,7 +462,7 @@ TestCase {
 
   // A group's name may hold "-": another group whose name it starts with
   // isn't it
-  function test_specialGroup() {
+  function test_special_group() {
     compare(SwayState.specialGroup("axiom-special-a-12"), "a");
     compare(SwayState.specialGroup("axiom-special-a-b-12"), "a-b");
     compare(SwayState.specialGroup("axiom-drop"), "");
@@ -525,7 +525,7 @@ TestCase {
     };
   }
 
-  function test_treeKeepsScratchWindowsApart() {
+  function test_tree_keeps_scratch_windows_apart() {
     const info = SwayState.tree(fixture("get_tree"));
     compare(info.scratch.map(w => w.title), ["scratchy"]);
     compare(info.scratch[0].hidden, true);
@@ -606,7 +606,7 @@ TestCase {
     };
   }
 
-  function test_specialsUnnamed() {
+  function test_specials_unnamed() {
     const tree = unnamedTree();
     const info = SwayState.tree(tree);
     const marks = SwayState.marks(tree);
@@ -625,7 +625,7 @@ TestCase {
     compare(SwayState.specials(bare, {}, []), [], "no scratchpad windows, no unnamed group");
   }
 
-  function test_specialToggleUnnamed() {
+  function test_special_toggle_unnamed() {
     const tree = unnamedTree();
     const info = SwayState.tree(tree);
     const marks = SwayState.marks(tree);
@@ -639,7 +639,7 @@ TestCase {
     compare(SwayState.specialToggle(info.windows, marks, "a", "WL-1", info.scratchIds).ids.sort(), ["21", "32"], "a group is unchanged");
   }
 
-  function test_windowCommands() {
+  function test_window_commands() {
     const windows = [
       {
         "id": "4",

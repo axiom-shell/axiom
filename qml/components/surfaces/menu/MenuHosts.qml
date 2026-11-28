@@ -71,7 +71,7 @@ Scope {
   readonly property bool _freeOccupied: root._freeHosts?.occupied ?? false
   property bool _freeKept: false
   on_FreeOccupiedChanged: Qt.callLater(() => root._freeKept = root._freeOccupied)
-  // ---- At a bar widget ----
+  // -- At a bar widget --
   // The widget a free menu is open at as its popout (PopoutAnchor), else
   // null; the one the edge host's box comes from, which follows it only
   // while that box is closed (the box in place never moves)
@@ -111,7 +111,7 @@ Scope {
   readonly property bool _edgeShows: root._openerRect === null || root._wantedAnchor === root._openerAnchor.value
   readonly property var hosts: FreeMenuPlace.hosts(root.menu?.placement ?? "", root.poppedOut, root.poppedOut ? root._handedOver : root._freeKept, root._atWidget, root._openerRect !== null, MenusConfig.canPopOut(root.menu))
 
-  // ---- The free host's screen ----
+  // -- The free host's screen --
   // Where a free menu opened (FreeMenuPlace.openedOn), "" while closed or
   // while the cursor is asked for; and the cursor in global px (`at:
   // cursor`), for the box's place

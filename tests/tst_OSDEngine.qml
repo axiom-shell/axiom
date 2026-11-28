@@ -299,7 +299,7 @@ TestCase {
     verify(!OSDEngine.byUser(toggle, "toggle", undefined), "never marked");
   }
 
-  function test_tileOf() {
+  function test_tile_of() {
     compare(OSDEngine.tileOf(toggle, "toggle", {
       "value": true
     }), {
@@ -313,7 +313,7 @@ TestCase {
     compare(OSDEngine.tileOf(audio, "audio", undefined).device, "", "no state yet");
   }
 
-  function test_cardOf() {
+  function test_card_of() {
     verify(OSDEngine.cardOf(toggle, {
       "key": "toggle"
     }, {}) === null, "none");
@@ -509,7 +509,7 @@ TestCase {
     own.destroy();
   }
 
-  function test_updateFields() {
+  function test_update_fields() {
     const own = Qt.createQmlObject(`
       import QtQuick
       import qs.components.surfaces.osd.engine
@@ -968,7 +968,7 @@ TestCase {
     compare(OSDEngine.arbitrate(row.shown, row.incoming, row.elapsed, defs), row.out);
   }
 
-  function test_shownAs() {
+  function test_shown_as() {
     const osd = {
       "cardsEnabled": true,
       "systems": [
@@ -1022,7 +1022,7 @@ TestCase {
     }, false), "", "the item's tiles off: no level");
   }
 
-  function test_cardRoute_data() {
+  function test_card_route_data() {
     const osd = (systems, extra) => Object.assign({
         "enabled": true,
         "cardsEnabled": true,
@@ -1100,11 +1100,11 @@ TestCase {
     ];
   }
 
-  function test_cardRoute(row) {
+  function test_card_route(row) {
     compare(OSDEngine.cardRoute(row.osds, "Drives", row.notify), row.out);
   }
 
-  function test_opensCard() {
+  function test_opens_card() {
     verify(!OSDEngine.opensCard(null, "Message"));
     verify(OSDEngine.opensCard({
       "enabled": true,
@@ -1122,7 +1122,7 @@ TestCase {
 
   // An event's key against an item whose `shows` pick what it shows (a
   // low battery only where Battery shows its battery icon)
-  function test_opensCard_key() {
+  function test_opens_card_key() {
     const osd = tiles => ({
           "enabled": true,
           "cardsEnabled": true,
@@ -1161,7 +1161,7 @@ TestCase {
 
   // keepThroughGap: an empty value is a gap, the next judged against the
   // one before it; settledKinds: a switch counts unsettled, a mute not
-  function test_keepThroughGap_settledKinds() {
+  function test_keep_through_gap_settled_kinds() {
     const def = _def(`
       type: "Device"
       onAdd: "none"
@@ -1226,7 +1226,7 @@ TestCase {
 
   // resetBy: a field changing with it makes it nobody's; ignoreWithin: a
   // change just after an outside event, unless the user's own came too
-  function test_resetBy_ignoreWithin() {
+  function test_reset_by_ignore_within() {
     const def = _def(`
       type: "Layout"
       onAdd: "none"
@@ -1257,7 +1257,7 @@ TestCase {
   }
 
   // takesIn: what a card out takes in without a card
-  function test_takesIn() {
+  function test_takes_in() {
     const key = _def(`type: "A"`);
     const system = _def(`type: "B"; takesIn: "system"`);
     const shown = at("A", "x", true);
@@ -1417,7 +1417,7 @@ TestCase {
     def.destroy();
   }
 
-  function test_actionOf() {
+  function test_action_of() {
     compare(toggle.actionOf("toggle", {}), {
       "id": "idleInhibit",
       "call": "toggle"
@@ -1427,7 +1427,7 @@ TestCase {
 
   // carriesEvents and alertKinds: a radio's value and its devices' events
   // on one key
-  function test_carriesEvents_alertKinds() {
+  function test_carries_events_alert_kinds() {
     const def = Qt.createQmlObject(`
       import qs.components.surfaces.osd.engine
       OSDSystem {
@@ -1461,7 +1461,7 @@ TestCase {
 
   // The settle window: only an event model's events show in it (an
   // `axiom message` just after a start isn't lost)
-  function test_showsWhileSettling() {
+  function test_shows_while_settling() {
     const msg = OSDEngine.judge(message, "message", {
       "event": null,
       "seq": 0
@@ -1486,7 +1486,7 @@ TestCase {
   // countsWithin: a level counts only just after the user's own set (a
   // set at the limit too, its time moving on), and such a key isn't held
   // by the settle window
-  function test_countsWithin() {
+  function test_counts_within() {
     const def = _def(`
       type: "Light"
       countsWithin: ({ "after": "setAt", "ms": 500 })
@@ -1517,7 +1517,7 @@ TestCase {
 
   // contextTile: a tile's or a card's own; a bar's its mark's tile (whose
   // device it is), none for a bar marked by itself
-  function test_contextTile() {
+  function test_context_tile() {
     const def = _def(`
       type: "Sound"
       exposes: [{ "key": "master", "part": "bar", "mark": "audio" }, { "key": "solo", "part": "bar" }, { "key": "audio", "part": "tile" }]
@@ -1582,7 +1582,7 @@ TestCase {
 
   // memberState: a set judged by a member field across transit, and the
   // "last" removal policy
-  function test_memberState_last() {
+  function test_member_state_last() {
     const def = Qt.createQmlObject(`
       import qs.components.surfaces.osd.engine
       OSDSystem {

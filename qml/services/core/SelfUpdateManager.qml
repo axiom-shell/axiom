@@ -6,29 +6,27 @@ import qs.services.session
 import qs.services.system
 import qs.services.ui
 
-/*
- * Updates axiom itself (not packages: that's UpdatesManager). It follows the
- * clone's remote on SelfUpdate.channel: "tags" (releases, `v*` tags) or
- * "main" (every commit on the main branch). The daemon does the git work
- * (selfupdate.status reads the clone, selfupdate.check fetches and
- * compares, selfupdate.apply fast-forwards to the newest, rebuilds the
- * axiom binary and re-execs into it). A clone with changed tracked files,
- * local commits or another branch is `blocked` and never touched.
- *
- * SelfUpdate.mode: "auto" installs a new release and notifies; "notify"
- * notifies, and the notification opens Settings → Updates; "off" never
- * checks. Checks run once per qs launch (not per hot reload), daily, and
- * when the channel changes. Each release (or main's commit) is notified once.
- *
- * A packaged axiom (the AUR's axiom-shell, Paths.packaged) is updated by its
- * package manager: this never checks, and its settings are hidden. A tree
- * with no .git otherwise (`managed`) never checks either; the card says
- * its updates come from the package manager.
- *
- *   axiom ipc selfUpdate check
- *   axiom ipc selfUpdate update
- *   axiom ipc selfUpdate open
- */
+// Updates axiom itself (not packages: that's UpdatesManager). It follows the
+// clone's remote on SelfUpdate.channel: "tags" (releases, `v*` tags) or
+// "main" (every commit on the main branch). The daemon does the git work
+// (selfupdate.status reads the clone, selfupdate.check fetches and
+// compares, selfupdate.apply fast-forwards to the newest, rebuilds the
+// axiom binary and re-execs into it). A clone with changed tracked files,
+// local commits or another branch is `blocked` and never touched.
+//
+// SelfUpdate.mode: "auto" installs a new release and notifies; "notify"
+// notifies, and the notification opens Settings → Updates; "off" never
+// checks. Checks run once per qs launch (not per hot reload), daily, and
+// when the channel changes. Each release (or main's commit) is notified once.
+//
+// A packaged axiom (the AUR's axiom-shell, Paths.packaged) is updated by its
+// package manager: this never checks, and its settings are hidden. A tree
+// with no .git otherwise (`managed`) never checks either; the card says
+// its updates come from the package manager.
+//
+//   axiom ipc selfUpdate check
+//   axiom ipc selfUpdate update
+//   axiom ipc selfUpdate open
 Singleton {
   id: root
 

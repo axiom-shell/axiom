@@ -24,7 +24,7 @@ TestCase {
     };
   }
 
-  function test_layoutSections_uneven_margins() {
+  function test_layout_sections_uneven_margins() {
     // A bar whose end makes way for another keeps more clear there
     const s = BarLayout.layoutSections([100, 200, 100], [50, 200, 50], 1000, [10, 60], 5, false);
     compare(s[0].offset, 10);
@@ -56,7 +56,7 @@ TestCase {
     compare(BarLayout.span([10, 0], 4, [false, true]), 10);
   }
 
-  function test_dividerGap() {
+  function test_divider_gap() {
     compare(BarLayout.dividerLength("line", 20), 10);
     compare(BarLayout.dividerLength("chevron", 20), 12);
     // The divider's room along the bar, the margin either side
@@ -67,7 +67,7 @@ TestCase {
     compare(BarLayout.dividerGap("none", 2, 20, 2), 4);
   }
 
-  function test_layoutSections_fits() {
+  function test_layout_sections_fits() {
     // 1000 long, margin 10, gap 5: ends hug the margins, center centered
     const s = BarLayout.layoutSections([100, 200, 100], [100, 200, 100], 1000, 10, 5, false);
     compare(s[0].offset, 10);
@@ -78,20 +78,20 @@ TestCase {
     compare(s[2].extent, 100);
   }
 
-  function test_layoutSections_center_slides() {
+  function test_layout_sections_center_slides() {
     // A long left side pushes the center right (not locked)
     const s = BarLayout.layoutSections([500, 200, 0], [500, 200, 0], 1000, 0, 10, false);
     compare(s[1].offset, 510);
   }
 
-  function test_layoutSections_lockCenter() {
+  function test_layout_sections_lock_center() {
     // Locked, the center stays dead center and the left squeezes instead
     const s = BarLayout.layoutSections([500, 200, 0], [100, 200, 0], 1000, 0, 10, true);
     compare(s[1].offset, 400);
     compare(s[0].extent, 390);
   }
 
-  function test_layoutSections_spacers_reach_the_center() {
+  function test_layout_sections_spacers_reach_the_center() {
     // A left side with a spacer stretches to a gap short of the center;
     // the right one without keeps its own length
     const s = BarLayout.layoutSections([100, 200, 100], [100, 200, 100], 1000, 10, 5, true, undefined, [1, 0, 0]);
@@ -109,7 +109,7 @@ TestCase {
 
   // Unlocked, with spacers: nothing is centered; every spacer on the bar
   // takes an equal share of its free room, the sections packed end to end
-  function test_layoutSections_unlocked_spacers_share_the_bar() {
+  function test_layout_sections_unlocked_spacers_share_the_bar() {
     // 1000 - 2 × 10 margin - 400 - 2 × 5 gap = 570 free: 190 each
     const s = BarLayout.layoutSections([100, 200, 100], [100, 200, 100], 1000, 10, 5, false, undefined, [1, 1, 1]);
     compare(s[0].extent, 290);
@@ -121,7 +121,7 @@ TestCase {
     compare(BarLayout.layoutSections([100, 200, 100], [100, 200, 100], 1000, 10, 5, false, undefined, [0, 0, 0])[1].offset, 400);
   }
 
-  function test_layoutSections_spacers_never_move_the_center() {
+  function test_layout_sections_spacers_never_move_the_center() {
     // Laid out at their minimum gaps first: the locked center stays put,
     // the side only reaching it
     const s = BarLayout.layoutSections([300, 200, 0], [300, 200, 0], 1000, 0, 10, true, undefined, [1, 0, 0]);
@@ -134,7 +134,7 @@ TestCase {
     compare(t[0].extent, 790);
   }
 
-  function test_layoutSections_spacers_share_with_no_center() {
+  function test_layout_sections_spacers_share_with_no_center() {
     // 1000 - 2 × 10 margin - 100 - 100 - a 5 gap = 775 free: one spacer
     // left and three right share it 1:3
     const s = BarLayout.layoutSections([100, 0, 100], [100, 0, 100], 1000, 10, 5, false, undefined, [1, 0, 3]);
@@ -148,7 +148,7 @@ TestCase {
     compare(one[2].extent, 875);
   }
 
-  function test_sectionRooms() {
+  function test_section_rooms() {
     // Unlocked: what the others and the gaps leave, 1000 less 10 each end
     compare(BarLayout.sectionRooms([100, 200, 100], 1000, 10, 5, false), [980 - 300 - 10, 980 - 200 - 10, 980 - 300 - 10]);
     // An empty side takes no gap from the others
@@ -157,7 +157,7 @@ TestCase {
     compare(BarLayout.sectionRooms([100, 200, 100], 1000, 10, 5, true), [400 - 10 - 5, 980, 1000 - 10 - 600 - 5]);
   }
 
-  function test_edgeHang() {
+  function test_edge_hang() {
     // Dividers at each end, with the spacing on their inner side
     compare(BarLayout.edgeHang([10, 50, 8, 12], [true, false, true, true], 4), {
       "lead": 14,
@@ -175,7 +175,7 @@ TestCase {
     });
   }
 
-  function test_layoutSections_center_hang() {
+  function test_layout_sections_center_hang() {
     // A 20 px divider (and 10 spacing) trailing the center: its 170 px of
     // content stays centered, the divider sitting in the gap after it
     const hang = {
@@ -191,7 +191,7 @@ TestCase {
     compare(locked[2].extent, 375);
   }
 
-  function test_layoutSections_squeeze_and_scale() {
+  function test_layout_sections_squeeze_and_scale() {
     // 300 of room: 400 preferred squeezed halfway to the 200 minimum
     const squeezed = BarLayout.layoutSections([200, 0, 200], [100, 0, 100], 300, 0, 0, false);
     compare(squeezed[0].extent, 150);
@@ -201,12 +201,12 @@ TestCase {
     compare(scaled[0].extent, 50);
   }
 
-  function test_overflowHidden_nothing_when_it_fits() {
+  function test_overflow_hidden_nothing_when_it_fits() {
     const hidden = BarLayout.overflowHidden([[m(100)], [m(100)], [m(100)]], 1000, 0, 10, 4, false);
     compare(hidden, [[], [], []]);
   }
 
-  function test_overflowHidden_key_is_equal_for_equal_membership() {
+  function test_overflow_hidden_key_is_equal_for_equal_membership() {
     // A widget growing by 9 px with room to spare hides no one else: the
     // key BarContainer follows is the same string
     const key = pref => JSON.stringify(BarLayout.overflowHidden([[m(100)], [m(pref)], [m(100, 100, 5)]], 1000, 0, 10, 4, false));
@@ -214,13 +214,13 @@ TestCase {
     verify(key(100) !== key(900), "a widget crowded out changes it");
   }
 
-  function test_overflowHidden_drops_lowest_priority() {
+  function test_overflow_hidden_drops_lowest_priority() {
     // 250 of room for 300: the priority-0 widget goes, wherever it is
     const hidden = BarLayout.overflowHidden([[m(100, 100, 5)], [m(100, 100, 0)], [m(100, 100, 5)]], 250, 0, 0, 0, false);
     compare(hidden, [[], [0], []]);
   }
 
-  function test_overflowHidden_ties_go_right_left_center() {
+  function test_overflow_hidden_ties_go_right_left_center() {
     // Equal priorities: the right section first, its last widget first
     const hidden = BarLayout.overflowHidden([[m(100)], [m(100)], [m(50), m(50)]], 250, 0, 0, 0, false);
     compare(hidden, [[], [], [1]]);
@@ -229,14 +229,14 @@ TestCase {
     compare(more, [[0], [], [0]]);
   }
 
-  function test_overflowHidden_restores_what_fits() {
+  function test_overflow_hidden_restores_what_fits() {
     // Dropping the big priority-1 widget leaves room to bring back the
     // priority-0 one dropped before it
     const hidden = BarLayout.overflowHidden([[m(100, 100, 0), m(300, 300, 1)], [], [m(100, 100, 2)]], 350, 0, 0, 0, false);
     compare(hidden, [[1], [], []]);
   }
 
-  function test_overflowHidden_never_drops_spacers() {
+  function test_overflow_hidden_never_drops_spacers() {
     // A spacer's minimum gap counts, but a widget goes instead of it
     const hidden = BarLayout.overflowHidden([[m(100), spacer(50), m(100, 100, 1)], [], []], 220, 0, 0, 10, false);
     compare(hidden, [[0], [], []]);
@@ -244,13 +244,13 @@ TestCase {
     compare(BarLayout.overflowHidden([[m(100), spacer(), m(100)], [], []], 210, 0, 0, 10, false), [[], [], []]);
   }
 
-  function test_overflowHidden_lockCenter_only_the_overflowing_half() {
+  function test_overflow_hidden_lock_center_only_the_overflowing_half() {
     // Center 200 in 1000 leaves 400 each side; only the left overflows
     const hidden = BarLayout.overflowHidden([[m(300), m(300)], [m(200)], [m(300)]], 1000, 0, 0, 0, true);
     compare(hidden, [[1], [], []]);
   }
 
-  function test_overflowHidden_lockCenter_center_alone_overflows() {
+  function test_overflow_hidden_lock_center_center_alone_overflows() {
     // The center can't fit the bar even alone: it loses its own widgets,
     // and the sides keep theirs
     const hidden = BarLayout.overflowHidden([[m(50)], [m(300), m(300), m(300)], [m(50)]], 800, 0, 0, 0, true);
@@ -260,7 +260,7 @@ TestCase {
     compare(side, [[0], [], []]);
   }
 
-  function test_overflowHidden_lockCenter_center_hang() {
+  function test_overflow_hidden_lock_center_center_hang() {
     // A 30 px divider trailing the 200 px center: centered on its 170 px of
     // content it starts at 415, leaving 415 on the left and 385 on the right
     const divider = Object.assign(m(30), {
@@ -356,7 +356,7 @@ TestCase {
     compare(BarLayout.runs([null, null]), []);
   }
 
-  function test_runPlaces() {
+  function test_run_places() {
     const places = BarLayout.runPlaces([true, false, true, true]);
     compare(places[1], null);
     compare(places[0], {
@@ -371,7 +371,7 @@ TestCase {
     });
   }
 
-  function test_runPlaces_skip_widgets_showing_nothing() {
+  function test_run_places_skip_widgets_showing_nothing() {
     const places = BarLayout.runPlaces([true, null, true]);
     compare(places[1], null);
     compare(places[2], {
@@ -383,7 +383,7 @@ TestCase {
 
   // A section end joining the next section's run: the run reaching it
   // counts one more member there, so its widget takes a middle place
-  function test_runPlaces_joined_ends() {
+  function test_run_places_joined_ends() {
     const places = BarLayout.runPlaces([null, true, true, false, true, null], true, true);
     compare(places[1], {
       "run": 0,
@@ -416,7 +416,7 @@ TestCase {
   }
 
   // Joined where a side's spacer pushed a widget against the next section
-  function test_sectionJoins() {
+  function test_section_joins() {
     // left [m m spacer m], center [m spacer m], right [m spacer m m]
     const example = [[m(40), m(40), spacer(), m(40)], [m(40), spacer(4), m(40)], [m(40), spacer(), m(40), m(40)]];
     compare(BarLayout.sectionJoins(example), {
@@ -447,7 +447,7 @@ TestCase {
   }
 
   // A joined boundary keeps its own gap; the locked center never moves
-  function test_layoutSections_joined_gaps() {
+  function test_layout_sections_joined_gaps() {
     const gaps = BarLayout.boundaryGaps({
       "leftCenter": true,
       "centerRight": false,
@@ -469,7 +469,7 @@ TestCase {
 
   // Which center group stays centered: between the outer spacers, else
   // the group with more widgets (the first on a tie)
-  function test_centerSplit() {
+  function test_center_split() {
     compare(BarLayout.centerSplit([m(10), m(10)]), {
       "start": 0,
       "end": 1,
@@ -497,7 +497,7 @@ TestCase {
     });
   }
 
-  function test_centerParts() {
+  function test_center_parts() {
     // [40 40 spacer(4) 40], spacing 5: the pair pinned, then the 5 gap and
     // the spacer's 4 before the last
     const measures = [m(40), m(40), spacer(4), m(40)];
@@ -515,7 +515,7 @@ TestCase {
 
   // A center spacer pushes the center's outer group to the side; the
   // pinned group stays dead center
-  function test_layoutSections_center_spacers() {
+  function test_layout_sections_center_spacers() {
     const parts = {
       "lead": 0,
       "core": 120,
@@ -541,7 +541,7 @@ TestCase {
   }
 
   // A side's spacer and the center's beside it share the half equally
-  function test_layoutSections_center_and_side_spacers_share() {
+  function test_layout_sections_center_and_side_spacers_share() {
     const parts = {
       "lead": 0,
       "core": 100,
@@ -564,7 +564,7 @@ TestCase {
   }
 
   // A center spacer pushing its outer group out joins it to the side
-  function test_sectionJoins_center_spacers() {
+  function test_section_joins_center_spacers() {
     const joins = BarLayout.sectionJoins([[m(40)], [m(40), spacer(), m(40), spacer(), m(40)], [m(40)]]);
     compare(joins.leftCenter, true);
     compare(joins.centerRight, true);
@@ -576,7 +576,7 @@ TestCase {
   }
 
   // A joined boundary's gap counts towards what fits
-  function test_overflowHidden_joined_gap() {
+  function test_overflow_hidden_joined_gap() {
     // 495 + 500 + a 10 gap overflows 1000; joined (gap 0) it fits
     const measures = [[m(495, 495, 0), spacer(0)], [], [m(500, 500, 1)]];
     compare(BarLayout.overflowHidden(measures, 1000, 0, 10, 0, false), [[0], [], []]);
@@ -599,14 +599,14 @@ TestCase {
   // A locked center's outer group keeps its full size on its half (the
   // center is never squeezed), so the side beside it must fit at its
   // minimum in what's left, else a widget is hidden
-  function test_overflowHidden_center_outer_group_at_full_size() {
+  function test_overflow_hidden_center_outer_group_at_full_size() {
     // Pinned [100 100] centered at 400; the left half's 400 holds the
     // outer 200 and a 10 gap, leaving 190 for a side of minimum 300
     const measures = [[m(380, 300, 0)], [m(200, 40, 1), spacer(), m(100, 100, 1), m(100, 100, 1)], []];
     compare(BarLayout.overflowHidden(measures, 1000, 0, 10, 0, true), [[0], [], []]);
   }
 
-  function test_joinGroups() {
+  function test_join_groups() {
     compare(BarLayout.joinGroups([], 4), []);
     // Out of order; 100..150 and 154..200 are 4 apart (joined), 260 is
     // 60 past: its own
@@ -648,7 +648,7 @@ TestCase {
     ], 4).length, 2);
   }
 
-  function test_pillRects_free_and_joined_ends() {
+  function test_pill_rects_free_and_joined_ends() {
     const groups = [
       {
         "start": 5,
@@ -691,7 +691,7 @@ TestCase {
     ], 5, 10, 1.5, 1000, [true, true]).length, 2);
   }
 
-  function test_islandRects_whole_bar() {
+  function test_island_rects_whole_bar() {
     compare(BarLayout.islandRects([], 6, 10, 990, true), [
       {
         "start": 10,
@@ -702,7 +702,7 @@ TestCase {
     ]);
   }
 
-  function test_islandRects_grow_clamp_and_merge() {
+  function test_island_rects_grow_clamp_and_merge() {
     // Grown by 6 each side; kept inside 10..990; 8..50 and 60..75 then
     // overlap, so they're one island
     const rects = BarLayout.islandRects([
@@ -728,7 +728,7 @@ TestCase {
     verify(rects.every(r => !r.joinStart && !r.joinEnd));
   }
 
-  function test_stretchIslands_stretched_back_over_others_joins_the_edge() {
+  function test_stretch_islands_stretched_back_over_others_joins_the_edge() {
     const rects = [
       {
         "start": 10,
@@ -757,7 +757,7 @@ TestCase {
     compare(shapes.map(r => [r.start, r.length, r.joinStart, r.joinEnd, r.squareStart, r.squareEnd]), [[0, 1000, true, true, false, false]]);
   }
 
-  function test_stretchIslands_grows_squares_and_merges() {
+  function test_stretch_islands_grows_squares_and_merges() {
     const rects = BarLayout.islandRects([
       {
         "start": 100,
@@ -791,7 +791,7 @@ TestCase {
     compare(joined.map(r => [r.start, r.length, r.squareStart, r.squareEnd]), [[100, 300, false, false]]);
   }
 
-  function test_stretchOf_combines_owners() {
+  function test_stretch_of_combines_owners() {
     compare(BarLayout.stretchOf([], 0), null);
     compare(BarLayout.stretchOf([null], 0), null);
     // A popout flush into the start and a menu reaching past the end
@@ -818,7 +818,7 @@ TestCase {
     ], 0);
     compare([both.start, both.end, both.squareStart, both.squareEnd], [90, 260, true, true]);
   }
-  function test_endReaches_nothing_asked() {
+  function test_end_reaches_nothing_asked() {
     const rects = [
       {
         "start": 0,
@@ -833,7 +833,7 @@ TestCase {
     verify(!r.straightStart && !r.straightEnd);
   }
 
-  function test_endReaches_stretches_the_end_pill() {
+  function test_end_reaches_stretches_the_end_pill() {
     const rects = [
       {
         "start": 0,
@@ -871,7 +871,7 @@ TestCase {
     verify(r.straightStart && !r.straightEnd);
   }
 
-  function test_endReaches_pulls_a_near_pill_back() {
+  function test_end_reaches_pulls_a_near_pill_back() {
     const rects = [
       {
         "start": 90,
@@ -892,7 +892,7 @@ TestCase {
     verify(r.stretches[0].joinStart);
   }
 
-  function test_endReaches_adds_stubs() {
+  function test_end_reaches_adds_stubs() {
     const rects = [
       {
         "start": 400,
@@ -935,7 +935,7 @@ TestCase {
     verify(drawn[2].joinEnd);
   }
 
-  function test_endReaches_stub_grows_with_the_request() {
+  function test_end_reaches_stub_grows_with_the_request() {
     // A request following a surface still sliding out reaches less than
     // a stub: the stub is no longer than it, growing from the corner
     const rects = [
@@ -975,7 +975,7 @@ TestCase {
     compare(none.stretches.length, 0);
   }
 
-  function test_shownStretches() {
+  function test_shown_stretches() {
     const rects = [
       {
         "start": 0,
@@ -1025,7 +1025,7 @@ TestCase {
     ], 1000)[0].joinEnd);
   }
 
-  function test_pillIndex() {
+  function test_pill_index() {
     const rects = [
       {
         "start": 0,
@@ -1076,7 +1076,7 @@ TestCase {
     }), -1);
   }
 
-  function test_onPills() {
+  function test_on_pills() {
     const rects = [
       {
         "start": 0,
@@ -1112,7 +1112,7 @@ TestCase {
     compare(moved[0].start, 80);
   }
 
-  function test_endReaches_on_a_bar_with_no_pills() {
+  function test_end_reaches_on_a_bar_with_no_pills() {
     const r = BarLayout.endReaches([], [
       {
         "atStart": false,
@@ -1124,7 +1124,7 @@ TestCase {
     compare(r.stretches[0].start, 900);
   }
 
-  function test_endReaches_squares_where_asked() {
+  function test_end_reaches_squares_where_asked() {
     const rects = [
       {
         "start": 900,
@@ -1151,7 +1151,7 @@ TestCase {
     verify(!past.stretches[0].squareStart, "not where the pill already reaches past it");
   }
 
-  function test_dropOrder() {
+  function test_drop_order() {
     // Lowest priority first; ties right, left, center, the last listed
     // first; a spacer (null) never goes
     compare(BarLayout.dropOrder([[0, 0], [5, null], [0, -1]]), [[4, 3], [5, 0], [2, 1]]);

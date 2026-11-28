@@ -19,7 +19,7 @@ import qs.services.system
 QtObject {
   id: root
 
-  // --- Users and sessions ---
+  // -- Users and sessions --
 
   // Regular accounts (GreeterUsers), by name
   readonly property var users: _users
@@ -59,7 +59,7 @@ QtObject {
     root._selectedSessionId = id;
   }
 
-  // --- The login ---
+  // -- The login --
 
   // greetd's current question ("Password:", a one-time code), and whether
   // its answer may show as typed
@@ -162,7 +162,7 @@ QtObject {
     }
   }
 
-  // --- Power ---
+  // -- Power --
 
   // "suspend" | "hibernate" | "reboot" | "poweroff": logind lets the
   // greeter's own session do these (hibernate only where
@@ -172,7 +172,7 @@ QtObject {
       CommandManager.runDetached(["systemctl", action]);
   }
 
-  // --- Remembered choices (the greeter's own state) ---
+  // -- Remembered choices (the greeter's own state) --
 
   property var _state: StateManager.createStateHandler("greeter")
   // { lastUser, sessions: { user: session id } }
@@ -188,7 +188,7 @@ QtObject {
     root._state.save(root._saved);
   }
 
-  // --- Startup ---
+  // -- Startup --
 
   // Each data dir's wayland-sessions/, in lookup order (find lists them
   // in that order, and says nothing of one that isn't there on stdout)

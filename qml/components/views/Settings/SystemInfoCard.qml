@@ -153,7 +153,7 @@ PageCard {
     }
   ]
 
-  // --- The machine: its picture, name and operating system ---
+  // -- The machine: its picture, name and operating system --
 
   RowLayout {
     Layout.fillWidth: true
@@ -255,7 +255,7 @@ PageCard {
     Layout.fillWidth: true
   }
 
-  // --- The facts, two to a line ---
+  // -- The facts, two to a line --
 
   FactGrid {
     pairsPerLine: root.width > Widget.px(640) ? 2 : 1
@@ -267,7 +267,7 @@ PageCard {
         }))
   }
 
-  // --- Copying the report ---
+  // -- Copying the report --
 
   RowLayout {
     Layout.fillWidth: true

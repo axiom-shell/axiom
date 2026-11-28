@@ -236,7 +236,7 @@ QtObject {
     return out;
   }
 
-  // ---- grey and luminance ----
+  // -- grey and luminance --
 
   function _lum(grey) {
     const v = grey / 255;

@@ -76,7 +76,7 @@ Item {
   // times close it (PopoutWrapperBase reads its content's `hovered`)
   readonly property bool hovered: root._order.some(part => root._open[part] === true)
 
-  // ---- The systems ----
+  // -- The systems --
 
   // The systems' types, as a string: any edit to an OSD parses every OSD
   // anew (OSDConfig.osds), and a new array as the model would rebuild
@@ -257,7 +257,7 @@ Item {
     return null;
   }
 
-  // ---- The parts ----
+  // -- The parts --
   // OSDParts.parts: "level" (the bars), "status" (the icons), "card"
 
   // The parts out (or folding back), out from the edge in order
@@ -532,7 +532,7 @@ Item {
       root._hosts.forEach(host => host.watch?.opened());
   }
 
-  // ---- Size ----
+  // -- Size --
 
   // An item's size across the edge, and along it
   function _depth(item) {
@@ -547,7 +547,7 @@ Item {
   // the next as the outer ones are from the outline, and the nearest from
   // the screen edge (EdgePopout.attachExtra keeps that the same)
   property real gap: Widget.spacing * 2
-  // ---- Its length ----
+  // -- Its length --
   // One box, attached or held off the edge, as long as its longest part:
   // a card shorter than the bars runs as long as them, a longer one makes
   // the box as long as it. The length eases to each new one
@@ -774,7 +774,7 @@ Item {
     root._expose();
   }
 
-  // ---- Drawing ----
+  // -- Drawing --
 
   // A part's slot: clipped to how far it's out, at its place out from the
   // edge (`place`, _layout's), the part held at its far end so it slides

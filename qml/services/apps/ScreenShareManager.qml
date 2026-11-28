@@ -8,23 +8,19 @@ import qs.services.core
 import qs.services.compositor
 import qs.services.system
 
-/*
- * axiom's screen-share picker: the daemon's screenshare.request (a portal
- * asking what to share: xdg-desktop-portal-hyprland's and -wlr's through
- * `axiom screenshare-pick`, niri's through axiom's own ScreenCast portal)
- * shows the picker (ScreenSharePicker) on the focused screen, and the
- * user's choice goes back as screenshare.answer. The daemon closes one
- * whose asker gave up (screenshare.done). A region is dragged in the
- * screenshot picker (ScreenshotManager.pickArea).
- * The hookup (ScreenShareSources.hookupTargets) points the compositor's
- * portal at axiom once; the ScreenSharing settings decide, at each request,
- * whether axiom's picker or the portal's own answers. Under niri there is
- * no hookup: the daemon puts the portal's line in its config while axiom
- * runs and takes it out when it stops (portalLine). The daemon restarts
- * the portal too, in this session only.
- *
- * rpc: screenshare.answer, screenshare.restartPortal, screenshare.portalLine
- */
+// axiom's screen-share picker: the daemon's screenshare.request (a portal
+// asking what to share: xdg-desktop-portal-hyprland's and -wlr's through
+// `axiom screenshare-pick`, niri's through axiom's own ScreenCast portal)
+// shows the picker (ScreenSharePicker) on the focused screen, and the
+// user's choice goes back as screenshare.answer. The daemon closes one
+// whose asker gave up (screenshare.done). A region is dragged in the
+// screenshot picker (ScreenshotManager.pickArea).
+// The hookup (ScreenShareSources.hookupTargets) points the compositor's
+// portal at axiom once; the ScreenSharing settings decide, at each request,
+// whether axiom's picker or the portal's own answers. Under niri there is
+// no hookup: the daemon puts the portal's line in its config while axiom
+// runs and takes it out when it stops (portalLine). The daemon restarts
+// the portal too, in this session only.
 Singleton {
   id: root
 

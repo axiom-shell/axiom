@@ -5,14 +5,14 @@ import qs.components.methods
 TestCase {
   name: "WorkspaceGeometry"
 
-  function test_fitScale() {
+  function test_fit_scale() {
     // 2×1 monitors of 100×50, 10 apart, in 210×200: width-bound at 1
     compare(WorkspaceGeometry.fitScale(210, 200, 100, 50, 10, 2, 1), 1);
     compare(WorkspaceGeometry.fitScale(210, 30, 100, 50, 10, 2, 1), 0.6);
     compare(WorkspaceGeometry.fitScale(10, 10, 0, 50, 0, 1, 1), 0.1);
   }
 
-  function test_boxPad() {
+  function test_box_pad() {
     compare(WorkspaceGeometry.boxPad(16, 8, 8, 10), 16);
     // (40 - 4)(1 - 1/sqrt2) + 10 = 20.5 > 16; (20 - 2) gives 15.3 < 16 stays
     fuzzyCompare(WorkspaceGeometry.boxPad(16, 40, 4, 10), 36 * (1 - Math.SQRT1_2) + 10, 0.001);
@@ -21,7 +21,7 @@ TestCase {
     compare(WorkspaceGeometry.boxPad(16, 4, 20, 10), 16);
   }
 
-  function test_usableRect() {
+  function test_usable_rect() {
     compare(WorkspaceGeometry.usableRect(1920, 1080, {
       "top": 40
     }), {
@@ -56,7 +56,7 @@ TestCase {
     });
   }
 
-  function test_usableOrigin() {
+  function test_usable_origin() {
     compare(WorkspaceGeometry.usableOrigin({
       "x": 1920,
       "y": 0,
@@ -83,7 +83,7 @@ TestCase {
     });
   }
 
-  function test_windowRect_cropped() {
+  function test_window_rect_cropped() {
     // A window 10 px below a 40 px top bar's edge, the origin the usable area's
     const top = WorkspaceGeometry.windowRect({
       "x": 0,
@@ -101,7 +101,7 @@ TestCase {
     compare(side.x, 1);
   }
 
-  function test_wallpaperRect() {
+  function test_wallpaper_rect() {
     const r = WorkspaceGeometry.wallpaperRect({
       "x": 0,
       "y": 40,
@@ -114,13 +114,13 @@ TestCase {
     compare(r.h, 108);
   }
 
-  function test_fitScale_side() {
+  function test_fit_scale_side() {
     compare(WorkspaceGeometry.fitScale(330, 200, 100, 50, 10, 2, 1, 20), 1);
     compare(WorkspaceGeometry.fitScale(330, 200, 100, 50, 10, 2, 1), 1.6);
     compare(WorkspaceGeometry.fitScale(330, 200, 100, 50, 10, 2, 1, 0), 1.6);
   }
 
-  function test_specialColumn() {
+  function test_special_column() {
     // 3 rows of 30 px cells, 5 px gaps: the grid is 100 px high, centre 50
     compare(WorkspaceGeometry.specialColumn(0, 40, 30, 5, 3, 3, 10), null);
     const one = WorkspaceGeometry.specialColumn(1, 40, 30, 5, 3, 3, 10);
@@ -153,7 +153,7 @@ TestCase {
     });
   }
 
-  function test_specialColumn_manyCells() {
+  function test_special_column_many_cells() {
     // 15 cells in one 30 px row: the scale stays positive, cells at least 1 px
     const column = WorkspaceGeometry.specialColumn(15, 40, 30, 5, 3, 1, 10);
     compare(column.scale, 0.01);
@@ -168,7 +168,7 @@ TestCase {
     verify(Math.abs(many.stackY * 2 + many.stackH - 100) <= 1, "centred on the grid");
   }
 
-  function test_specialCellAt() {
+  function test_special_cell_at() {
     const column = WorkspaceGeometry.specialColumn(4, 40, 30, 5, 3, 2, 10);
     column.rects.forEach((r, i) => compare(WorkspaceGeometry.specialCellAt(column, r.x + r.w / 2, r.y + r.h / 2), i));
     compare(WorkspaceGeometry.specialCellAt(column, 137, 5), -1);
@@ -177,7 +177,7 @@ TestCase {
     compare(WorkspaceGeometry.specialCellAt(null, 150, 5), -1);
   }
 
-  function test_digitCell() {
+  function test_digit_cell() {
     // A 3x3 grid, nine cells in reading order
     compare(WorkspaceGeometry.digitCell(1, 9), 0);
     compare(WorkspaceGeometry.digitCell(5, 9), 4);
@@ -215,20 +215,20 @@ TestCase {
     compare(nav(0, "up", 1, 4, 0), 0);
   }
 
-  function test_cellRect_and_cellAt_agree() {
+  function test_cell_rect_and_cell_at_agree() {
     for (let i = 0; i < 5; i++) {
       const r = WorkspaceGeometry.cellRect(i, 40, 30, 5, 3);
       compare(WorkspaceGeometry.cellAt(r.x + 1, r.y + 1, 40, 30, 5, 3, 5), i);
     }
   }
 
-  function test_cellAt_misses() {
+  function test_cell_at_misses() {
     compare(WorkspaceGeometry.cellAt(42, 1, 40, 30, 5, 3, 5), -1, "gap");
     compare(WorkspaceGeometry.cellAt(-1, 1, 40, 30, 5, 3, 5), -1, "outside");
     compare(WorkspaceGeometry.cellAt(91, 36, 40, 30, 5, 3, 5), -1, "past the last cell");
   }
 
-  function test_windowRect_clamps_into_the_cell() {
+  function test_window_rect_clamps_into_the_cell() {
     const r = WorkspaceGeometry.windowRect({
       "x": 1900,
       "y": 1000,
@@ -243,7 +243,7 @@ TestCase {
     compare(tiny.w, 8);
   }
 
-  function test_stripRects_squeeze_the_strip_into_the_cell() {
+  function test_strip_rects_squeeze_the_strip_into_the_cell() {
     // Three 1000 px columns on a 2000 px monitor, the first scrolled half
     // off it: 3000 px of strip from -500 squeezed into a 100 px cell
     const wins = [-500, 500, 1500].map(x => ({
@@ -270,7 +270,7 @@ TestCase {
     compare(rows[0].h, 25);
   }
 
-  function test_stripOrder() {
+  function test_strip_order() {
     const wins = [
       {
         "id": "float",
@@ -298,7 +298,7 @@ TestCase {
     compare(WorkspaceGeometry.stripOrder(wins, true).map(w => w.id), ["upper", "right", "lower", "float"]);
   }
 
-  function test_stripDropTarget_goes_after_the_nearest() {
+  function test_strip_drop_target_goes_after_the_nearest() {
     const items = [
       {
         "id": "a",
@@ -327,7 +327,7 @@ TestCase {
     compare(WorkspaceGeometry.stripDropTarget([], 5, 10, false), null);
   }
 
-  function test_windowAt_prefers_floating() {
+  function test_window_at_prefers_floating() {
     const items = [
       {
         "id": "tiled",
@@ -365,7 +365,7 @@ TestCase {
     compare(WorkspaceGeometry.windowAt(items, 200, 200), "");
   }
 
-  function test_dropTarget_splits_the_long_side() {
+  function test_drop_target_splits_the_long_side() {
     const wide = [
       {
         "id": "w",
@@ -386,7 +386,7 @@ TestCase {
     compare(WorkspaceGeometry.dropTarget([], 0, 0, 1), null);
   }
 
-  function test_resizeEdges() {
+  function test_resize_edges() {
     const r = {
       "x": 0,
       "y": 0,
@@ -399,7 +399,7 @@ TestCase {
     compare([middle.left, middle.right, middle.top, middle.bottom], [false, false, true, false]);
   }
 
-  function test_stripOrderByColumn() {
+  function test_strip_order_by_column() {
     // niri says the column and the place in it; positions are unknown (0)
     const wins = [
       {
@@ -425,7 +425,7 @@ TestCase {
     compare(WorkspaceGeometry.stripOrder(wins, false).map(w => w.id), ["a1", "a2", "b", "float"]);
   }
 
-  function test_blockBases() {
+  function test_block_bases() {
     const outputs = [
       {
         "name": "HDMI-A-1",
@@ -447,7 +447,7 @@ TestCase {
     compare(WorkspaceGeometry.blockBases([], "", 5), {});
   }
 
-  function test_blockBases_profiles() {
+  function test_block_bases_profiles() {
     const profiles = [
       {
         "outputs": [
@@ -545,7 +545,7 @@ TestCase {
     }, "a rule naming the connector itself comes before one last seen on it");
   }
 
-  function test_outputToward() {
+  function test_output_toward() {
     const outputs = [
       {
         "name": "A",
@@ -578,7 +578,7 @@ TestCase {
     compare(WorkspaceGeometry.outputToward(outputs, "X", "right"), "", "unknown output");
   }
 
-  function test_orderMonitors_primary_first_then_by_key() {
+  function test_order_monitors_primary_first_then_by_key() {
     const monitors = [
       {
         "id": 2,
@@ -600,7 +600,7 @@ TestCase {
     compare(ordered.map(m => m.name), ["DP-2", "DP-1", "HDMI-A-1"]);
   }
 
-  function test_orderMonitors_no_primary_connected_falls_back_to_key_order() {
+  function test_order_monitors_no_primary_connected_falls_back_to_key_order() {
     const monitors = [
       {
         "id": 2,
@@ -617,7 +617,7 @@ TestCase {
     compare(ordered.map(m => m.name), ["DP-1", "HDMI-A-1"]);
   }
 
-  function test_orderMonitors_ignores_hyprland_connection_order() {
+  function test_order_monitors_ignores_hyprland_connection_order() {
     const a = {
       "id": 0,
       "name": "DP-1",
@@ -639,7 +639,7 @@ TestCase {
     compare(WorkspaceGeometry.orderMonitors([b, c, a], "DP-2").map(m => m.name), expected);
   }
 
-  function test_orderMonitors_survives_reconnect_by_key_not_name() {
+  function test_order_monitors_survives_reconnect_by_key_not_name() {
     // DP-1 replugged into a different port: id/name change, key (the
     // description-based identity) stays the same.
     const monitors = [
@@ -657,7 +657,7 @@ TestCase {
     compare(WorkspaceGeometry.orderMonitors(monitors, "DP-2").map(m => m.key), ["desc:b", "desc:a"]);
   }
 
-  function test_orderMonitors_removed_and_appended() {
+  function test_order_monitors_removed_and_appended() {
     const a = {
       "id": 0,
       "name": "DP-1",
@@ -678,7 +678,7 @@ TestCase {
     compare(WorkspaceGeometry.orderMonitors([a, c, d], "").map(m => m.key), ["desc:a", "desc:c", "desc:d"]);
   }
 
-  function test_orderMonitors_ignores_locale() {
+  function test_order_monitors_ignores_locale() {
     const keys = ["HDMI-A-1", "eDP-1", "desc:a", "DP-1", "dp-1"];
     compare(WorkspaceGeometry.orderMonitors(keys.map(key => ({
           "name": key,
@@ -877,7 +877,7 @@ TestCase {
     compare(plan.moves[0].origin, "");
   }
 
-  function test_returnOutput_by_description_then_connector() {
+  function test_return_output_by_description_then_connector() {
     const outputs = [
       {
         "name": "DP-1",
@@ -1045,7 +1045,7 @@ TestCase {
     verify(!plan.changed);
   }
 
-  function test_remap_standard_to_perMonitor() {
+  function test_remap_standard_to_per_monitor() {
     const windows = _windows([["a1", 1, 0], ["a2", 2, 0], ["b1", 3, 1], ["b2", 4, 1], ["b3", 4, 1]]);
     const plan = WorkspaceGeometry.remapWorkspaces(_monitors(1, 3), windows, {
       "blocks": false,
@@ -1059,7 +1059,7 @@ TestCase {
     verify(plan.changed);
   }
 
-  function test_remap_perMonitor_to_standard_collides() {
+  function test_remap_per_monitor_to_standard_collides() {
     const windows = _windows([["a1", 1, 0], ["a2", 2, 0], ["b1", 11, 1], ["b2", 12, 1], ["b3", 15, 1]]);
     const plan = WorkspaceGeometry.remapWorkspaces(_monitors(2, 11), windows, {
       "blocks": true,
@@ -1162,7 +1162,7 @@ TestCase {
     compare(_focus(plan), "B:2 A:13");
   }
 
-  function test_startWorkspace() {
+  function test_start_workspace() {
     // A grid: the middle cell, after the middle with an even count
     compare(WorkspaceGeometry.startWorkspace(1, 3, 3, "middle"), 5, "3 × 3: the middle");
     compare(WorkspaceGeometry.startWorkspace(10, 3, 3, "middle"), 14, "a second block's middle");
@@ -1176,14 +1176,14 @@ TestCase {
     compare(WorkspaceGeometry.startWorkspace(11, 10, 1, "first"), 11, "a second block of 10: the first");
   }
 
-  function test_middleOf() {
+  function test_middle_of() {
     compare(WorkspaceGeometry.middleOf(3), 2, "3: the second");
     compare(WorkspaceGeometry.middleOf(4), 3, "4: after the middle");
     compare(WorkspaceGeometry.middleOf(1), 1, "one");
     compare(WorkspaceGeometry.middleOf(0), 1, "none: the first");
   }
 
-  function test_startFocus() {
+  function test_start_focus() {
     // A grid of 3 × 3 blocks: A owns 1-9, B 10-18
     const centre = WorkspaceGeometry.startFocus(_monitors(1, 2), 9, 3, 3, "middle", true);
     compare(_focus(centre), "B:14 A:5", "both where the compositor started them, the focused one last");

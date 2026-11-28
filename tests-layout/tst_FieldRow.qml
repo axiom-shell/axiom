@@ -120,7 +120,7 @@ TestCase {
     harness.configure({});
   }
 
-  function test_besideLabelFills_data() {
+  function test_beside_label_fills_data() {
     return [
       {
         tag: "100%",
@@ -133,7 +133,7 @@ TestCase {
     ];
   }
 
-  function test_besideLabelFills(data) {
+  function test_beside_label_fills(data) {
     harness.configure({
       scale: data.scale
     });
@@ -148,11 +148,11 @@ TestCase {
     compare(row.height, key.height, "as tall as a plain one-line row");
   }
 
-  function test_shortControl_keeps_the_label_line_data() {
-    return test_besideLabelFills_data();
+  function test_short_control_keeps_the_label_line_data() {
+    return test_beside_label_fills_data();
   }
 
-  function test_shortControl_keeps_the_label_line(data) {
+  function test_short_control_keeps_the_label_line(data) {
     harness.configure({
       scale: data.scale
     });

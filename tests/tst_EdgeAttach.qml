@@ -41,7 +41,7 @@ TestCase {
   }
 
   // The band a stroke hole cuts: the stroke's width and a pixel of fringe each side
-  function test_strokeHoleAcross_data() {
+  function test_stroke_hole_across_data() {
     return [
       {
         "tag": "stroke 1",
@@ -55,7 +55,7 @@ TestCase {
       }
     ];
   }
-  function test_strokeHoleAcross(data) {
+  function test_stroke_hole_across(data) {
     const band = EdgeAttach.strokeHoleAcross(data.from, data.width);
     compare(band.start, data.from - 1);
     compare(band.size, data.width + 2);
@@ -63,7 +63,7 @@ TestCase {
     compare(band.start + band.size / 2, data.from + data.width / 2);
   }
 
-  function test_strokeHoleAlong_data() {
+  function test_stroke_hole_along_data() {
     return [
       {
         "tag": "inside the box",
@@ -87,13 +87,13 @@ TestCase {
       }
     ];
   }
-  function test_strokeHoleAlong(data) {
+  function test_stroke_hole_along(data) {
     const run = EdgeAttach.strokeHoleAlong(...data.args);
     compare(run.start, data.want[0]);
     compare(run.end, data.want[1]);
   }
 
-  function test_filletMargin() {
+  function test_fillet_margin() {
     compare(EdgeAttach.filletMargin(2, 28), 27);
     // Too tight a radius for a fillet
     compare(EdgeAttach.filletMargin(2, 0), 0);
@@ -274,7 +274,7 @@ TestCase {
     });
   }
 
-  function test_pillAt() {
+  function test_pill_at() {
     const pills = [pill(100, 100), pill(400, 100)];
     compare(EdgeAttach.pillAt(pills, 150, false).index, 0);
     // Between pills: none, but an island takes the nearest
@@ -828,7 +828,7 @@ TestCase {
     compare([p.start, p.joinStart, p.flushStart, p.contentStart], [-2, true, false, 50]);
   }
 
-  function test_joinOpening() {
+  function test_join_opening() {
     // A top bar's surface joined at its start covers the left edge's
     // stroke from the screen's top down to its join
     compare(EdgeAttach.joinOpening("top", true, 10, 100, 60, 1440), {
@@ -870,7 +870,7 @@ TestCase {
     });
   }
 
-  function test_pillJoinFilleted() {
+  function test_pill_join_filleted() {
     // A bar 1000 long, the surface at its end, its wall at 800; radius
     // 24 (a fillet and a corner need 48), no merge, stroke 3
     const at = (pills, merge) => EdgeAttach.pillJoinFilleted(pills, 800, false, 24, merge ?? 0, 3);
@@ -968,7 +968,7 @@ TestCase {
     compare([p.start, p.end, p.grow, p.flushStart, p.flushEnd], [300, 700, 0, true, true]);
   }
 
-  function test_progressStretch() {
+  function test_progress_stretch() {
     const rest = {
       "start": 400,
       "length": 200
@@ -1000,7 +1000,7 @@ TestCase {
   }
 
   // The modes a box centred at a point may take whatever its length
-  function test_modesAt() {
+  function test_modes_at() {
     const pills = [pill(100, 200), pill(700, 200)];
     // A pill bar showing none grows from its outer edge; elsewhere plain
     compare(EdgeAttach.modesAt(spec({

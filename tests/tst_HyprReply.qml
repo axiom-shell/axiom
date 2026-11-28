@@ -10,7 +10,7 @@ TestCase {
     compare(HyprReply.batch(["j/getoption general:gaps_out", "j/animations"]), "[[BATCH]]j/getoption general:gaps_out;j/animations");
   }
 
-  function test_splitBatch() {
+  function test_split_batch() {
     compare(HyprReply.splitBatch("a\n\n\nb", 3), ["a", "b", ""], "a missing reply is empty");
   }
 

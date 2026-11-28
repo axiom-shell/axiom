@@ -13,7 +13,7 @@ import qs.components.methods
 QtObject {
   id: root
 
-  // ---- colours (one object per theme) ----
+  // -- colours (one object per theme) --
 
   readonly property var _roles: root._derive(ThemeManager.currentTheme, ThemeManager.defaults)
 
@@ -84,7 +84,7 @@ QtObject {
   // the tone of a segmented control's track
   readonly property string segmentTrackTone: root._roles.segmentTrack
 
-  // ---- inks: what reads on each tone ----
+  // -- inks: what reads on each tone --
 
   // No property here is named on<X>: a QML property on<X> next to a property
   // <x> never takes its value (qml-pitfalls.md), so content on a fill reads
@@ -398,7 +398,7 @@ QtObject {
     }
   }
 
-  // ---- shadows ----
+  // -- shadows --
 
   // A shadow's colour: `look.shadowColor` (a bar's look or the BarStyle
   // section's), Automatic the theme's raw accent (not the nudged `accent`)
@@ -440,7 +440,7 @@ QtObject {
       "map": ({})
     })
 
-  // ---- translucency ----
+  // -- translucency --
 
   // The user's surface opacity, raised to the theme's readability floor
   readonly property real surfaceAlpha: Appearance.surfaceAlpha < 1 ? Math.max(Appearance.surfaceAlpha, root._roles.alphaFloor) : 1
@@ -467,12 +467,12 @@ QtObject {
     return Math.max(Widget.smallHeight, icon + Widget.spacing * 2);
   }
 
-  // ---- alphas ----
+  // -- alphas --
 
   // a whole disabled control
   readonly property real opacityDisabled: root._roles.opacityDisabled
 
-  // ---- text ----
+  // -- text --
 
   readonly property int typeMicro: StyleTokens.roleSize(-3, Appearance.baseFontSize, Widget.contentSize / 100)
   readonly property int typeCaption: StyleTokens.roleSize(-2, Appearance.baseFontSize, Widget.contentSize / 100)
@@ -550,7 +550,7 @@ QtObject {
     }
   }
 
-  // ---- icons ----
+  // -- icons --
 
   readonly property int iconXs: Appearance.fontSizeBy(-2)
   readonly property int iconSm: Appearance.fontSize
@@ -574,7 +574,7 @@ QtObject {
     }
   }
 
-  // ---- shape ----
+  // -- shape --
 
   // what touches the screen
   readonly property int radiusOuter: Appearance.borderRadius
@@ -594,7 +594,7 @@ QtObject {
   readonly property int dividerWidth: 1
   readonly property int focusWidth: Math.max(2, Appearance.borderWidth + 1)
 
-  // ---- spacing ----
+  // -- spacing --
 
   readonly property int space1: Widget.spacing
   readonly property int space2: Widget.spacing * 2
@@ -621,7 +621,7 @@ QtObject {
   readonly property int columnLeast: 2
   readonly property int columnMax: 4
 
-  // ---- motion ----
+  // -- motion --
 
   // how far a streamed card or a list row slides in
   readonly property int enterOffset: Widget.px(8)

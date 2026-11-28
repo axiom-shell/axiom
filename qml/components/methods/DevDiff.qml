@@ -1,13 +1,11 @@
 pragma Singleton
 import QtQuick
 
-/**
- * Dev mode's labels: a checkout as `branch@sha`, and the rows of
- * dev.config.diff (`{ path, side, dev?, live?, devOnly }`, a path of keys
- * and `{ id }` list items) as the Development settings show them: the
- * setting's titles from the schema, each side's value as short text, and
- * which side changed it.
- */
+// Dev mode's labels: a checkout as `branch@sha`, and the rows of
+// dev.config.diff (`{ path, side, dev?, live?, devOnly }`, a path of keys
+// and `{ id }` list items) as the Development settings show them: the
+// setting's titles from the schema, each side's value as short text, and
+// which side changed it.
 QtObject {
   id: root
 

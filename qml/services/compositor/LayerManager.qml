@@ -7,38 +7,36 @@ import qs.components.methods.layer
 import qs.config
 import qs.services.core
 
-/**
- * The layer service: where axiom's layer-shell windows stand, on every
- * compositor (docs/dev/compositor/layer-arrangement.md). A window states
- * its place as intents: its row in LayerStack (layer, order, overFullscreen,
- * modal) and its LayerSlot (wanted, held); this service answers each slot
- * with whether it shows and which layer it is on now (`slotOf`), and each
- * window's rect (`rectOf`). The mechanisms differ by compositor and live in
- * its parts: the backends' `supports` facts (`layerOrder`: the compositor
- * keeps axiom's order itself, as Hyprland does while the daemon's order
- * rules are in; `layerRestack`: a window moved to another layer lands on
- * top of it) and the daemon's writer of the rules; nothing outside this
- * service reads them. Without the rules the windows map one stage at a time
- * in LayerStack order and map again when they land out of place, so the
- * map order is the order: the fallback.
- * Each window that needs to know, or that reserves space others are placed
- * against, states how it asks to be laid out (hosts/window/LayerOrigin,
- * `setLayerSpec`): anchors, margins, size, zone, and when it mapped. Where
- * the compositor can list its layers (Hyprland: CompositorManager.
- * withLayerRects), each window's rect is corrected by how far the
- * compositor's own differs, sampled once they've settled: what axiom doesn't
- * arrange (another app's layers, a monitor's reserved space) moves its
- * windows too. Each difference is logged (console.log, "LayerManager:"),
- * and each layer move too (`LayerManager: … moves from … to …`).
- * The windows with a fixed place in the stack (bars, the border, docks,
- * integrated edge menus, the overlay, the popouts, the prompts:
- * hosts/window/LayerSlot, `setSlot`) are mapped in LayerStack order, one
- * stage at a time.
- * The owners of both are the host items themselves; a pass takes its input
- * as plain data (a KeptList of entries by index, never an item) and gives
- * each owner its answer back through the same indexes, and again when only
- * the owners changed (`_followOwners`).
- */
+// The layer service: where axiom's layer-shell windows stand, on every
+// compositor (docs/dev/compositor/layer-arrangement.md). A window states
+// its place as intents: its row in LayerStack (layer, order, overFullscreen,
+// modal) and its LayerSlot (wanted, held); this service answers each slot
+// with whether it shows and which layer it is on now (`slotOf`), and each
+// window's rect (`rectOf`). The mechanisms differ by compositor and live in
+// its parts: the backends' `supports` facts (`layerOrder`: the compositor
+// keeps axiom's order itself, as Hyprland does while the daemon's order
+// rules are in; `layerRestack`: a window moved to another layer lands on
+// top of it) and the daemon's writer of the rules; nothing outside this
+// service reads them. Without the rules the windows map one stage at a time
+// in LayerStack order and map again when they land out of place, so the
+// map order is the order: the fallback.
+// Each window that needs to know, or that reserves space others are placed
+// against, states how it asks to be laid out (hosts/window/LayerOrigin,
+// `setLayerSpec`): anchors, margins, size, zone, and when it mapped. Where
+// the compositor can list its layers (Hyprland: CompositorManager.
+// withLayerRects), each window's rect is corrected by how far the
+// compositor's own differs, sampled once they've settled: what axiom doesn't
+// arrange (another app's layers, a monitor's reserved space) moves its
+// windows too. Each difference is logged (console.log, "LayerManager:"),
+// and each layer move too (`LayerManager: … moves from … to …`).
+// The windows with a fixed place in the stack (bars, the border, docks,
+// integrated edge menus, the overlay, the popouts, the prompts:
+// hosts/window/LayerSlot, `setSlot`) are mapped in LayerStack order, one
+// stage at a time.
+// The owners of both are the host items themselves; a pass takes its input
+// as plain data (a KeptList of entries by index, never an item) and gives
+// each owner its answer back through the same indexes, and again when only
+// the owners changed (`_followOwners`).
 QtObject {
   id: root
 
@@ -219,7 +217,7 @@ QtObject {
       root._sequence();
   }
 
-  // --- Corrections from the compositor's own list ---
+  // -- Corrections from the compositor's own list --
 
   // owner -> { dx, dy, dw, dh, rule }: how far the compositor's rect of each
   // mapped window differs from the computed one (LayerArrange.correctionsOf),
@@ -266,7 +264,7 @@ QtObject {
     }
   }
 
-  // --- Mapping in order (LayerSlot) ---
+  // -- Mapping in order (LayerSlot) --
 
   // Every slot's state, by owner (the LayerSlot): { outputName, namespace,
   // rank, rankGroup, wanted, held, mapped }

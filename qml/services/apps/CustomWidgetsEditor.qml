@@ -18,7 +18,7 @@ import qs.services.ui
 QtObject {
   id: root
 
-  // --- The draft ---
+  // -- The draft --
   readonly property var items: _draft.local?.items ?? []
   readonly property bool isDirty: _draft.isDirty
 
@@ -66,7 +66,7 @@ QtObject {
     }
   }
 
-  // --- Samples (D1): one per screen, kept in the definition ---
+  // -- Samples (D1): one per screen, kept in the definition --
 
   // The most samples and bytes (as JSON) a definition keeps
   readonly property var sampleLimits: ({
@@ -121,7 +121,7 @@ QtObject {
   // Where it comes from: "saved", "live" or "none"
   readonly property string sampleSource: root.pageShown ? CustomWidgetData.sampleSource(root.selected, root.viewIndex, root.seen, CustomWidgetsManager.fields[root.selectedId] ?? null) : "none"
 
-  // --- Actions (the definition's actions.items; elements and the bar pick one by id) ---
+  // -- Actions (the definition's actions.items; elements and the bar pick one by id) --
 
   // What a trigger's combo offers: Nothing, each action of the definition
   // and "New action…" (value "__new", which newActionFor answers)

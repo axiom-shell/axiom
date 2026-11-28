@@ -8,16 +8,16 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 
-/* CompositorManager's backend on niri (docs/dev/compositor/contract.md,
- * docs/dev/compositor/niri-backend.md): niri's state as the
- * compositor-neutral shapes (NiriState), and the primitives CompositorManager
- * builds on. The state comes from niri's event stream, kept up event by
- * event (NiriState.reduce); the outputs, which the stream doesn't hold,
- * from an Outputs request whenever the workspaces or screens change. */
+// CompositorManager's backend on niri (docs/dev/compositor/contract.md,
+// docs/dev/compositor/niri-backend.md): niri's state as the
+// compositor-neutral shapes (NiriState), and the primitives CompositorManager
+// builds on. The state comes from niri's event stream, kept up event by
+// event (NiriState.reduce); the outputs, which the stream doesn't hold,
+// from an Outputs request whenever the workspaces or screens change.
 Singleton {
   id: root
 
-  // --- Backend state (docs/dev/compositor/contract.md) ---
+  // -- Backend state (docs/dev/compositor/contract.md) --
 
   // Whether the wallpaper stays put as workspaces slide: niri draws the
   // background layer inside each workspace unless axiom's module puts it
@@ -122,7 +122,7 @@ Singleton {
       "shareRestore": true
     })
 
-  // --- Events ---
+  // -- Events --
 
   // An output was connected or disconnected
   signal outputsHotplugged
@@ -156,7 +156,7 @@ Singleton {
     root._action(action);
   }
 
-  // --- Windows ---
+  // -- Windows --
 
   function activateWindow(id) {
     root._action({
@@ -294,7 +294,7 @@ Singleton {
     return null;
   }
 
-  // --- Workspaces (the layout is CompositorManager's) ---
+  // -- Workspaces (the layout is CompositorManager's) --
 
   // Sends the focused window to workspace `id`, staying put
   function sendWindowToWorkspace(id) {
@@ -400,14 +400,14 @@ Singleton {
     return root.focusedOutput;
   }
 
-  // --- Binds ---
+  // -- Binds --
 
   // Nothing to do: the key recorder's window inhibits niri's shortcuts
   // itself (KeyRecorder's ShortcutInhibitor), niri having no empty mode
   function captureKeys(on) {
   }
 
-  // --- Session and input ---
+  // -- Session and input --
 
   // Calls back with the keyboard's layouts ({ layouts, index, keymap },
   // NiriState.keyboard), or null; `registry` names them
@@ -436,7 +436,7 @@ Singleton {
     });
   }
 
-  // --- Outputs (the Monitors page) ---
+  // -- Outputs (the Monitors page) --
 
   // Calls back with every output in detail, disabled ones too
   // (NiriState.outputDetails), or null
@@ -449,7 +449,7 @@ Singleton {
     root._readOutputs();
   }
 
-  // --- State behind the members above ---
+  // -- State behind the members above --
 
   // niri's state, kept up from its event stream (NiriState.reduce)
   property var _state: NiriState.empty()
@@ -534,8 +534,8 @@ Singleton {
     }, true);
   }
 
-  // --- niri's socket, through axiom (niri.request, niri.watch): Quickshell
-  // has no niri module ---
+  // -- niri's socket, through axiom (niri.request, niri.watch): Quickshell
+  // has no niri module --
 
   // Sends `request` ("Outputs", or an object) and calls back with its Ok
   // value, or null when niri refused it (logged) or didn't answer.

@@ -3,10 +3,10 @@ import QtQuick
 
 import qs.components.methods
 
-/* The registry of shown surfaces: each SurfaceGroup's window and whether
-   it's open, the windows focus grabs let input through to (grab partners,
-   screenshot pickers, modal prompts), stepping aside, the border's
-   openings, and screen layouts' required fields */
+// The registry of shown surfaces: each SurfaceGroup's window and whether
+// it's open, the windows focus grabs let input through to (grab partners,
+// screenshot pickers, modal prompts), stepping aside, the border's
+// openings, and screen layouts' required fields
 QtObject {
   // Surfaces on every monitor at once act as one: each SurfaceGroup
   // reports its instance opening or closing, and the others follow
@@ -111,7 +111,7 @@ QtObject {
   // picker's frame is in they stay, so it holds them
   readonly property bool popupsHidden: modalShown && captureWindows.every(w => w.frozen)
 
-  // --- Screen layouts' required fields ---
+  // -- Screen layouts' required fields --
 
   // Which screen layout surfaces (the lock screen's, the greeter's, by the
   // key their host gives their modules) show their required field: the

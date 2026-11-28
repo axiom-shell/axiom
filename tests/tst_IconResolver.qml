@@ -14,7 +14,7 @@ TestCase {
     };
   }
 
-  function test_guessIcon_data() {
+  function test_guess_icon_data() {
     return [
       {
         "tag": "no class",
@@ -114,7 +114,7 @@ TestCase {
     ];
   }
 
-  function test_guessIcon(data) {
+  function test_guess_icon(data) {
     compare(IconResolver.guessIcon(data.cls, lookup(data.icons, data.apps, data.entries)), data.want);
   }
 }

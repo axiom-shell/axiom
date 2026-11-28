@@ -60,7 +60,7 @@ TestCase {
     verify(root.widgets.Network !== undefined);
   }
 
-  function test_popoutPropertiesMatchModule() {
+  function test_popout_properties_match_module() {
     let checked = 0;
     const absent = [];
     for (const [type, widget] of Object.entries(root.widgets)) {
@@ -82,13 +82,13 @@ TestCase {
       verify(absent.includes(type), type + " has no popout.properties");
   }
 
-  function test_systemTrayPopoutHasNoProperties() {
+  function test_system_tray_popout_has_no_properties() {
     const popout = root.propsOf("SystemTray").properties.popout;
     verify(popout);
     verify(popout.properties.properties === undefined);
   }
 
-  function test_networkCard2() {
+  function test_network_card2() {
     const rows = SchemaLayout.formRows(root.cards("Network").popout, []);
     compare(root.paths(rows).join(" "), ["enabled", "menu", "sizing.contentSize", "properties.showConnection", "properties.showVpn"].map(p => "popout." + p).join(" "));
     for (const row of rows.filter(row => row.path[1] === "properties")) {
@@ -98,14 +98,14 @@ TestCase {
     }
   }
 
-  function test_cardsSplitLosesNothing_data() {
+  function test_cards_split_loses_nothing_data() {
     return Object.keys(root.widgets).map(type => ({
           "tag": type,
           "type": type
         }));
   }
 
-  function test_cardsSplitLosesNothing(data) {
+  function test_cards_split_loses_nothing(data) {
     const parts = root.cards(data.type);
     const first = root.rowPaths(parts.options);
     const second = root.rowPaths(parts.popout);
@@ -114,14 +114,14 @@ TestCase {
     compare(first.concat(second).sort().join(" "), whole.slice().sort().join(" "));
   }
 
-  function test_volumeCard2() {
+  function test_volume_card2() {
     const paths = root.rowPaths(root.cards("Volume").popout);
     verify(paths.includes("popout.properties.ignoreApps"), paths.join(" "));
     verify(!paths.includes("popout.properties.mode"));
     verify(!paths.includes("popout.properties.maxVolume"));
   }
 
-  function test_separatorHasNoCard2() {
+  function test_separator_has_no_card2() {
     compare(Object.keys(root.cards("Separator").popout).length, 0);
   }
 }

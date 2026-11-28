@@ -5,7 +5,7 @@ import qs.components.methods
 TestCase {
   name: "MonitorLayout"
 
-  function test_parseMode() {
+  function test_parse_mode() {
     compare(MonitorLayout.parseMode("3440x1440@240.00Hz"), {
       "width": 3440,
       "height": 1440,
@@ -16,13 +16,13 @@ TestCase {
     compare(MonitorLayout.parseMode("preferred"), null);
   }
 
-  function test_formatMode() {
+  function test_format_mode() {
     compare(MonitorLayout.formatMode(3440, 1440, 240.00101), "3440x1440@240");
     compare(MonitorLayout.formatMode(1920, 1080, 59.9400), "1920x1080@59.94");
     compare(MonitorLayout.formatMode(1920, 1080, 0), "1920x1080");
   }
 
-  function test_availableMode_and_describe() {
+  function test_available_mode_and_describe() {
     compare(MonitorLayout.availableMode(3440, 1440, 239991), "3440x1440@239.99Hz", "a rate in mHz, two decimals");
     compare(MonitorLayout.availableMode(1920, 1080, 60000), "1920x1080@60.00Hz");
     compare(MonitorLayout.hz(59940), 59.94);
@@ -40,7 +40,7 @@ TestCase {
     compare(MonitorLayout.describe(null), "");
   }
 
-  function test_parseModes_groups_and_sorts() {
+  function test_parse_modes_groups_and_sorts() {
     const modes = MonitorLayout.parseModes(["1920x1080@60.00Hz", "3440x1440@60.00Hz", "3440x1440@240.00Hz", "1920x1080@60.00Hz", "1920x1080@119.88Hz", "junk"]);
     compare(modes.length, 2);
     compare(modes[0].width, 3440);
@@ -48,7 +48,7 @@ TestCase {
     compare(modes[1].rates, [119.88, 60], "duplicates dropped, highest first");
   }
 
-  function test_validScales() {
+  function test_valid_scales() {
     const scales = MonitorLayout.validScales(3440, 1440);
     verify(scales.includes(1));
     verify(scales.includes(1.25));
@@ -59,7 +59,7 @@ TestCase {
     compare(kept, kept.slice().sort((a, b) => a - b));
   }
 
-  function test_logicalSize_turns_and_scales() {
+  function test_logical_size_turns_and_scales() {
     compare(MonitorLayout.logicalSize(3840, 2160, 2, 0), {
       "width": 1920,
       "height": 1080
@@ -189,7 +189,7 @@ TestCase {
     verify(MonitorLayout.fit(rects, 0, 0, 20).scale > 0, "never a zero or negative scale");
   }
 
-  function test_fixedSize() {
+  function test_fixed_size() {
     const one = [
       {
         "x": 0,
@@ -236,7 +236,7 @@ TestCase {
     }, "no rects: a 16:9 screen");
   }
 
-  function test_fillMissing() {
+  function test_fill_missing() {
     const known = {
       "x": 100,
       "y": 50,
@@ -320,7 +320,7 @@ TestCase {
       "description": "LG TV"
     })
 
-  function test_outputId() {
+  function test_output_id() {
     compare(MonitorLayout.outputId(aoc, [aoc, tv]), "desc:AOC CU34G4Z XJ9R7HA000231");
     const twin = {
       "name": "DP-2",
@@ -343,7 +343,7 @@ TestCase {
     verify(!MonitorLayout.matches("desc:AOC CU34G4Z", niri));
   }
 
-  function test_ruleFromMonitor() {
+  function test_rule_from_monitor() {
     const monitor = {
       "name": "DP-1",
       "description": aoc.description,
@@ -372,7 +372,7 @@ TestCase {
     compare(MonitorLayout.ruleRect(rule, monitor), main);
   }
 
-  function test_wholeScaleRules() {
+  function test_whole_scale_rules() {
     const laptop = {
       "name": "eDP-1",
       "description": "BOE laptop",
@@ -441,13 +441,13 @@ TestCase {
     return [main, tv];
   }
 
-  function test_ruleFromMonitor_reads_a_mirror_by_id() {
+  function test_rule_from_monitor_reads_a_mirror_by_id() {
     const live = _mirrored();
     compare(MonitorLayout.ruleFromMonitor(live[1], live).mirror, "desc:Main");
     compare(MonitorLayout.ruleFromMonitor(live[0], live).mirror, "");
   }
 
-  function test_differsFromLive() {
+  function test_differs_from_live() {
     const live = _mirrored();
     const now = live.map(monitor => MonitorLayout.ruleFromMonitor(monitor, live));
     verify(!MonitorLayout.differsFromLive(now, live), "the monitors as they are");

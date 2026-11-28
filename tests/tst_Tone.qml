@@ -126,7 +126,7 @@ TestCase {
     verify(Tone.contrast("#1e1e2e", near) >= 1.2 - 0.05, "a too-near target is lifted to min");
   }
 
-  function test_readableOn() {
+  function test_readable_on() {
     same(Tone.readableOn("#000000", "#cccccc", ["#ffffff"]), "#cccccc", "the preferred where it reads");
     same(Tone.readableOn("#ffffff", "#eeeeee", ["#222222"]), "#000000", "black beats an alternate that reads less");
     same(Tone.readableOn("#808080", "#808080", []), "#000000", "black on a light-ish grey");
@@ -134,14 +134,14 @@ TestCase {
     same(Tone.readableOn("#ffffff", "#777777", ["#000000"]), "#000000", "an alternate as good as black is taken first");
   }
 
-  function test_bestOn() {
+  function test_best_on() {
     compare(Tone.bestOn("#000000"), "#FFFFFF");
     compare(Tone.bestOn("#ffffff"), "#000000");
     compare(Tone.bestOn("#fb4934"), "#000000", "by contrast, not by a luma split");
     compare(Tone.bestOn("#3060c0"), "#FFFFFF");
   }
 
-  function test_isDark() {
+  function test_is_dark() {
     verify(Tone.isDark("#101010"));
     verify(!Tone.isDark("#f0f0f0"));
     verify(!Tone.isDark("#00a800"), "WCAG: white and black both read about alike; black wins on this green");
@@ -153,7 +153,7 @@ TestCase {
     verify(Tone.reaches([], "#808080", 21), "no backs: vacuously");
   }
 
-  function test_alphaFloor() {
+  function test_alpha_floor() {
     compare(Tone.alphaFloor("#000000", "#ffffff", ["#000000"], 4.5), 0, "already reads on the bare backs");
     compare(Tone.alphaFloor("#808080", "#808080", ["#ffffff"], 4.5), 1, "unreachable even on the opaque fill");
     // text over the page over the pole: the pole rows of tokens_reference.py --scrims
@@ -176,7 +176,7 @@ TestCase {
       verify(root.readsAt("#1e1e2e", "#cdd6f4", b, both, 4.5), `reaches on ${b}`);
   }
 
-  function test_deltaRgb() {
+  function test_delta_rgb() {
     compare(Tone.deltaRgb([0.2, 0.4, 0.6], [0.2, 0.4, 0.6]), 0);
     // black to white spans 1 in OKLab's lightness
     verify(Math.abs(Tone.deltaRgb([0, 0, 0], [1, 1, 1]) - 1) < 1e-3, `${Tone.deltaRgb([0, 0, 0], [1, 1, 1])}`);
@@ -184,7 +184,7 @@ TestCase {
     verify(Math.abs(lab[0] - 1) < 1e-3 && Math.abs(lab[1]) < 1e-3 && Math.abs(lab[2]) < 1e-3, `${lab}`);
   }
 
-  function test_distinctRgb() {
+  function test_distinct_rgb() {
     const base = [0.9, 0.9, 0.9];
     const hue = [0.1, 0.4, 0.9];
     // nothing to keep apart from: the first mix

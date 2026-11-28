@@ -7,7 +7,7 @@ import qs.services.core
 import qs.services.compositor
 import qs.services.system
 
-/* The shell's signals, link navigation and screen targeting */
+// The shell's signals, link navigation and screen targeting
 QtObject {
   id: root
 

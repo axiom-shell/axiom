@@ -117,12 +117,6 @@ def parse_qml(path):
     while j >= 0 and not lines[j].strip():
         j -= 1
     block = []
-    if j >= 0 and lines[j].rstrip().endswith("*/"):
-        while j >= 0:
-            block.insert(0, lines[j].strip().removeprefix("/**").removeprefix("/*").removesuffix("*/").lstrip("* ").strip())
-            if "/*" in lines[j]:
-                break
-            j -= 1
     while j >= 0 and lines[j].startswith("//"):
         block.insert(0, lines[j][2:].strip())
         j -= 1

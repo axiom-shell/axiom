@@ -4,19 +4,17 @@ import QtQuick
 import Quickshell.I3
 import qs.services.core
 
-/*
- * Requests to sway that want a reply, through swaymsg: what Quickshell.I3
- * doesn't cover (its I3.dispatch runs a command with no reply, and it has no
- * window tree, inputs or outputs in full). Only the Sway* services use it;
- * the rest of the shell asks SwayManager (docs/dev/compositor/sway-backend.md).
- *
- *   SwayIpcManager.json("get_tree", tree => …)       // or null
- *   SwayIpcManager.command("[con_id=4] focus", ok => …)
- *   SwayIpcManager.dispatch("workspace number 2")      // no reply wanted
- *
- * Commands run one at a time, in the order sent, so a chain split over
- * several calls can't overtake itself. Reads run at once.
- */
+// Requests to sway that want a reply, through swaymsg: what Quickshell.I3
+// doesn't cover (its I3.dispatch runs a command with no reply, and it has no
+// window tree, inputs or outputs in full). Only the Sway* services use it;
+// the rest of the shell asks SwayManager (docs/dev/compositor/sway-backend.md).
+//
+//   SwayIpcManager.json("get_tree", tree => …)       // or null
+//   SwayIpcManager.command("[con_id=4] focus", ok => …)
+//   SwayIpcManager.dispatch("workspace number 2")      // no reply wanted
+//
+// Commands run one at a time, in the order sent, so a chain split over
+// several calls can't overtake itself. Reads run at once.
 QtObject {
   id: root
 

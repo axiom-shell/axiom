@@ -82,7 +82,7 @@ TestCase {
     compare(root.notified, 1);
   }
 
-  function test_idOf_is_used() {
+  function test_id_of_is_used() {
     const list = make({
       "fresh": [
         {

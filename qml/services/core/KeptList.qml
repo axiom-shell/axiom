@@ -3,12 +3,12 @@ import QtQuick
 
 import qs.components.methods
 
-/* The list `fresh` builds, kept the same array and the same objects while
- * its content is equal (Utils.keepEqual by `idOf`), so a rebuild with equal
- * content reaches no reader of `items`. With `oncePerTurn` it is kept once
- * per event turn (Qt.callLater), so the transient states within one turn
- * notify once; [] until it has completed. Not a singleton: each list a
- * service keeps owns one (CompositorManager's four, ScreenEdgeManager.bars). */
+// The list `fresh` builds, kept the same array and the same objects while
+// its content is equal (Utils.keepEqual by `idOf`), so a rebuild with equal
+// content reaches no reader of `items`. With `oncePerTurn` it is kept once
+// per event turn (Qt.callLater), so the transient states within one turn
+// notify once; [] until it has completed. Not a singleton: each list a
+// service keeps owns one (CompositorManager's four, ScreenEdgeManager.bars).
 QtObject {
   id: root
 

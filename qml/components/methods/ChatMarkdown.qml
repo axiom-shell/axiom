@@ -1,12 +1,10 @@
 pragma Singleton
 import QtQuick
 
-/**
- * Splits a chat reply into what the chat draws separately: Markdown prose
- * (a TextEdit in MarkdownText) and fenced code blocks (a box of their own,
- * with a copy button). Pure; safe to call on a reply still streaming in,
- * where the last fence may not be closed yet.
- */
+// Splits a chat reply into what the chat draws separately: Markdown prose
+// (a TextEdit in MarkdownText) and fenced code blocks (a box of their own,
+// with a copy button). Pure; safe to call on a reply still streaming in,
+// where the last fence may not be closed yet.
 QtObject {
   id: root
 

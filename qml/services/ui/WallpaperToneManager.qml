@@ -5,16 +5,16 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 
-/* What the shown wallpaper is under a surface: theme.backdrop's luminance
- * grid per shown wallpaper (a call when a screen's wallpaper changes, only
- * while something needs it: a bar with no surface, translucent surfaces, a
- * bare module on the desktop, lock screen or greeter), mapped onto a
- * surface's rectangle through the wallpaper's placement (`regionOn`, what the
- * bars and BackdropScrim read) and the edge family's floored alpha
- * (`edgeFloor`: Appearance.wallpaperEdgeFloor), the least opacity the bars'
- * fill needs so their content reads on the wallpapers, the same on every
- * screen. Nothing is polled; the daemon decodes each wallpaper once. On a wallpaper change the previous
- * wallpaper's grid stands in until the new one's arrives. */
+// What the shown wallpaper is under a surface: theme.backdrop's luminance
+// grid per shown wallpaper (a call when a screen's wallpaper changes, only
+// while something needs it: a bar with no surface, translucent surfaces, a
+// bare module on the desktop, lock screen or greeter), mapped onto a
+// surface's rectangle through the wallpaper's placement (`regionOn`, what the
+// bars and BackdropScrim read) and the edge family's floored alpha
+// (`edgeFloor`: Appearance.wallpaperEdgeFloor), the least opacity the bars'
+// fill needs so their content reads on the wallpapers, the same on every
+// screen. Nothing is polled; the daemon decodes each wallpaper once. On a wallpaper change the previous
+// wallpaper's grid stands in until the new one's arrives.
 QtObject {
   id: root
 
@@ -101,7 +101,7 @@ QtObject {
     }, blur, Backdrop.greyOf(Style.surfacePage));
   }
 
-  // ---- the edge floor ----
+  // -- the edge floor --
 
   // Over every bar that draws a fill (the ones with no surface get a shade
   // instead): its band's bare backs and the ink its text colour is, from
@@ -140,7 +140,7 @@ QtObject {
     return floor;
   }
 
-  // ---- the grids ----
+  // -- the grids --
 
   // path -> { state: "pending" | "ready" | "failed", grid }, mutated in place
   property var _grids: ({})

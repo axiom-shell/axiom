@@ -102,7 +102,7 @@ TestCase {
     verify(![].concat(LayerStack.blurSurfaces, LayerStack.blurBackdrops).includes("menu"), "never blurred whole");
   }
 
-  function test_orderOf() {
+  function test_order_of() {
     compare(shared.calls.LayerStack.orderOf("axiom-bar"), 5);
     compare(shared.calls.LayerStack.orderOf("dock"), -7);
     compare(shared.calls.LayerStack.orderOf("axiom-desktop"), 0, "listed at 0");

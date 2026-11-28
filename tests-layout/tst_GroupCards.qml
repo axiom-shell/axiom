@@ -125,11 +125,11 @@ TestCase {
     return pane;
   }
 
-  function test_cardGeometry_data() {
+  function test_card_geometry_data() {
     return rows();
   }
 
-  function test_cardGeometry(data) {
+  function test_card_geometry(data) {
     const pane = make(data);
     const group = pane.group;
     compare(group.tone, "surface");
@@ -162,11 +162,11 @@ TestCase {
     tryVerify(() => group.height > 2 * Style.space3 + header.height + 1, 3000);
   }
 
-  function test_notFoldable_data() {
+  function test_not_foldable_data() {
     return rows();
   }
 
-  function test_notFoldable(data) {
+  function test_not_foldable(data) {
     const pane = make(data, {
       "foldable": false
     });
@@ -256,7 +256,7 @@ TestCase {
   }
 
   // A folded card whose last row is a shut fold row still closes with the padding
-  function test_foldedEndsWithPadding() {
+  function test_folded_ends_with_padding() {
     harness.configure({});
     const pane = createTemporaryObject(foldComp, root);
     verify(pane);
@@ -271,7 +271,7 @@ TestCase {
   }
 
   // A header button sits inside the card's padding and clear of the first row; a zero-height wrapper doesn't
-  function test_headerExtrasButton() {
+  function test_header_extras_button() {
     harness.configure({});
     const pane = createTemporaryObject(oneGroupComp, root, {
       "extras": realButtonComp
@@ -295,7 +295,7 @@ TestCase {
   }
 
   // A title-less card with a description shows it as its header, with no fold
-  function test_titlelessDescription() {
+  function test_titleless_description() {
     harness.configure({});
     const pane = createTemporaryObject(oneGroupComp, root, {
       "title": "",
@@ -315,11 +315,11 @@ TestCase {
     compare(Math.round(pane.row0.mapToItem(group, 0, 0).y), Math.round(header.mapToItem(group, 0, header.height).y + Style.space2));
   }
 
-  function test_hideRule_data() {
+  function test_hide_rule_data() {
     return rows();
   }
 
-  function test_hideRule(data) {
+  function test_hide_rule(data) {
     const pane = make(data);
     // The form stub (all hidden) and the two rows are what counts
     compare(pane.group.visible, true, "a row shows");
@@ -380,11 +380,11 @@ TestCase {
     return root.findAll(row, it => it.objectName === "rowTint")[0];
   }
 
-  function test_levelIndentsTheBody_data() {
+  function test_level_indents_the_body_data() {
     return rows();
   }
 
-  function test_levelIndentsTheBody(data) {
+  function test_level_indents_the_body(data) {
     harness.configure(data);
     for (const level of [0, 1, 2, 3]) {
       const host = root.make_level(level);
@@ -396,11 +396,11 @@ TestCase {
     compare(root.rails(half.row), []);
   }
 
-  function test_tintStartsAtTheRowsRule_data() {
+  function test_tint_starts_at_the_rows_rule_data() {
     return rows();
   }
 
-  function test_tintStartsAtTheRowsRule(data) {
+  function test_tint_starts_at_the_rows_rule(data) {
     harness.configure(data);
     const at = host => root.tint(host.row).mapToItem(host.row, 0, 0).x;
     compare(at(root.make_level(0)), -Style.rowBleed, "depth 0 bleeds past the edge");
@@ -466,11 +466,11 @@ TestCase {
     return root.findAll(item, it => it.bodyHeight !== undefined && it.depth !== undefined);
   }
 
-  function test_formLevels_data() {
+  function test_form_levels_data() {
     return rows();
   }
 
-  function test_formLevels(data) {
+  function test_form_levels(data) {
     harness.configure(data);
     const pane = createTemporaryObject(formComp, root);
     verify(pane);
@@ -527,7 +527,7 @@ TestCase {
     }
   }
 
-  function test_hiddenIndentedRowKeepsBodyWidth() {
+  function test_hidden_indented_row_keeps_body_width() {
     harness.configure({});
     const pane = createTemporaryObject(hiddenComp, root);
     verify(pane);
@@ -600,7 +600,7 @@ TestCase {
     return null;
   }
 
-  function test_tintInsideTheClip_data() {
+  function test_tint_inside_the_clip_data() {
     return [
       {
         "tag": "100%",
@@ -613,7 +613,7 @@ TestCase {
     ];
   }
 
-  function test_tintInsideTheClip(data) {
+  function test_tint_inside_the_clip(data) {
     harness.configure({
       "scale": data.scale
     });
@@ -684,7 +684,7 @@ TestCase {
     }
   }
 
-  function test_foldFormRow() {
+  function test_fold_form_row() {
     harness.configure({});
     const pane = createTemporaryObject(foldComp, root);
     verify(pane);
@@ -775,11 +775,11 @@ TestCase {
     return out;
   }
 
-  function test_foldRowParity_data() {
+  function test_fold_row_parity_data() {
     return parityData();
   }
 
-  function test_foldRowParity(data) {
+  function test_fold_row_parity(data) {
     harness.configure(data);
     // The stub keeps fold state across rows: every row starts shut
     SettingsManager.collapsed = ({});
@@ -892,7 +892,7 @@ TestCase {
     }
   }
 
-  function test_trailingChildEndsCard_data() {
+  function test_trailing_child_ends_card_data() {
     return [
       {
         "tag": "hidden after a shut fold: ends shut",
@@ -907,7 +907,7 @@ TestCase {
     ];
   }
 
-  function test_trailingChildEndsCard(data) {
+  function test_trailing_child_ends_card(data) {
     harness.configure({});
     const pane = createTemporaryObject(trailComp, root, {
       "trailShown": data.shown
@@ -955,11 +955,11 @@ TestCase {
     }
   }
 
-  function test_narrowControlInACard_data() {
+  function test_narrow_control_in_a_card_data() {
     return rows().filter(r => r.w === 340);
   }
 
-  function test_narrowControlInACard(data) {
+  function test_narrow_control_in_a_card(data) {
     harness.configure(data);
     const pane = createTemporaryObject(comboCard, root);
     verify(pane);
@@ -1003,11 +1003,11 @@ TestCase {
     }
   }
 
-  function test_handBuiltCard_data() {
+  function test_hand_built_card_data() {
     return rows().filter(r => r.w === 340);
   }
 
-  function test_handBuiltCard(data) {
+  function test_hand_built_card(data) {
     harness.configure(data);
     const pane = createTemporaryObject(handComp, root);
     verify(pane);
@@ -1050,11 +1050,11 @@ TestCase {
     }
   }
 
-  function test_titlelessFieldRows_data() {
+  function test_titleless_field_rows_data() {
     return rows().filter(r => r.w === 340);
   }
 
-  function test_titlelessFieldRows(data) {
+  function test_titleless_field_rows(data) {
     harness.configure(data);
     const pane = createTemporaryObject(bindsComp, root);
     verify(pane);
@@ -1230,11 +1230,11 @@ TestCase {
     return out;
   }
 
-  function test_rowsAbut_data() {
+  function test_rows_abut_data() {
     return rhythmRows();
   }
 
-  function test_rowsAbut(data) {
+  function test_rows_abut(data) {
     harness.configure(data);
     const pane = createTemporaryObject(rowsComp, root);
     verify(pane);
@@ -1244,11 +1244,11 @@ TestCase {
   }
 
   // The heading's bottom to the first row (a control: unchanged)
-  function test_headingToFirstRow_data() {
+  function test_heading_to_first_row_data() {
     return rhythmRows();
   }
 
-  function test_headingToFirstRow(data) {
+  function test_heading_to_first_row(data) {
     harness.configure(data);
     const pane = createTemporaryObject(rowsComp, root);
     verify(pane);
@@ -1259,11 +1259,11 @@ TestCase {
     compare(Math.round(top - bottom), Style.space2);
   }
 
-  function test_cardsStackBySpace2_data() {
+  function test_cards_stack_by_space2_data() {
     return rhythmRows();
   }
 
-  function test_cardsStackBySpace2(data) {
+  function test_cards_stack_by_space2(data) {
     harness.configure(data);
     const pane = createTemporaryObject(stackComp, root);
     verify(pane);
@@ -1274,11 +1274,11 @@ TestCase {
     compare(Math.round(pane.g1.height - pane.last1.mapToItem(pane.g1, 0, pane.last1.height).y), Style.space3);
   }
 
-  function test_groupColumnsGap_data() {
+  function test_group_columns_gap_data() {
     return rhythmRows();
   }
 
-  function test_groupColumnsGap(data) {
+  function test_group_columns_gap(data) {
     harness.configure(data);
     const pane = createTemporaryObject(columnsComp, root);
     verify(pane);
@@ -1289,11 +1289,11 @@ TestCase {
   }
 
   // A group is an outlined card with its padding above and below
-  function test_groupKeepsItsPadding_data() {
+  function test_group_keeps_its_padding_data() {
     return rhythmRows();
   }
 
-  function test_groupKeepsItsPadding(data) {
+  function test_group_keeps_its_padding(data) {
     harness.configure(data);
     const col = createTemporaryObject(boxedComp, root);
     verify(col);

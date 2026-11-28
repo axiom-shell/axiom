@@ -9,16 +9,16 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 
-/* CompositorManager's backend on sway (docs/dev/compositor/contract.md,
- * docs/dev/compositor/sway-backend.md): sway's state as the
- * compositor-neutral shapes (SwayState), and the primitives CompositorManager
- * builds on. Outputs and workspaces come live from Quickshell.I3; the windows
- * from sway's tree (get_tree), read again on its events. The only reader of
- * Quickshell.I3 outside the Sway* services. */
+// CompositorManager's backend on sway (docs/dev/compositor/contract.md,
+// docs/dev/compositor/sway-backend.md): sway's state as the
+// compositor-neutral shapes (SwayState), and the primitives CompositorManager
+// builds on. Outputs and workspaces come live from Quickshell.I3; the windows
+// from sway's tree (get_tree), read again on its events. The only reader of
+// Quickshell.I3 outside the Sway* services.
 Singleton {
   id: root
 
-  // --- Backend state (docs/dev/compositor/contract.md) ---
+  // -- Backend state (docs/dev/compositor/contract.md) --
 
   // The windows (SwayState.window), most recently used ranked first
   readonly property var windows: SwayState.ranked(_info.windows, JSON.parse(_recent.idsJson), _info.order, activeWindowId)
@@ -95,7 +95,7 @@ Singleton {
     return caps;
   }, {}) : {})
 
-  // --- Events ---
+  // -- Events --
 
   // An output was connected or disconnected
   signal outputsHotplugged
@@ -116,7 +116,7 @@ Singleton {
     _debounce.restart();
   }
 
-  // --- Windows ---
+  // -- Windows --
 
   function _con(id) {
     return `[con_id=${Number(id)}]`;
@@ -201,7 +201,7 @@ Singleton {
     return null;
   }
 
-  // --- Workspaces (the layout is CompositorManager's) ---
+  // -- Workspaces (the layout is CompositorManager's) --
 
   // Sends the focused window to workspace `id`, staying put
   function sendWindowToWorkspace(id) {
@@ -255,7 +255,7 @@ Singleton {
     SwayIpcManager.command(lines.join("; "), () => root.refresh());
   }
 
-  // --- Special workspaces: groups of marked scratchpad windows ---
+  // -- Special workspaces: groups of marked scratchpad windows --
 
   // Shows the windows of special group `name` on the focused output, or
   // hides them when any is shown there (SwayState.specialToggle). "" is the
@@ -281,7 +281,7 @@ Singleton {
     SwayIpcManager.command(SwayState.specialMove(root._marks, id, name).join("; "), () => root._debounce.restart());
   }
 
-  // --- axiom's config layer (the daemon's: CompositorConfigManager) ---
+  // -- axiom's config layer (the daemon's: CompositorConfigManager) --
 
   // axiom's config layer changed sway at runtime (the daemon's
   // compositor.applied): sway sends no event for a gap change, so the
@@ -371,7 +371,7 @@ Singleton {
     }
   }
 
-  // --- Session and input ---
+  // -- Session and input --
 
   // Calls back with the main keyboard's layouts ({ layouts, index, keymap },
   // SwayState.keyboard), or null; `registry` names them
@@ -399,7 +399,7 @@ Singleton {
     SwayIpcManager.dispatch("exit");
   }
 
-  // --- Outputs (the Monitors page) ---
+  // -- Outputs (the Monitors page) --
 
   // Calls back with every output in detail, disabled ones too
   // (SwayState.outputDetails), or null
@@ -412,7 +412,7 @@ Singleton {
     root.refresh();
   }
 
-  // --- State behind the members above ---
+  // -- State behind the members above --
 
   // The last tree read (SwayState.tree)
   property var _info: SwayState.tree(null)

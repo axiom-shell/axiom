@@ -9,22 +9,20 @@ import qs.services.compositor
 import qs.services.system
 import qs.services.ui
 
-/*
- * The emoji the launcher searches (";" or /emoji), while Launcher.emoji is on.
- * `entries()` is config/json/emoji.json (built by scripts/generate_emoji.py
- * from Unicode's emoji-test.txt and CLDR's keywords), read the first time
- * it's asked for: [{ e: emoji, n: name, g: group, k: [keywords] }], in
- * Unicode's order. `copy` puts one on the clipboard and counts it in
- * `usage` ({ emoji: { count, last } }), for LauncherManager's frecency;
- * `type` also types it into the focused window (the daemon's virtual
- * keyboard, where the compositor has one: `canType`), or where the focused
- * app can't take it as keys (Chromium and Electron drop characters above
- * U+FFFF from key events) pastes it with Ctrl+V (the clipboard already holds
- * it from copy()), 150 ms after it's called, so call it once that window has
- * the keyboard back.
- * `search(query, limit, group)` ranks them for the launcher and the EmojiPicker
- * module (most used first with no query).
- */
+// The emoji the launcher searches (";" or /emoji), while Launcher.emoji is on.
+// `entries()` is config/json/emoji.json (built by scripts/gen_emoji.py
+// from Unicode's emoji-test.txt and CLDR's keywords), read the first time
+// it's asked for: [{ e: emoji, n: name, g: group, k: [keywords] }], in
+// Unicode's order. `copy` puts one on the clipboard and counts it in
+// `usage` ({ emoji: { count, last } }), for LauncherManager's frecency;
+// `type` also types it into the focused window (the daemon's virtual
+// keyboard, where the compositor has one: `canType`), or where the focused
+// app can't take it as keys (Chromium and Electron drop characters above
+// U+FFFF from key events) pastes it with Ctrl+V (the clipboard already holds
+// it from copy()), 150 ms after it's called, so call it once that window has
+// the keyboard back.
+// `search(query, limit, group)` ranks them for the launcher and the EmojiPicker
+// module (most used first with no query).
 QtObject {
   id: root
 
@@ -43,7 +41,7 @@ QtObject {
         root._entries = [];
       }
       if (root._entries.length === 0)
-        console.warn("[EmojiManager] No emoji: run scripts/generate_emoji.py");
+        console.warn("[EmojiManager] No emoji: run scripts/gen_emoji.py");
     }
     return root._entries;
   }
@@ -103,7 +101,7 @@ QtObject {
     _typeLater.restart();
   }
 
-  // --- Private ---
+  // -- Private --
 
   property var _entries: null
   property string _typing: ""

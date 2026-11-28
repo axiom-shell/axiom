@@ -21,7 +21,7 @@ QtObject {
   // CompositorManager
   property var manager: null
 
-  // --- Layout changes ---
+  // -- Layout changes --
 
   // The layout the workspaces were last laid out for ({ blocks, size,
   // grid, bases })
@@ -106,7 +106,7 @@ QtObject {
     }
   }
 
-  // --- Hotplugs ---
+  // -- Hotplugs --
 
   // The layout before the hotplugs a re-home waits on ({ size, bases }),
   // and the outputs they took away
@@ -187,7 +187,7 @@ QtObject {
     manager.backend.applyRemap(plan, outputs.map(o => o.name));
   }
 
-  // --- Returns ---
+  // -- Returns --
 
   // Where each re-homed window came from, by window id ({ workspace,
   // monitor, description, shown }: the workspace it left, the monitor's
@@ -310,7 +310,7 @@ QtObject {
     root.remap(root._layout(), root._layout(), false);
   }
 
-  // --- The start workspace ---
+  // -- The start workspace --
 
   // Which run of the compositor this is (CompositorKind.sessionKey: a new
   // one each time it starts), "" when unknown

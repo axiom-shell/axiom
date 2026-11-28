@@ -3,15 +3,13 @@ import QtQuick
 import QtQuick.Shapes
 import qs.config
 
-/**
- * Concave "inverted corner" piece: fills the corner (isLeft/isTop) of
- * its box with fillColor up to a quarter-circle, and strokes the two box
- * edges leading away from that corner joined by the arc.
- *
- * The stroke is centred half a stroke width inside the box, so its full
- * width is visible and lines up pixel-exactly with a Rectangle-drawn
- * stroke along the same edges (e.g. BorderPanel's inner line).
- */
+// Concave "inverted corner" piece: fills the corner (isLeft/isTop) of
+// its box with fillColor up to a quarter-circle, and strokes the two box
+// edges leading away from that corner joined by the arc.
+//
+// The stroke is centred half a stroke width inside the box, so its full
+// width is visible and lines up pixel-exactly with a Rectangle-drawn
+// stroke along the same edges (e.g. BorderPanel's inner line).
 Item {
   id: root
   property int borderRadius: Style.radiusOuter
@@ -42,7 +40,7 @@ Item {
     anchors.fill: parent
     preferredRendererType: Shape.CurveRenderer
 
-    // --- FILL ---
+    // -- FILL --
     ShapePath {
       fillColor: Style.edgeFill(root.fillColor, false)
       strokeColor: "transparent"
@@ -76,7 +74,7 @@ Item {
       }
     }
 
-    // --- STROKE ---
+    // -- STROKE --
     ShapePath {
       fillColor: "transparent"
       strokeColor: root.strokeColor

@@ -8,7 +8,7 @@ import qs.components.methods
 QtObject {
   id: root
 
-  // --- Paths (from the environment, not from any config value) ---
+  // -- Paths (from the environment, not from any config value) --
   readonly property string homeDirectory: Quickshell.env("HOME") + "/"
   // The shell's QML folder (the tree's qml/, where shell.qml is), always
   // with a trailing slash. Read-only: axiom writes nothing under it (a
@@ -49,7 +49,7 @@ QtObject {
   readonly property string packagedVersion: (FileManager.read(root.installTreePath + ".packaged") ?? "").trim()
   readonly property bool packaged: packagedVersion !== ""
 
-  // --- What axiom writes (ConfigManager.dataDirs: the XDG folders) ---
+  // -- What axiom writes (ConfigManager.dataDirs: the XDG folders) --
 
   // $XDG_CONFIG_HOME/axiom/: config.json and saved/
   readonly property string userConfigPath: ConfigManager.configDir
@@ -86,7 +86,7 @@ QtObject {
   // clipboard thumbnails, copy-only screenshots, album art
   readonly property string runtimePath: root.runtimeDir + "/axiom/"
 
-  // --- The greeter (GreeterManager, greeter.qml) ---
+  // -- The greeter (GreeterManager, greeter.qml) --
 
   // This instance is the greeter: greetd's login screen, running as
   // greetd's user from the installed copy (set by greeter-session.sh;

@@ -415,7 +415,7 @@ QtObject {
       Qt.callLater(root._followPreview);
   }
 
-  // --- How a menu opens ---
+  // -- How a menu opens --
 
   // What opens menu `id` besides hovering its edge: bar Buttons and
   // widgets opening it as their popout (in the bar editor's draft) and
@@ -514,7 +514,7 @@ QtObject {
     });
   }
 
-  // --- Trying a menu out ---
+  // -- Trying a menu out --
 
   // Whether the editor wants the selected menu held open; stays set while
   // switching menus, so the preview follows the selection

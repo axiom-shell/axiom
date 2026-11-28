@@ -158,7 +158,7 @@ QtObject {
     return x - root.alongStart;
   }
 
-  // --- Its frame (SurfaceContext.frame): ends and room ---
+  // -- Its frame (SurfaceContext.frame): ends and room --
   function _side(location, held) {
     const name = ScreenEdge.name(location);
     const frame = root.bare ? 0 : ScreenEdgeManager.frameLineOn(root.screen, location);
@@ -236,7 +236,7 @@ QtObject {
   // they start past it when it reserves its space, whether it does or not
   // (the same spot either way)
   readonly property real _detachedPush: root.barConfig ? BarsConfig.detachedPush(root.barConfig, ScreenEdgeManager.windowsPast(root.screen, root.edge, root.barConfig.frame, root.barConfig.trim), root.connectorGap) : 0
-  // --- Its box (SurfaceContext.layout) ---
+  // -- Its box (SurfaceContext.layout) --
   readonly property var _layout: SurfaceContext.layout(root.frame, Object.assign({}, root._params, {
     "pills": root._pills,
     "centre": root._toScreen(root.centre),
@@ -382,7 +382,7 @@ QtObject {
     });
   }
 
-  // --- Its shadow (SurfaceContext.shadow) ---
+  // -- Its shadow (SurfaceContext.shadow) --
   // What it grows out of: its bar (pills, islands, a merged box's outer
   // edge, a solid bar's own stroke with the border off), the border, or a
   // bare edge. AttachedSurface's shadowLook.
@@ -391,7 +391,7 @@ QtObject {
   // lag a moment)
   readonly property var shadowLook: root.shadow.look === "bar" && root.ownBar ? root.ownBar : BarStyle.look
 
-  // --- Its fill (BlurManager) ---
+  // -- Its fill (BlurManager) --
   // Whether its window is on the Overlay layer, and where it is on screen
   // (null until known): the blur window draws its fill and casts its
   // shadow where it backs that layer on its screen; else it fills itself,
@@ -401,7 +401,7 @@ QtObject {
   readonly property bool backed: BlurManager.backsOn(root.screen, root.onOverlayLayer) && root.origin !== null
   readonly property bool opaque: BlurManager.opaqueOn(root.screen)
 
-  // --- The strokes it covers ---
+  // -- The strokes it covers --
   // The surface (its AttachedSurface, positioned in the window at
   // `origin`) and whether its openings show: out, and granted
   property var attachedSurface: null

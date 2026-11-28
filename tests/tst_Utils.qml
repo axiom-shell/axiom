@@ -17,7 +17,7 @@ TestCase {
     Item {}
   }
 
-  function test_valueAt() {
+  function test_value_at() {
     const object = {
       "Bar": {
         "items": [
@@ -35,7 +35,7 @@ TestCase {
     compare(Utils.valueAt(undefined, ["a"]), undefined, "no object");
   }
 
-  function test_spaceWords() {
+  function test_space_words() {
     compare(Utils.spaceWords("SystemTray"), "System Tray");
     compare(Utils.spaceWords("Grid2x2"), "Grid 2x2");
     compare(Utils.spaceWords("HalfWide"), "Half Wide");
@@ -45,7 +45,7 @@ TestCase {
 
   // An enum value with no label, as the form shows it (check_i18n.py's
   // enum_label makes the same keys)
-  function test_enumLabel() {
+  function test_enum_label() {
     compare(Utils.enumLabel("top"), "Top");
     compare(Utils.enumLabel("accentText"), "Accent text");
     compare(Utils.enumLabel("grid2x2"), "Grid 2x2");
@@ -53,21 +53,21 @@ TestCase {
     compare(Utils.enumLabel(""), "");
   }
 
-  function test_edgeArrow() {
+  function test_edge_arrow() {
     compare(Utils.edgeArrow("top"), "arrow_upward");
     compare(Utils.edgeArrow("bottom"), "arrow_downward");
     compare(Utils.edgeArrow("left"), "arrow_back");
     compare(Utils.edgeArrow("right"), "arrow_forward");
   }
 
-  function test_horizontalAlignment() {
+  function test_horizontal_alignment() {
     compare(Utils.horizontalAlignment("left"), Text.AlignLeft);
     compare(Utils.horizontalAlignment("center"), Text.AlignHCenter);
     compare(Utils.horizontalAlignment("right"), Text.AlignRight);
     compare(Utils.horizontalAlignment("sideways"), Text.AlignHCenter, "an unknown value centres, as Greeting, Login, Password and custom elements' align all did");
   }
 
-  function test_freeId() {
+  function test_free_id() {
     compare(Utils.freeId("dock", []), "dock");
     compare(Utils.freeId("dock", ["dock"]), "dock2");
     compare(Utils.freeId("dock2", ["dock", "dock2"]), "dock3");
@@ -76,7 +76,7 @@ TestCase {
     compare(Utils.freeId("bar-1", ["bar-1"], "-"), "bar-2");
   }
 
-  function test_newId() {
+  function test_new_id() {
     compare(Utils.newId("ClockCalendar", []), "clockCalendar");
     compare(Utils.newId("", null), "item");
     compare(Utils.newId("clock", [
@@ -99,7 +99,7 @@ TestCase {
     ]), "layout-3", "a taken id is numbered on from its stem");
   }
 
-  function test_keepEqual() {
+  function test_keep_equal() {
     const id = e => e.id;
     const mk = (i, c) => ({
           "id": i,
@@ -132,7 +132,7 @@ TestCase {
     verify(order.items[0] === added.items[2] && order.items[1] === added.items[0]);
   }
 
-  function test_deepEqual() {
+  function test_deep_equal() {
     verify(Utils.deepEqual({
       "a": 1,
       "b": [1,
@@ -169,7 +169,7 @@ TestCase {
     verify(!Utils.deepEqual([Qt.rect(1, 2, 3, 4)], [Qt.rect(1, 2, 3, 4), Qt.rect(0, 0, 1, 1)]), "a rect more");
   }
 
-  function test_deepEqual_identity_data() {
+  function test_deep_equal_identity_data() {
     return [
       {
         "tag": "key order is ignored in plain data",
@@ -210,11 +210,11 @@ TestCase {
     ];
   }
 
-  function test_deepEqual_identity(data) {
+  function test_deep_equal_identity(data) {
     compare(Utils.deepEqual(data.a.call(this), data.b.call(this)), data.equal);
   }
 
-  function test_isPlainObject_data() {
+  function test_is_plain_object_data() {
     return [
       {
         "tag": "an object literal is plain",
@@ -239,11 +239,11 @@ TestCase {
     ];
   }
 
-  function test_isPlainObject(data) {
+  function test_is_plain_object(data) {
     compare(Utils.isPlainObject(data.value.call(this)), data.plain);
   }
 
-  function test_withEntry() {
+  function test_with_entry() {
     const map = {
       "a": 1,
       "b": 2
@@ -295,7 +295,7 @@ TestCase {
     compare(Utils.clone(undefined), null);
   }
 
-  function test_recordUse() {
+  function test_record_use() {
     const first = Utils.recordUse({}, "x", 100);
     compare(first, {
       "x": {
@@ -313,7 +313,7 @@ TestCase {
     compare(Utils.recordUse(null, "y", 5).y.count, 1);
   }
 
-  function test_visualWidth_counts_wide_chars_twice() {
+  function test_visual_width_counts_wide_chars_twice() {
     compare(Utils.visualWidth("abc"), 3);
     compare(Utils.visualWidth("日本"), 4);
     compare(Utils.visualWidth("😀"), 1);
@@ -335,7 +335,7 @@ TestCase {
     compare(Utils.formatRate(undefined), "0 B/s");
   }
 
-  function test_formatBytes() {
+  function test_format_bytes() {
     compare(Utils.formatBytes(820), "820 B");
     compare(Utils.formatBytes(4.2 * 1024 * 1024), "4.2 MiB");
     compare(Utils.formatBytes(37 * 1024 * 1024 + 5000), "37 MiB");
@@ -344,12 +344,12 @@ TestCase {
     compare(Utils.formatBytes(undefined), "0 B");
   }
 
-  function test_formatSize() {
+  function test_format_size() {
     compare(Utils.formatSize(512 * Utils.bytesPerGiB), "512G");
     compare(Utils.formatSize(1843 * Utils.bytesPerGiB), "1.8T");
   }
 
-  function test_monthGrid() {
+  function test_month_grid() {
     // September 2026 starts on a Tuesday
     const sunday = Utils.monthGrid(2026, 8, 0, new Date(2026, 8, 26).toDateString());
     compare(sunday.length, 42);
@@ -363,7 +363,7 @@ TestCase {
     compare(Utils.monthGrid(2026, 1, 0, "")[0].day, 1);
   }
 
-  function test_subtractSpans() {
+  function test_subtract_spans() {
     compare(Utils.subtractSpans(0, 100, []), [
       {
         "start": 0,
@@ -425,7 +425,7 @@ TestCase {
     ]), []);
   }
 
-  function test_firstFormRow() {
+  function test_first_form_row() {
     const rows = [null,
       {
         "shown": false,
@@ -448,14 +448,14 @@ TestCase {
     compare(Utils.firstFormRow(3, i => rows[i]), -1);
   }
 
-  function test_isSymbolName() {
+  function test_is_symbol_name() {
     verify(Utils.isSymbolName("terminal"));
     verify(!Utils.isSymbolName("Web"), "capitals: words");
     verify(!Utils.isSymbolName(""), "a glyph");
     verify(!Utils.isSymbolName(""));
   }
 
-  function test_fromCelsius() {
+  function test_from_celsius() {
     compare(Utils.fromCelsius(0, "celsius"), 0);
     compare(Utils.fromCelsius(0, "fahrenheit"), 32);
     compare(Utils.fromCelsius(100, "fahrenheit"), 212);
@@ -490,7 +490,7 @@ TestCase {
     return pieces;
   }
 
-  function test_subtractRects() {
+  function test_subtract_rects() {
     const bounds = Qt.rect(10, 10, 100, 50);
     // None taken
     compare(checkRects(bounds, []).length, 1);
@@ -505,7 +505,7 @@ TestCase {
     compare(checkRects(bounds, [Qt.rect(0, 0, 200, 200)]), []);
   }
 
-  function test_insetUnion() {
+  function test_inset_union() {
     const flat = rs => rs.map(r => [r.x, r.y, r.width, r.height]);
     const bounds = Qt.rect(0, 0, 100, 100);
     // Two meeting at x 30: the shared edge stays
@@ -520,7 +520,7 @@ TestCase {
     compare(flat(Utils.insetUnion(bounds, [Qt.rect(90, 40, 20, 10)], 0.5)), [[90.5, 40.5, 9.5, 9]]);
   }
 
-  function test_subtractHoles() {
+  function test_subtract_holes() {
     const flat = rs => rs.map(r => [r.x, r.y, r.width, r.height]);
     const bounds = Qt.rect(0, 0, 100, 100);
     const t = Utils.tieInset;
@@ -545,7 +545,7 @@ TestCase {
     }
   }
 
-  function test_temperatureSymbol() {
+  function test_temperature_symbol() {
     compare(Utils.temperatureSymbol("celsius"), "°C");
     compare(Utils.temperatureSymbol("fahrenheit"), "°F");
   }

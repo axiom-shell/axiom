@@ -1,12 +1,10 @@
 pragma Singleton
 import QtQuick
 
-/**
- * Guesses icon names for window classes: desktop entries first, then known
- * substitutions, then name variants that exist in the icon theme. Pure: the
- * caller (AppIconManager) hands it the theme and the desktop entries.
- * Substitution tables adapted from end-4's dots-hyprland.
- */
+// Guesses icon names for window classes: desktop entries first, then known
+// substitutions, then name variants that exist in the icon theme. Pure: the
+// caller (AppIconManager) hands it the theme and the desktop entries.
+// Substitution tables adapted from end-4's dots-hyprland.
 QtObject {
   id: root
 

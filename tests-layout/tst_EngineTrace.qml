@@ -63,7 +63,7 @@ TestCase {
     EngineTrace.setTracing(false);
   }
 
-  function test_recordKeepsLastPerStage() {
+  function test_record_keeps_last_per_stage() {
     EngineTrace.record({
       "engine": "last",
       "stage": "s",
@@ -82,7 +82,7 @@ TestCase {
     compare(EngineTrace.recordsOf("last", "a").s.output, 4);
   }
 
-  function test_recordsOfReturnsEveryStage() {
+  function test_records_of_returns_every_stage() {
     EngineTrace.record({
       "engine": "stages",
       "stage": "s",
@@ -101,7 +101,7 @@ TestCase {
     compare(EngineTrace.recordsOf("stages", "a").t.output, 6);
   }
 
-  function test_forgetDropsAllStagesOfAnId() {
+  function test_forget_drops_all_stages_of_an_id() {
     for (const stage of ["s", "t"])
       EngineTrace.record({
         "engine": "forget",
@@ -126,7 +126,7 @@ TestCase {
     compare(EngineTrace.idsOf("forget"), ["b"]);
   }
 
-  function test_idsOfIsSorted() {
+  function test_ids_of_is_sorted() {
     for (const id of ["c", "a", "b"])
       EngineTrace.record({
         "engine": "sorted",
@@ -138,7 +138,7 @@ TestCase {
     compare(EngineTrace.idsOf("sorted"), ["a", "b", "c"]);
   }
 
-  function test_recordInsideBindingNotifiesNothing() {
+  function test_record_inside_binding_notifies_nothing() {
     const o = createTemporaryObject(boundComp, root);
     o.changes = 0;
     verify(EngineTrace.recordsOf("bound", "a").s !== undefined);
@@ -159,14 +159,14 @@ TestCase {
     compare(o.changes, 0);
   }
 
-  function test_tracingIsOffByDefaultAndSet() {
+  function test_tracing_is_off_by_default_and_set() {
     EngineTrace.setTracing(false);
     verify(EngineTrace.tracing === false);
     EngineTrace.setTracing(true);
     verify(EngineTrace.tracing === true);
   }
 
-  function test_recordWhileOffKeepsNothing() {
+  function test_record_while_off_keeps_nothing() {
     EngineTrace.setTracing(false);
     EngineTrace.record({
       "engine": "off",
@@ -179,11 +179,11 @@ TestCase {
     compare(EngineTrace.idsOf("off"), []);
   }
 
-  function test_recordsOfUnknownIdIsEmpty() {
+  function test_records_of_unknown_id_is_empty() {
     compare(EngineTrace.recordsOf("unknown", "x"), {});
   }
 
-  function test_recordsOfReturnsACopy() {
+  function test_records_of_returns_a_copy() {
     EngineTrace.record({
       "engine": "copy",
       "stage": "s",
@@ -198,7 +198,7 @@ TestCase {
     compare(Object.keys(EngineTrace.recordsOf("copy", "a")), ["s"]);
   }
 
-  function test_recordingBindingRerunsWhenTracingTurnsOn() {
+  function test_recording_binding_reruns_when_tracing_turns_on() {
     EngineTrace.setTracing(false);
     const o = createTemporaryObject(rerunComp, root);
     compare(o.seen, {});
@@ -207,7 +207,7 @@ TestCase {
     compare(o.seen.s.output, 2);
   }
 
-  function test_reservedNamesAreOrdinaryKeys() {
+  function test_reserved_names_are_ordinary_keys() {
     for (const [engine, id] of [["__proto__", "x"], ["reserved", "__proto__"], ["reserved", "toString"], ["reserved", "hasOwnProperty"]]) {
       EngineTrace.record({
         "engine": engine,
@@ -232,7 +232,7 @@ TestCase {
     verify(Object.keys(Object.prototype).length === 0);
   }
 
-  function test_reservedStagesAreOrdinaryKeys() {
+  function test_reserved_stages_are_ordinary_keys() {
     for (const stage of ["__proto__", "toString", "constructor"])
       EngineTrace.record({
         "engine": "rstage",
@@ -253,12 +253,12 @@ TestCase {
     compare(EngineTrace.recordsOf("rstage", "a"), {});
   }
 
-  function test_ipcTargetIsEngines() {
+  function test_ipc_target_is_engines() {
     compare(EngineTrace._ipc.target, "engines");
     compare(BackendManager._targets.length, 1);
   }
 
-  function test_ipcListAnswersSortedIds() {
+  function test_ipc_list_answers_sorted_ids() {
     for (const id of ["b", "a"])
       EngineTrace.record({
         "engine": "ipclist",
@@ -271,7 +271,7 @@ TestCase {
     compare(EngineTrace._ipc.list("ipcunknown"), "[]");
   }
 
-  function test_ipcExplainAnswersRecords() {
+  function test_ipc_explain_answers_records() {
     EngineTrace.record({
       "engine": "ipcexplain",
       "stage": "s",
@@ -283,7 +283,7 @@ TestCase {
     compare(EngineTrace._ipc.explain("ipcexplain", "none"), "{}");
   }
 
-  function test_ipcExplainKeepsReservedStages() {
+  function test_ipc_explain_keeps_reserved_stages() {
     for (const stage of ["__proto__", "toString"])
       EngineTrace.record({
         "engine": "ipcreserved",
@@ -297,7 +297,7 @@ TestCase {
     compare(Object.keys(JSON.parse(json)).sort(), ["__proto__", "toString"]);
   }
 
-  function test_ipcEnableDisableToggleStatus() {
+  function test_ipc_enable_disable_toggle_status() {
     EngineTrace._ipc.disable();
     verify(EngineTrace.tracing === false);
     verify(EngineTrace._ipc.status() === false);

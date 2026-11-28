@@ -3,15 +3,13 @@ import QtQuick
 import Quickshell
 import qs.services.core
 
-/*
- * The machine's clock, for Settings › System › Date & time: its time zone,
- * network time (on, synchronized) and setting the time by hand, through
- * systemd-timedated in axiom (datetime.*, backend/internal/timedate).
- * Each setter asks polkit, whose prompt is the user's agent's (axiom's own,
- * PolkitManager). A change made anywhere (timedatectl, another desktop's
- * settings) comes as datetime.state. `available` is false without
- * timedated (no systemd): the card then only shows the time.
- */
+// The machine's clock, for Settings › System › Date & time: its time zone,
+// network time (on, synchronized) and setting the time by hand, through
+// systemd-timedated in axiom (datetime.*, backend/internal/timedate).
+// Each setter asks polkit, whose prompt is the user's agent's (axiom's own,
+// PolkitManager). A change made anywhere (timedatectl, another desktop's
+// settings) comes as datetime.state. `available` is false without
+// timedated (no systemd): the card then only shows the time.
 Singleton {
   id: root
 

@@ -33,7 +33,7 @@ TestCase {
     compare(GridPosition.glyph(2, 4, false), "keyboard_arrow_down", "no middle dot with an even count");
   }
 
-  function test_headPips() {
+  function test_head_pips() {
     let h = GridPosition.head(5, 1, false, 30, 14);
     compare(h.kind, "pips");
     compare(h.dot, 3);
@@ -51,7 +51,7 @@ TestCase {
     compare(h.length, 15);
   }
 
-  function test_headArrow() {
+  function test_head_arrow() {
     let h = GridPosition.head(10, 3, false, 30, 14);
     compare(h.kind, "arrow");
     compare(h.glyph, "keyboard_arrow_up", "3 is before the middle, 4.5");
@@ -60,7 +60,7 @@ TestCase {
     compare(h.glyph, "keyboard_double_arrow_up");
   }
 
-  function test_headNone() {
+  function test_head_none() {
     compare(GridPosition.head(1, 0, false, 30, 14).kind, "none", "a single line has no position");
   }
 }

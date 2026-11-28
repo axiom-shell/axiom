@@ -84,7 +84,7 @@ PageCard {
     Layout.fillWidth: true
     spacing: Widget.padding * 1.5
 
-    // --- The picture: a click changes it ---
+    // -- The picture: a click changes it --
 
     Thumbnail {
       id: picture
@@ -134,7 +134,7 @@ PageCard {
       }
     }
 
-    // --- Names and the kind of account ---
+    // -- Names and the kind of account --
 
     ColumnLayout {
       Layout.fillWidth: true
@@ -178,7 +178,7 @@ PageCard {
       }
     }
 
-    // --- What can be changed ---
+    // -- What can be changed --
 
     ColumnLayout {
       Layout.alignment: Qt.AlignTop
@@ -235,7 +235,7 @@ PageCard {
     tone: root.passwordFailed ? "error" : "success"
   }
 
-  // --- The real name, edited ---
+  // -- The real name, edited --
 
   FoldingColumn {
     Layout.fillWidth: true
@@ -273,7 +273,7 @@ PageCard {
     }
   }
 
-  // --- The password, changed ---
+  // -- The password, changed --
 
   FoldingColumn {
     Layout.fillWidth: true

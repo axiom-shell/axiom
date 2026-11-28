@@ -291,7 +291,7 @@ TestCase {
     verify(!card.endsShut, "an open fold row no longer ends it");
   }
 
-  function test_switchRow_click_off_the_switch_flips() {
+  function test_switch_row_click_off_the_switch_flips() {
     const col = createTemporaryObject(columnComp, root);
     verify(col);
     wait(50);
@@ -304,7 +304,7 @@ TestCase {
     compare(col.flips, 1, "a click off the switch flipped it");
   }
 
-  function test_switchRow_unavailable_is_greyed_and_off_only() {
+  function test_switch_row_unavailable_is_greyed_and_off_only() {
     const col = createTemporaryObject(columnComp, root);
     verify(col);
     col.flip.unavailableReason = "Not here";

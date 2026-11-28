@@ -101,7 +101,7 @@ QtObject {
   }
   property bool _reloadWhenUnlocked: false
 
-  // --- The layouts editor's draft (Lockscreen.layout) and its preview ---
+  // -- The layouts editor's draft (Lockscreen.layout) and its preview --
 
   property ScreenLayoutEditor editor: ScreenLayoutEditor {
     path: ["Lockscreen", "layout"]

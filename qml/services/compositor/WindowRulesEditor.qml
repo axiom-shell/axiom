@@ -17,7 +17,7 @@ import qs.services.ui
 QtObject {
   id: root
 
-  // --- The draft ---
+  // -- The draft --
   readonly property var rules: _draft.local?.rules ?? []
   readonly property bool isDirty: _draft.isDirty
   // The draft's built-in switches (WindowRules.switches)

@@ -1,6 +1,6 @@
 # VPN
 
-> **Files:** `backend/internal/nmvpn/`, `backend/internal/daemon/vpn.go`, `qml/services/system/VpnManager.qml`, `qml/components/content/parts/VpnRow.qml`, `qml/components/content/VpnConnections/VpnConnections.qml`, `qml/components/bar/widgets/Vpn/Vpn.qml`, `qml/components/bar/widgets/Network/Network.qml`, `qml/components/content/WifiNetworks/WifiNetworks.qml`, `scripts/dev/vpn-fixtures.sh`, `qml/config/VpnConfig.qml`
+> **Files:** `backend/internal/nmvpn/`, `backend/internal/daemon/vpn.go`, `qml/services/system/VpnManager.qml`, `qml/components/content/parts/VpnRow.qml`, `qml/components/content/VpnConnections/VpnConnections.qml`, `qml/components/bar/widgets/Vpn/Vpn.qml`, `qml/components/bar/widgets/Network/Network.qml`, `qml/components/content/WifiNetworks/WifiNetworks.qml`, `scripts/dev/vpn_fixtures.sh`, `qml/config/VpnConfig.qml`
 > **Config:** `Vpn` (`VpnConfig`), `Apps.networkEditor`; the Network widget's `showVpnLock` / `vpnColor`
 > **Related:** [Networking and Bluetooth](networking-bluetooth.md), [Prompts](prompts.md), [Protocol](../backend/protocol.md), [D-Bus](../backend/dbus.md)
 
@@ -47,7 +47,7 @@ Quickshell's `Networking` has no VPN or active-connection types (`DeviceType` is
   - `/vpn [name]` in the launcher.
 
 ### Testing
-`scripts/dev/vpn-fixtures.sh up` adds two profiles owned by the user, so no admin rights are needed:
+`scripts/dev/vpn_fixtures.sh up` adds two profiles owned by the user, so no admin rights are needed:
 - A WireGuard profile that really comes up: a peer at TEST-NET 192.0.2.1, routing only 10.99.0.0/24.
 - An OpenVPN profile that asks for a password each time and then times out. Without `networkmanager-openvpn` it is added as a profile whose plugin is missing.
 

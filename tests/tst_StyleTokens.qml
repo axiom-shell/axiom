@@ -20,7 +20,7 @@ TestCase {
   property var _themeFiles: ({})
   property var _generated: null
 
-  // ---- loading ----
+  // -- loading --
 
   function defaults() {
     if (!root._defaults)
@@ -104,7 +104,7 @@ TestCase {
     return StyleTokens.derive(StyleTokens.theme(data, defaults()));
   }
 
-  // ---- colour helpers ----
+  // -- colour helpers --
 
   // A colour as the shell shows it: rounded to 8 bits
   function q(color) {
@@ -132,7 +132,7 @@ TestCase {
     verify(Math.abs(c.r - e.r) <= 1.5 / 255 && Math.abs(c.g - e.g) <= 1.5 / 255 && Math.abs(c.b - e.b) <= 1.5 / 255 && Math.abs(c.a - e.a) <= 1.5 / 255, `${message}: ${actual} != ${hex}`);
   }
 
-  // ---- the guaranteed pairs (tokens.md) ----
+  // -- the guaranteed pairs (tokens.md) --
 
   readonly property var toneFills: ({
       "page": "surfacePage",
@@ -256,7 +256,7 @@ TestCase {
     return [ratio >= min - 1e-9, ratio];
   }
 
-  // ---- theme resolution ----
+  // -- theme resolution --
 
   function test_theme_matches_theme_files() {
     const d = defaults();
@@ -300,7 +300,7 @@ TestCase {
     }
   }
 
-  // ---- the pair sweep ----
+  // -- the pair sweep --
 
   function test_contrast_targets() {
     const failures = [];

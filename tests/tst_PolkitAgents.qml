@@ -6,7 +6,7 @@ import qs.components.methods.polkit
 TestCase {
   name: "PolkitAgents"
 
-  function test_processPattern() {
+  function test_process_pattern() {
     const pattern = new RegExp(PolkitAgents.processPattern);
     verify(pattern.test("/usr/lib/hyprpolkitagent/hyprpolkitagent"));
     verify(pattern.test("/usr/lib/polkit-kde-authentication-agent-1 --flag"));

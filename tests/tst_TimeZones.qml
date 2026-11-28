@@ -46,7 +46,7 @@ TestCase {
     compare(TimeZones.shift(date, undefined), date);
   }
 
-  function test_msToNextCheck() {
+  function test_ms_to_next_check() {
     compare(TimeZones.msToNextCheck(new Date(Date.UTC(2026, 0, 1, 10, 0, 0))), 30 * 60000 + 2000, "on the half hour: the next one");
     compare(TimeZones.msToNextCheck(new Date(Date.UTC(2026, 0, 1, 10, 29, 0))), 60000 + 2000);
     compare(TimeZones.msToNextCheck(new Date(Date.UTC(2026, 0, 1, 10, 45, 0))), 15 * 60000 + 2000);

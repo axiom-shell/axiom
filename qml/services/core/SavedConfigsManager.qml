@@ -6,24 +6,22 @@ import qs.config
 import qs.services.ui
 import qs.services.apps
 
-/**
- * Named snapshots of the config (one JSON file each in
- * $XDG_CONFIG_HOME/axiom/saved/) and shared configs: the examples shipped in
- * examples/, imported files, exports to the home folder. axiom does the
- * work (saved.* and share.*, backend/internal/saved): a snapshot holds the
- * look, personal parts and commands (by the schema's x-scope) and the
- * wallpaper setup (x-snapshot), in the export format, so a saved file can
- * be shared or imported as it is; restoring applies it like an example,
- * plus the wallpaper setup where its files are still there. Restoring or
- * applying a shared file first keeps the running config (keep): edits go
- * into the active snapshot. One is always active: with none, axiom saves
- * the running config as "My setup". An applied file (the defaults too)
- * becomes the active snapshot; untouched, it goes once another replaces
- * it. Files of
- * any version axiom reads are taken (an older one is converted), and
- * nothing loaded changes a takeover setting (x-takeover). This keeps what
- * the settings page shows: the list, the active snapshot, a status line.
- */
+// Named snapshots of the config (one JSON file each in
+// $XDG_CONFIG_HOME/axiom/saved/) and shared configs: the examples shipped in
+// examples/, imported files, exports to the home folder. axiom does the
+// work (saved.* and share.*, backend/internal/saved): a snapshot holds the
+// look, personal parts and commands (by the schema's x-scope) and the
+// wallpaper setup (x-snapshot), in the export format, so a saved file can
+// be shared or imported as it is; restoring applies it like an example,
+// plus the wallpaper setup where its files are still there. Restoring or
+// applying a shared file first keeps the running config (keep): edits go
+// into the active snapshot. One is always active: with none, axiom saves
+// the running config as "My setup". An applied file (the defaults too)
+// becomes the active snapshot; untouched, it goes once another replaces
+// it. Files of
+// any version axiom reads are taken (an older one is converted), and
+// nothing loaded changes a takeover setting (x-takeover). This keeps what
+// the settings page shows: the list, the active snapshot, a status line.
 QtObject {
   id: root
 

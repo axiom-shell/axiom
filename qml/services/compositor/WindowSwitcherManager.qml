@@ -9,19 +9,17 @@ import qs.components.methods
 import qs.services.core
 import qs.services.ui
 
-/**
- * The window switcher (Alt+Tab). The compositor reports each step, pick
- * and cancel to the backend's switcherKey: on Hyprland a switcher bind
- * enters the submap axiom's layer defines (render.SwitcherLua), so nothing here can miss
- * a quick release. sway's and niri's binds report steps only (`nop axiom
- * switcher`, `axiom ipc windowSwitcher`), so while it's open the daemon
- * holds the keyboard (switcher.hold): it sees the keys already down when
- * it takes it, so a modifier let go before then still picks, and pushes
- * switcher.key on the release, Return or Escape. The first step opens it on the focused
- * monitor with the windows most recently used first, fixed until it
- * closes; it only shows once held for WindowSwitcherConfig.showDelay, so a
- * tap swaps windows without drawing anything.
- */
+// The window switcher (Alt+Tab). The compositor reports each step, pick
+// and cancel to the backend's switcherKey: on Hyprland a switcher bind
+// enters the submap axiom's layer defines (render.SwitcherLua), so nothing here can miss
+// a quick release. sway's and niri's binds report steps only (`nop axiom
+// switcher`, `axiom ipc windowSwitcher`), so while it's open the daemon
+// holds the keyboard (switcher.hold): it sees the keys already down when
+// it takes it, so a modifier let go before then still picks, and pushes
+// switcher.key on the release, Return or Escape. The first step opens it on the focused
+// monitor with the windows most recently used first, fixed until it
+// closes; it only shows once held for WindowSwitcherConfig.showDelay, so a
+// tap swaps windows without drawing anything.
 Singleton {
   id: root
 

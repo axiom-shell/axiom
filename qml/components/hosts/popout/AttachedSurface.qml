@@ -6,39 +6,37 @@ import qs.config
 import qs.components.reusable
 import qs.components.methods
 
-/**
- * The shared "grows out of an edge" shape used by bar popouts, screen-edge
- * popouts and bar pills: a content box joined to the attach edge by two
- * concave fillets, with the bar/border stroke cut open where it joins.
- * The whole thing slides in/out from the attach edge.
- *
- * The outline is a single path (fill + stroke), with the stroke centred
- * half a border width inside the edge. That way every segment (the line
- * along the attach edge, the fillets, the sides and the far corners) is
- * the same full width, pixel-aligned with the bar/border stroke it
- * continues. Composing rectangles + clipped corner pieces left some
- * segments half-clipped and anti-aliased.
- *
- * `edge` is the side the surface attaches to, as a ScreenEdge value.
- * `boxWidth`/`boxHeight` are the size of the content box; the implicit
- * size adds the connector and fillet margins around it. Attached, the box
- * starts on the attach edge (boxStart), the fillets beside it.
- *
- * Variations, all off by default:
- * - joinStart/joinEnd: that end sits flush on the perpendicular edge's
- *   stroke (u = 0 is its outer edge): no side wall, and the far edge meets
- *   that stroke with a concave fillet instead
- * - flushStart/flushEnd: that side wall runs straight into the attach
- *   edge with no fillet, continuing the end of what it attaches to (a
- *   floating bar's island, whose corner squares to meet it)
- * - detached: a plain rounded box, not joined to anything; detachedOffset
- *   sets it further in from the edge it slides out of
- * - straight/straightJoins: the attach edge, or the edges a join meets, are
- *   bare screen edges, so the walls run straight off them
- *
- * Place this at the attach edge of its window: for a Top edge, y = 0 of
- * this item should sit on the top of the bar/border stroke line.
- */
+// The shared "grows out of an edge" shape used by bar popouts, screen-edge
+// popouts and bar pills: a content box joined to the attach edge by two
+// concave fillets, with the bar/border stroke cut open where it joins.
+// The whole thing slides in/out from the attach edge.
+//
+// The outline is a single path (fill + stroke), with the stroke centred
+// half a border width inside the edge. That way every segment (the line
+// along the attach edge, the fillets, the sides and the far corners) is
+// the same full width, pixel-aligned with the bar/border stroke it
+// continues. Composing rectangles + clipped corner pieces left some
+// segments half-clipped and anti-aliased.
+//
+// `edge` is the side the surface attaches to, as a ScreenEdge value.
+// `boxWidth`/`boxHeight` are the size of the content box; the implicit
+// size adds the connector and fillet margins around it. Attached, the box
+// starts on the attach edge (boxStart), the fillets beside it.
+//
+// Variations, all off by default:
+// - joinStart/joinEnd: that end sits flush on the perpendicular edge's
+//   stroke (u = 0 is its outer edge): no side wall, and the far edge meets
+//   that stroke with a concave fillet instead
+// - flushStart/flushEnd: that side wall runs straight into the attach
+//   edge with no fillet, continuing the end of what it attaches to (a
+//   floating bar's island, whose corner squares to meet it)
+// - detached: a plain rounded box, not joined to anything; detachedOffset
+//   sets it further in from the edge it slides out of
+// - straight/straightJoins: the attach edge, or the edges a join meets, are
+//   bare screen edges, so the walls run straight off them
+//
+// Place this at the attach edge of its window: for a Top edge, y = 0 of
+// this item should sit on the top of the bar/border stroke line.
 Item {
   id: root
 
@@ -201,7 +199,7 @@ Item {
   readonly property bool attachTop: edge === ScreenEdge.Top
   readonly property bool attachBottom: edge === ScreenEdge.Bottom
 
-  // ---- Geometry, in edge-local coordinates ----
+  // -- Geometry, in edge-local coordinates --
   // u runs along the attach edge, v away from it (v = 0 is the attach
   // edge). Everything below is laid out as if attached to the Top edge,
   // then mapped onto the real edge (SurfaceOutline.toItem).

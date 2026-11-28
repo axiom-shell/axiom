@@ -7,17 +7,15 @@ import qs.services.compositor
 import qs.services.apps
 import qs.components.reusable
 
-/**
- * Settings page, System › Community setups (the section's `x-card`,
- * wide): the gallery of setups shared at axiom-shell/community-setups.
- * The catalog is downloaded when this card is first shown (never before),
- * with each setup's thumbnail. Search and tag chips narrow the grid; a
- * tile opens its details (the full screenshot, what it needs, its
- * wallpaper's license) with Apply, which asks for a second click, keeps
- * unsaved changes and takes the look only. The
- * catalog's text is someone else's, so it shows as plain text (`about` as
- * Markdown CommunityCatalog made inert) and only web links open.
- */
+// Settings page, System › Community setups (the section's `x-card`,
+// wide): the gallery of setups shared at axiom-shell/community-setups.
+// The catalog is downloaded when this card is first shown (never before),
+// with each setup's thumbnail. Search and tag chips narrow the grid; a
+// tile opens its details (the full screenshot, what it needs, its
+// wallpaper's license) with Apply, which asks for a second click, keeps
+// unsaved changes and takes the look only. The
+// catalog's text is someone else's, so it shows as plain text (`about` as
+// Markdown CommunityCatalog made inert) and only web links open.
 PageCard {
   id: root
 

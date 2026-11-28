@@ -1660,7 +1660,7 @@ TestCase {
 
   // Style holds each role as its derivation made it: a property named on<X>
   // beside <x> never takes its value (qml-pitfalls.md), reading black
-  function test_styleColoursMatchRoles() {
+  function test_style_colours_match_roles() {
     harness.configure({
       theme: "rose-pine"
     });
@@ -1687,7 +1687,7 @@ TestCase {
   }
 
   // The muted highlight is a step lighter than the card, over the whole bar
-  function test_volumeBarMuted() {
+  function test_volume_bar_muted() {
     harness.configure({
       theme: "rose-pine"
     });
@@ -1740,7 +1740,7 @@ TestCase {
     }
   }
 
-  function test_meterTroughs_data() {
+  function test_meter_troughs_data() {
     return [
       {
         tag: "dark",
@@ -1754,7 +1754,7 @@ TestCase {
   }
 
   // A meter's trough is Style.trough, plain: no border on the track, the blocks or the bar's trough (tst_Meters has the parity rows)
-  function test_meterTroughs(data) {
+  function test_meter_troughs(data) {
     harness.configure({
       theme: data.theme
     });
@@ -1779,7 +1779,7 @@ TestCase {
   }
 
   // The knob is the foreground in dark and light themes alike
-  function test_sliderKnob_data() {
+  function test_slider_knob_data() {
     return [
       {
         tag: "dark",
@@ -1792,7 +1792,7 @@ TestCase {
     ];
   }
 
-  function test_sliderKnob(data) {
+  function test_slider_knob(data) {
     harness.configure({
       theme: data.theme
     });
@@ -1824,7 +1824,7 @@ TestCase {
   }
 
   // A list taller than its cap scrolls inside it (cut, with a scroll bar); a short one takes its own height
-  function test_pinnedList() {
+  function test_pinned_list() {
     const tall = createTemporaryObject(pinnedListComp, root, {
       "count": 20
     });
@@ -1876,7 +1876,7 @@ TestCase {
   }
 
   // Its cap comes from `shareOf`, never its layout parent: no `shareOf` means its content height
-  function test_pinnedList_shareOf() {
+  function test_pinned_list_share_of() {
     const col = createTemporaryObject(pinnedInColumnComp, root);
     verify(col);
     waitForRendering(col);
@@ -1929,7 +1929,7 @@ TestCase {
 
   // A click sets the switch's own `checked`; it follows the row's again, so a
   // host that refuses the change shows as it is
-  function test_switchRow_follows_checked_after_a_click() {
+  function test_switch_row_follows_checked_after_a_click() {
     harness.configure({});
     const row = createTemporaryObject(formSwitchRowComp, root);
     waitForRendering(row);
@@ -1942,7 +1942,7 @@ TestCase {
   }
 
   // A label that is data shows as it is; a dimmed row is faint
-  function test_switchRow_plain_label_and_dimmed() {
+  function test_switch_row_plain_label_and_dimmed() {
     harness.configure({});
     const row = createTemporaryObject(formSwitchRowComp, root);
     row.label = "<b>x</b>";
@@ -1964,7 +1964,7 @@ TestCase {
     }
   }
 
-  function test_statusLine_role() {
+  function test_status_line_role() {
     harness.configure({});
     const line = createTemporaryObject(statusLineComp, root);
     line.role = "caption";
@@ -2064,7 +2064,7 @@ TestCase {
   }
 
   // A title or message is data (a device's name): never read as markup
-  function test_modalHeader_text_is_plain() {
+  function test_modal_header_text_is_plain() {
     harness.configure({});
     const header = createTemporaryObject(modalHeaderComp, root);
     waitForRendering(header);
@@ -2076,7 +2076,7 @@ TestCase {
   }
 
   // The switch's width counts in the row's least width
-  function test_schemaSwitch_least_width_has_the_switch() {
+  function test_schema_switch_least_width_has_the_switch() {
     harness.configure({});
     const row = createTemporaryObject(switchRowComp, root);
     waitForRendering(row);

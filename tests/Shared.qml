@@ -189,7 +189,7 @@ QtObject {
     return call("schema.showIfHolds", [condition, valueOf]);
   }
 
-  // --- recording ---
+  // -- recording --
 
   function _caseText(op, args) {
     return JSON.stringify({

@@ -5,7 +5,7 @@ import qs.components.methods
 TestCase {
   name: "WriteQueue"
 
-  function test_pushToEmpty() {
+  function test_push_to_empty() {
     const done = () => 1;
     const queue = WriteQueue.push([], "a", done);
     compare(queue.length, 1);
@@ -14,12 +14,12 @@ TestCase {
     verify(queue[0].dones[0] === done);
   }
 
-  function test_pushWithoutDone() {
+  function test_push_without_done() {
     const queue = WriteQueue.push([], "a");
     compare(queue[0].dones, []);
   }
 
-  function test_pushCollapses() {
+  function test_push_collapses() {
     const queue = [];
     WriteQueue.push(queue, "a");
     WriteQueue.push(queue, "b");
@@ -28,7 +28,7 @@ TestCase {
     compare(queue[0].text, "c", "the newest text");
   }
 
-  function test_laterDoneAdded() {
+  function test_later_done_added() {
     const queue = [];
     const done = () => 1;
     WriteQueue.push(queue, "a");
@@ -39,7 +39,7 @@ TestCase {
     verify(queue[0].dones[0] === done);
   }
 
-  function test_donesKeepOrder() {
+  function test_dones_keep_order() {
     const queue = [];
     const first = () => 1;
     const second = () => 2;

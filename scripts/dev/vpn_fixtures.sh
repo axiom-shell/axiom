@@ -11,9 +11,9 @@
 #                          without it, a profile whose connect fails with
 #                          "plugin missing" instead)
 #
-#   scripts/dev/vpn-fixtures.sh up       add the profiles (replacing old ones)
-#   scripts/dev/vpn-fixtures.sh down     delete every "Axiom test …" profile
-#   scripts/dev/vpn-fixtures.sh status   list them
+#   scripts/dev/vpn_fixtures.sh up       add the profiles (replacing old ones)
+#   scripts/dev/vpn_fixtures.sh down     delete every "Axiom test …" profile
+#   scripts/dev/vpn_fixtures.sh status   list them
 set -euo pipefail
 
 prefix="Axiom test"

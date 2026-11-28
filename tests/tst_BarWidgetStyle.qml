@@ -28,7 +28,7 @@ TestCase {
     verify(Math.abs(a.r - e.r) < 0.01 && Math.abs(a.g - e.g) < 0.01 && Math.abs(a.b - e.b) < 0.01, `${message}: ${actual} != ${expected}`);
   }
 
-  // ---- Exact rows ----
+  // -- Exact rows --
 
   function test_over_composites_opaque() {
     same(Tone.over("#ffffff", "#000000"), "#ffffff", "opaque top");
@@ -305,7 +305,7 @@ TestCase {
     compare(merged.gradient, null, "a merged widget draws no gradient of its own");
   }
 
-  // ---- Hover and backdrops ----
+  // -- Hover and backdrops --
 
   // A widget's colors on a look (BarStyle keys), accent #fb4934 over the
   // dark theme's #282828, `widget` its state
@@ -452,7 +452,7 @@ TestCase {
     return Math.abs(x.r - y.r) < 0.01 && Math.abs(x.g - y.g) < 0.01 && Math.abs(x.b - y.b) < 0.01;
   }
 
-  // ---- One row per look ----
+  // -- One row per look --
 
   // Each look, split as each of its kinds: where its state color shows
   // (`show`: a key of colors(); `as`: the color itself, its tint, or read
@@ -614,7 +614,7 @@ TestCase {
     verify(fails.length === 0, fails.join("\n"));
   }
 
-  // ---- The invariant sweep ----
+  // -- The invariant sweep --
 
   readonly property var themes: [["dark", Bars.theme], ["light", Bars.lightTheme]]
   // Fill on hover [off, on], hovered
@@ -877,7 +877,7 @@ TestCase {
     verify(fails.length === 0, `${fails.length} of ${cases} cases fail:\n` + fails.slice(0, 12).join("\n"));
   }
 
-  // ---- Pulse ladder ----
+  // -- Pulse ladder --
 
   // Whether `x` and `y` hold the same colours, arrays and fields
   function deepSame(x, y) {
@@ -935,7 +935,7 @@ TestCase {
     compare(BarWidgetStyle.pulseSteps, 16);
   }
 
-  // ---- Over a wallpaper (transparent bars: backs and scrim) ----
+  // -- Over a wallpaper (transparent bars: backs and scrim) --
 
   // The fixture backdrops of tokens_reference.py (its BACKDROPS): the grey
   // levels { mean, low, high } under a bar

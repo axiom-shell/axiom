@@ -22,7 +22,7 @@ TestCase {
     }, extra ?? {});
   }
 
-  function test_keyId() {
+  function test_key_id() {
     compare(shared.calls.BindKeys.keyId("SUPER + SHIFT + Space"), "65:space");
     compare(shared.calls.BindKeys.keyId("mod4+control+Q"), "68:q");
     compare(shared.calls.BindKeys.keyId("F12"), "0:f12");
@@ -32,7 +32,7 @@ TestCase {
     compare(shared.calls.BindKeys.keyId(undefined), "");
   }
 
-  function test_decodeMods() {
+  function test_decode_mods() {
     compare(BindKeys.decodeMods(65), ["SUPER", "SHIFT"]);
     compare(BindKeys.decodeMods(4 | 8 | 2 | 128), ["CTRL", "ALT", "MOD5", "CAPS"], "in modifierNames' order");
     compare(BindKeys.decodeMods(0), []);
@@ -40,14 +40,14 @@ TestCase {
       compare(BindKeys.decodeMods(BindKeys._modBits[name]), [name], "each name its own bit");
   }
 
-  function test_entryId_matches_keyId() {
+  function test_entry_id_matches_key_id() {
     compare(shared.calls.BindKeys.entryId(entry(65, "Space")), shared.calls.BindKeys.keyId("SUPER + SHIFT + space"));
     compare(shared.calls.BindKeys.entryId(entry(64, "", {
       "keycode": 10
     })), shared.calls.BindKeys.keyId("SUPER + code:10"));
   }
 
-  function test_tapIds() {
+  function test_tap_ids() {
     // Hyprland lists a tap with its modifier held, sway without
     compare(shared.calls.BindKeys.keyId("Super_L"), "0:super_l");
     compare(shared.calls.BindKeys.keyId("SUPER + Super_L"), "0:super_l");
@@ -56,7 +56,7 @@ TestCase {
     compare(shared.calls.BindKeys.keyId("CTRL + Super_L"), "4:super_l", "not a tap");
   }
 
-  function test_userKeyCounts_less_axioms_own() {
+  function test_user_key_counts_less_axioms_own() {
     const entries = [entry(64, "a"), entry(64, "a"), entry(64, "b"), entry(64, "c", {
         "submap": "resize"
       })];
@@ -77,7 +77,7 @@ TestCase {
     compare(counts["64:z"], undefined);
   }
 
-  function test_mergeBinds_one_bind_per_key() {
+  function test_merge_binds_one_bind_per_key() {
     const axiom = [
       {
         "key": "SUPER + Q",
@@ -123,7 +123,7 @@ TestCase {
   }
 
   // A paused bind holds no key: the user's replaces the active one on it
-  function test_mergeBinds_skips_paused() {
+  function test_merge_binds_skips_paused() {
     const axiom = [
       {
         "key": "SUPER + W",
@@ -162,7 +162,7 @@ TestCase {
   }
 
   // Shared with the binary's merge (manager.withIDs)
-  function test_withIds() {
+  function test_with_ids() {
     const kept = {
       "id": "super-y",
       "key": "SUPER + Y"

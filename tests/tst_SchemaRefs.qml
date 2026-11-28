@@ -248,7 +248,7 @@ TestCase {
   }
 
   // The built schema's sites: the keybinds' and hot corners' argument, a rule's special workspace; a rule's paused shortcuts
-  function test_builtSchema() {
+  function test_built_schema() {
     const built = repo.json("qml/config/json/config.schema.json");
     compare(SchemaRefs.sites(built, "specialWorkspace").map(s => s.path.join(".") + ":" + s.key), ["Keybinds.binds:argument", "WindowRules.rules:window.special.id", "HotCorners.items:argument"]);
     compare(SchemaRefs.sites(built, "keybind").map(s => s.path.join(".") + ":" + s.key), ["WindowRules.rules:shell.pauseBinds.binds"]);

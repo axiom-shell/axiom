@@ -35,14 +35,15 @@ running anything:
     (an entry no longer used is an error); every BlurShape's `shown:` reads
     `backed`
   - no Repeater model or acquire() request in the UI reads a polled
-    service's member (one owning an OwnerRegistry or DeadlineTicker),
-    in the expression or through a property of the file; a model may
-    count one (`.length`, `.count`)
+    service's member (one owning an OwnerRegistry or DeadlineTicker), or,
+    for a model, a push service's array rebuilt per push, in the
+    expression or through a property of the file; a model may count one
+    (`.length`, `.count`)
   - the config UI and onboarding build no hover tint (StateLayer), key
     handler, sunken box, `onRowClicked`, `first:` literal or kept pushed
     `text`, and no SegmentButton outside a SegmentRow, SegmentTabs or
     StyledToggle (views, content, surfaces), unless the file is listed in
-    scripts/ui-local-pieces.json with a reason (special drawing); the list
+    scripts/ui-local-exceptions.json with a reason (special drawing); the list
     only shrinks
   - nothing formats a date with Qt.formatDateTime / formatDate /
     formatTime (I18n.formatDate follows the language), and only General
@@ -53,10 +54,8 @@ running anything:
   - no property is named on<X> beside a property, signal or function <x>
     (its file's, or a Qt type's it inherits: width, a window's screen, …): Qt never
     gives it its value
-  - every bar widget is data on BarWidget: rules T1-T8 of
-    bar_widget_template (the root, no colour resolved, no opacity fade, no
-    base output written, no unused or unknown colour field), its exceptions
-    in scripts/bar-widget-exceptions.json
+  - every bar widget is data on BarWidget: the WIDGET_RULES of
+    bar_widget_template, its exceptions in scripts/bar-widget-exceptions.json
   - a bar widget's `popoutModule` (x-popoutModule) is a popoutName it
     opens, and one whose popoutName is an overlay module declares it; its
     anchors hand its values by `fromWidget` (the keys popoutModule lists),
@@ -182,7 +181,7 @@ CHROME_GONE = re.compile(r"\b(?:HoledItem|shadowHoles)\b")
 # Bar widgets allowed to break a rule of the bar widget template, each with
 # its reason; an entry no longer needed is an error
 WIDGET_EXCEPTIONS = ROOT / "scripts" / "bar-widget-exceptions.json"
-LOCAL_PIECES = ROOT / "scripts" / "ui-local-pieces.json"
+LOCAL_EXCEPTIONS = ROOT / "scripts" / "ui-local-exceptions.json"
 # Hand-built versions of what a shared piece does, in the config UI and the
 # onboarding (rule name -> pattern on a line without comments)
 LOCAL_PIECE_RULES = {
@@ -192,13 +191,23 @@ LOCAL_PIECE_RULES = {
     "onRowClicked": (re.compile(r"\bonRowClicked\s*:"), "a hand-set row click: give the row `activates`"),
     "first-literal": (re.compile(r"^\s*first\s*:\s*(?:true|false)\b"), "a `first:` literal: the row's column decides"),
 }
+LOCAL_RULES = set(LOCAL_PIECE_RULES) | {"SegmentButton", "restore-text"}
 LOCAL_PIECE_SCOPES = ("qml/components/views/", "qml/components/surfaces/onboarding/")
 SEGMENT_ROW_SCOPES = ("qml/components/views/", "qml/components/content/", "qml/components/surfaces/")
 SEGMENT_HOSTS = ("SegmentRow", "SegmentTabs", "StyledToggle")
 WIDGETS_DIR = "qml/components/bar/widgets"
-WIDGET_RULES = {f"T{n}" for n in range(1, 9)}
+WIDGET_RULES = {
+    "widget-root": "a root other than BarWidget or AudioLevelWidget",
+    "resolved-color": "a resolved colour: name a colour field, the base resolves it",
+    "opacity-fade": "a fade by opacity or a dim by a dim: a dim is a colour the base draws",
+    "color-field": "a colour field nothing uses, or a *Color named that isn't one of the widget's colour fields",
+    "base-output": "a set or write of what the base computes (WIDGET_OUTPUTS)",
+    "folder-files": "a file in the widget's folder besides <Type>.qml and schema.yaml",
+    "box-read": "a .box read (or a bare box in <Type>.qml): read shownItems",
+    "state-color-name": "stateColorName named: a state names its colour field (accentField)",
+}
 WIDGET_ROOTS = {"BarWidget", "AudioLevelWidget"}
-# What the base computes: a widget declares data, never these (T5)
+# What the base computes: a widget declares data, never these (base-output)
 WIDGET_OUTPUTS = ("colors drawnColors paint shownItems backgroundLevel backgroundLevelColor splits splitAt "
                   "splitPart innerSplits contentAcross leadLength minimumSize pulse box hitArea autoColors "
                   "barOffset barLength runPlace segmented pinStart fillsOnHover").split()
@@ -279,7 +288,7 @@ def qml_blocks(text, type_name):
 
 def bar_widget_template(schema, sources, errors):
     """Every bar widget is data on BarWidget (docs/dev/bar/widget-style.md ›
-    The widget template): rules T1-T8, but for the listed exceptions."""
+    The widget template): the WIDGET_RULES, but for the listed exceptions."""
     root = ROOT / WIDGETS_DIR
     exceptions, shape = qml_modules.load_exceptions(WIDGET_EXCEPTIONS, WIDGET_RULES, section="types")
     errors.extend(shape)
@@ -310,13 +319,13 @@ def bar_widget_template(schema, sources, errors):
             start = next((i for i, line in enumerate(lines) if re.match(r"[A-Z][\w.]*\s*\{", line)), None)
             name = re.match(r"[A-Z][\w.]*", lines[start]).group(0) if start is not None else None
             if name not in WIDGET_ROOTS:
-                add("T1", f"{rel(folder)}/{t}.qml: T1 its root is {name}, not BarWidget or AudioLevelWidget")
+                add("widget-root", f"{rel(folder)}/{t}.qml: widget-root its root is {name}, not BarWidget or AudioLevelWidget")
 
         for f in files:
             path = rel(f)
             short = f"{t}/{f.relative_to(folder).as_posix()}"
             for n, m in lines_of(code[f], WIDGET_COLOR_CALLS):
-                add("T2", f"{short}:{n}: T2 resolves a colour ({m.group(0).strip()}): name a colour field, the base resolves it")
+                add("resolved-color", f"{short}:{n}: resolved-color resolves a colour ({m.group(0).strip()}): name a colour field, the base resolves it")
             # opacity: only an Image fades; else a switch of 0 or 1
             stack = []
             for n, line in enumerate(plain[f].split("\n"), 1):
@@ -337,16 +346,16 @@ def bar_widget_template(schema, sources, errors):
                         offset = sum(len(x) + 1 for x in plain[f].split("\n")[:n - 1]) + arg
                         expr = binding(plain[f], offset)
                         if any(float(x) not in (0, 1) for x in re.findall(r"(?<![\w.])(?:\d+(?:\.\d*)?|\.\d+)", expr)):
-                            add("T3", f"{short}:{n}: T3 fades by opacity ({expr.strip()}): an opacity is 0 or 1, a dim is a colour")
+                            add("opacity-fade", f"{short}:{n}: opacity-fade fades by opacity ({expr.strip()}): an opacity is 0 or 1, a dim is a colour")
             for n, _ in lines_of(plain[f], r"\bdim\b"):
-                add("T3", f"{short}:{n}: T3 dims by a `dim`: a dim is a colour the base draws")
+                add("opacity-fade", f"{short}:{n}: opacity-fade dims by a `dim`: a dim is a colour the base draws")
             for n, _ in lines_of(plain[f], r"\.box\b"):
-                add("T7", f"{short}:{n}: T7 reads .box: read shownItems")
+                add("box-read", f"{short}:{n}: box-read reads .box: read shownItems")
             if f == main_file:
                 for n, _ in lines_of(plain[f], r"(?<![\w.$])(?<!let )(?<!const )(?<!var )(?<!id: )(?<!id:)box\b(?!\s*:)"):
-                    add("T7", f"{short}:{n}: T7 reads box: read shownItems")
+                    add("box-read", f"{short}:{n}: box-read reads box: read shownItems")
             for n, _ in lines_of(plain[f], r"\bstateColorName\b"):
-                add("T8", f"{short}:{n}: T8 names stateColorName: a state names its colour field (accentField)")
+                add("state-color-name", f"{short}:{n}: state-color-name names stateColorName: a state names its colour field (accentField)")
 
         if main_file in raw:
             body = plain[main_file]
@@ -355,16 +364,16 @@ def bar_widget_template(schema, sources, errors):
             binding_re = re.compile(r"^\s*(?:(?:readonly\s+|required\s+|default\s+)*property\s+[\w<>.]+\s+)?(" + names + r")\s*:")
             for n, line in enumerate(body.split("\n"), 1):
                 if depth == 1 and binding_re.match(line):
-                    add("T5", f"{t}/{t}.qml:{n}: T5 sets {binding_re.match(line).group(1)}: it is the base's output")
+                    add("base-output", f"{t}/{t}.qml:{n}: base-output sets {binding_re.match(line).group(1)}: it is the base's output")
                 depth += line.count("{") - line.count("}")
             for n, m in lines_of(body, r"(?<![\w.])(?<!let )(?<!var )(?<!const )(?:root\.)?(" + names + r")\s*=(?!=)"):
-                add("T5", f"{t}/{t}.qml:{n}: T5 writes {m.group(1)}: it is the base's output")
+                add("base-output", f"{t}/{t}.qml:{n}: base-output writes {m.group(1)}: it is the base's output")
 
         for f in sorted(folder.iterdir()):
             if f.name not in (f"{t}.qml", "schema.yaml"):
-                add("T6", f"{rel(folder)}/: T6 holds {f.name}: only {t}.qml and schema.yaml")
+                add("folder-files", f"{rel(folder)}/: folder-files holds {f.name}: only {t}.qml and schema.yaml")
 
-    # T4: a colour field nothing uses, a colour named that isn't one
+    # color-field: a colour field nothing uses, a colour named that isn't one
     unused_without = {}
     for t, fields in colour_fields.items():
         folder = root / t
@@ -385,7 +394,7 @@ def bar_widget_template(schema, sources, errors):
         for path in exceptions.get(t, {}).get("fieldsReadIn", []):
             extra |= set(re.findall(r"\bproperties\??\.(\w+)", sources.get(path, "")))
         for field in sorted(fields - used - extra):
-            out.append(("T4", f"{t}/: T4 {field} is a colour field of {t} that nothing uses"))
+            out.append(("color-field", f"{t}/: color-field {field} is a colour field of {t} that nothing uses"))
         for f, c in texts.items():
             asks = [(m.end(), binding(c, m.end())) for m in re.finditer(r"\b(?:accentField|iconField)\s*:", c)]
             asks += [(m.end(), binding(c, m.end())) for m in re.finditer(r'(?<![\w.])"?field"?\s*:', c)]
@@ -394,7 +403,7 @@ def bar_widget_template(schema, sources, errors):
                 for name in re.findall(r'"(color|\w+Color)"', expr):
                     if name not in fields:
                         n = c.count("\n", 0, at) + 1
-                        out.append(("T4", f"{t}/{f.name}:{n}: T4 names {name}, not a colour field of {t}"))
+                        out.append(("color-field", f"{t}/{f.name}:{n}: color-field names {name}, not a colour field of {t}"))
 
     name = rel(WIDGET_EXCEPTIONS)
     for t, entry in exceptions.items():
@@ -762,10 +771,11 @@ def main():
     # sunken box, hand-set row click or `first:` literal, no loose
     # SegmentButton and no pushed `text` that keeps its value: each is a
     # shared piece's job (docs/dev/core/shared-ui-pieces.md > When a page may
-    # own a local piece). A file is listed in scripts/ui-local-pieces.json
+    # own a local piece). A file is listed in scripts/ui-local-exceptions.json
     # per rule with a reason (special drawing); an entry whose rule no
     # longer hits is an error
-    local = json.loads(LOCAL_PIECES.read_text())["files"]
+    local, local_errors = qml_modules.load_exceptions(LOCAL_EXCEPTIONS, LOCAL_RULES, section="files")
+    errors.extend(local_errors)
     local_hits = {}
     for path, text in sorted(sources.items()):
         in_ui = path.startswith(LOCAL_PIECE_SCOPES)
@@ -795,13 +805,11 @@ def main():
                     local_hits.setdefault((path, "SegmentButton"), (n, "a SegmentButton outside a SegmentRow or SegmentTabs: a toggle is a ToggleChip, a choice a SegmentRow"))
     for (path, name), (n, advice) in sorted(local_hits.items()):
         if name not in local.get(path, {}).get("rules", []):
-            errors.append(f"{path}:{n}: {name}: {advice} (special drawing only: list the file in {rel(LOCAL_PIECES)} with a reason)")
+            errors.append(f"{path}:{n}: {name}: {advice} (special drawing only: list the file in {rel(LOCAL_EXCEPTIONS)} with a reason)")
     for path, entry in sorted(local.items()):
-        if not entry.get("reason"):
-            errors.append(f"{rel(LOCAL_PIECES)}: {path} has no reason")
         for name in entry.get("rules", []):
             if (path, name) not in local_hits:
-                errors.append(f"{rel(LOCAL_PIECES)}: {path} no longer breaks {name}: remove it from the list (it only shrinks)")
+                errors.append(f"{rel(LOCAL_EXCEPTIONS)}: {path} no longer breaks {name}: remove it from the list (it only shrinks)")
 
     # Services live in their group's folder (.claude/rules/services.md › Folders):
     # one directly in services/ would escape the singleton checks below,
@@ -990,7 +998,9 @@ def main():
         j = start - 1
         while j >= 0 and not lines[j].strip():
             j -= 1
-        if j < 0 or not (lines[j].startswith("//") or lines[j].rstrip().endswith("*/")):
+        if j >= 0 and lines[j].rstrip().endswith("*/"):
+            errors.append(f"{path}: a /* */ purpose comment: write it as // lines")
+        elif j < 0 or not lines[j].startswith("//"):
             errors.append(f"{path}: no purpose comment above its root object")
 
     # Popout names -> content files
@@ -1111,10 +1121,22 @@ def main():
     # pushed qs past 25 GB. Live means a member of a polled service (one
     # polling through an OwnerRegistry or DeadlineTicker, not
     # BackendManager's or NotesManager's acquire()), read in the expression
-    # or through one property of the same file. A model may count one
+    # or through one property of the same file; a model's live set also
+    # holds the arrays a push service (one calling BackendManager.listen)
+    # assigns per push (any `var` or `list` member it assigns: an
+    # approximation). A model may count one
     # (`.length`, `.count`: an int notifies only when it changes); a request
     # may not read one at all
-    polled = {f.stem for f in QML_ROOT.glob("services/*/*.qml") if re.search(r"\b(?:OwnerRegistry|DeadlineTicker)\s*\{", f.read_text())}
+    polled = set()
+    pushed = {}
+    for f in QML_ROOT.glob("services/*/*.qml"):
+        text = f.read_text()
+        if re.search(r"\b(?:OwnerRegistry|DeadlineTicker)\s*\{", text):
+            polled.add(f.stem)
+        code = re.sub(r"//[^\n]*", "", text)
+        if "BackendManager.listen(" in code:
+            pushed[f.stem] = {m for m in re.findall(r"\bproperty\s+(?:var|list<[^>]*>)\s+(\w+)", code)
+                              if re.search(rf"(?<![\w.])(?<!let )(?<!const )(?<!var )(?:root\.)?{m}\s*=(?![=>])", code)}
     chain = re.compile(r"(?<![\w.])(?:root\.)?([A-Za-z_]\w*)((?:\??\.\w+)*)")
 
     def live_reads(expr, props, counts, depth=0):
@@ -1124,6 +1146,8 @@ def main():
             if (expr[m.end():m.end() + 1] == "(" and len(members) < 2) or (counts and members[-1:] in (["length"], ["count"])):
                 continue
             if name in polled and members and members[0] not in ("acquire", "release"):
+                found.append(f"{name}.{members[0]}")
+            elif counts and members[:1] and members[0] in pushed.get(name, ()):
                 found.append(f"{name}.{members[0]}")
             elif name in props and not depth:
                 found += [f"{name} → {r}" for r in live_reads(props[name], props, counts, 1)]

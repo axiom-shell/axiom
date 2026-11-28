@@ -26,7 +26,7 @@ TestCase {
     compare(families[0].shared, false);
   }
 
-  function test_sharedLight() {
+  function test_shared_light() {
     const families = ThemeFamilies.build(tokyo, false);
     compare(families.map(family => family.label), ["Tokyo", "Tokyo Storm"], "the extra dark keeps its own name");
     compare(families[1].dark, "tokyo-storm");
@@ -34,14 +34,14 @@ TestCase {
     compare(families[1].shared, true);
   }
 
-  function test_loneThemes() {
+  function test_lone_themes() {
     const families = ThemeFamilies.build([theme("d", "Dark One", "dark", ""), theme("l", "Light One", "light", "missing"), theme("x", "Odd", "dark", "d")], true);
     compare(families.length, 3, "a dark naming another dark stays alone");
     compare(families.every(family => !(family.dark && family.light)), true);
     compare(families.every(family => family.generated), true);
   }
 
-  function test_halfPair() {
+  function test_half_pair() {
     const families = ThemeFamilies.build([theme("f-dark", "Foo Dark", "dark", "f-light"), theme("f-light", "Foo Light", "light", "")], false);
     compare(families.map(family => family.label), ["Foo Dark", "Foo Light"], "a light naming no dark back joins none");
     compare(families.every(family => !family.shared), true);
@@ -57,7 +57,7 @@ TestCase {
     compare(ThemeFamilies.current(families, "nope", ""), null);
   }
 
-  function test_previewOf() {
+  function test_preview_of() {
     const dark = theme("a-dark", "Ayu Dark", "dark", "a-light");
     dark.preview = {
       "background": "#000"
@@ -72,7 +72,7 @@ TestCase {
     compare(ThemeFamilies.previewOf(families, "nope"), null);
   }
 
-  function test_commonLabel() {
+  function test_common_label() {
     compare(ThemeFamilies.commonLabel("Nightfox", "Dayfox"), "Nightfox");
     compare(ThemeFamilies.commonLabel("Rosé Pine", "Rosé Pine Dawn"), "Rosé Pine");
   }

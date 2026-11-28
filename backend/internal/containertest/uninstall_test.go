@@ -266,7 +266,7 @@ func diffPath(line string) string {
 func under(path, x string) bool { return path == x || strings.HasPrefix(path, x+"/") }
 
 // checkPlan runs `axiom --json uninstall --dry-run args…` and compares its
-// plan with testdata/<name> (container-test.sh -update writes it, into the
+// plan with testdata/<name> (container_test.sh -update writes it, into the
 // logs folder).
 func (s *Session) checkPlan(t *testing.T, name string, args ...string) {
 	t.Helper()
@@ -290,7 +290,7 @@ func (s *Session) checkPlan(t *testing.T, name string, args ...string) {
 		os.WriteFile(golden, append(data, '\n'), 0o644)
 		os.WriteFile(filepath.Join(os.Getenv("AXIOM_CTR_OUT"), name), append(data, '\n'), 0o644)
 	} else if want, err := os.ReadFile(golden); err != nil {
-		t.Fatalf("%v (container-test.sh -update writes it into the logs folder)", err)
+		t.Fatalf("%v (container_test.sh -update writes it into the logs folder)", err)
 	} else if strings.TrimSpace(string(want)) != strings.TrimSpace(string(data)) {
 		os.WriteFile(filepath.Join(s.Out, name+".got"), data, 0o644)
 		t.Errorf("the plan differs from %s (got it in the logs: %s.got):\n%s", golden, name, data)

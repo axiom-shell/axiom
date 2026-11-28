@@ -45,7 +45,7 @@ Item {
     anchors.right: parent.right
     spacing: Widget.spacing / 2
 
-    // --- The user's message ---
+    // -- The user's message --
 
     Surface {
       id: bubble
@@ -101,7 +101,7 @@ Item {
       onClicked: ChatManager.regenerate()
     }
 
-    // --- A reply ---
+    // -- A reply --
 
     ColumnLayout {
       visible: !root.isUser
@@ -274,7 +274,7 @@ Item {
       }
     }
 
-    // --- Actions ---
+    // -- Actions --
 
     RowLayout {
       Layout.alignment: root.isUser ? Qt.AlignRight : Qt.AlignLeft

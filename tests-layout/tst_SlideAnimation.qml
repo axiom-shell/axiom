@@ -62,7 +62,7 @@ TestCase {
     return createTemporaryObject(slideComp, root, props);
   }
 
-  function test_madeHidden() {
+  function test_made_hidden() {
     const s = make({
       "slideFromRight": true,
       "width": 100,
@@ -73,7 +73,7 @@ TestCase {
     compare(s.slideX, 100);
   }
 
-  function test_madeShown() {
+  function test_made_shown() {
     const s = make({
       "slideFromRight": true,
       "width": 100,
@@ -85,7 +85,7 @@ TestCase {
     compare(s.slideX, 0);
   }
 
-  function test_madeHiddenShownAtOnce() {
+  function test_made_hidden_shown_at_once() {
     const s = make({
       "slideFromRight": true,
       "width": 100,
@@ -109,19 +109,19 @@ TestCase {
     tryCompare(s, prop, 0, 1000);
   }
 
-  function test_growsWhileHidden() {
+  function test_grows_while_hidden() {
     growsWhileHidden({
       "slideFromRight": true
     }, "slideX", 120, "width");
   }
 
-  function test_growsWhileHiddenBottom() {
+  function test_grows_while_hidden_bottom() {
     growsWhileHidden({
       "slideFromBottom": true
     }, "slideY", 120, "height");
   }
 
-  function test_growsWhileHiddenFade() {
+  function test_grows_while_hidden_fade() {
     const s = make({
       "fade": true,
       "width": 0,
@@ -137,7 +137,7 @@ TestCase {
     compare(s.slideY, 0);
   }
 
-  function test_sideOverflow_data() {
+  function test_side_overflow_data() {
     return [
       {
         "tag": "slides down, room beside it",
@@ -168,12 +168,12 @@ TestCase {
       }
     ];
   }
-  function test_sideOverflow(data) {
+  function test_side_overflow(data) {
     const s = make(data.props);
     compare([s._left, s._top, s._right, s._bottom], data.want);
   }
 
-  function test_firstOpenMatchesLater() {
+  function test_first_open_matches_later() {
     const s = make({
       "slideFromRight": true,
       "width": 0,
@@ -193,7 +193,7 @@ TestCase {
 
   // A pill's end reach and opening are sent in the pass they change in, so
   // the bar draws them in the frame their surface moves in
-  function test_pillRequestSentInItsPass() {
+  function test_pill_request_sent_in_its_pass() {
     const stub = createTemporaryObject(stubComp, root);
     const stretch = createTemporaryObject(stretchComp, root, {
       "container": stub
@@ -216,7 +216,7 @@ TestCase {
   }
 
   // A stretch that tracks its surface is sent in the pass it changes in too
-  function test_trackingStretchSentInItsPass() {
+  function test_tracking_stretch_sent_in_its_pass() {
     const stub = createTemporaryObject(stubComp, root);
     const stretch = createTemporaryObject(stretchComp, root, {
       "container": stub,

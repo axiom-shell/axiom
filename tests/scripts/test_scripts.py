@@ -422,6 +422,7 @@ class CheckStructure(unittest.TestCase):
          "qml/shell/OnClash.qml:7: property onBattery beside `battery`"),
         ("qml/shell/OnInherited.qml", qml("readonly property bool onWidth: true"), "qml/shell/OnInherited.qml:6: property onWidth beside `width`"),
         ("qml/shell/NoPurpose.qml", qml(purpose=""), "qml/shell/NoPurpose.qml: no purpose comment"),
+        ("qml/shell/BlockPurpose.qml", qml(purpose="/** A fixture. */"), "qml/shell/BlockPurpose.qml: a /* */ purpose comment"),
         ("qml/shell/Popout.qml", qml('PopoutAnchor { popoutName: "Ghost" }'), 'popoutName "Ghost" has no qml/components/content/Ghost/Ghost.qml'),
         ("qml/components/content/Unused/Unused.qml", qml(), "qml/components/content/Unused/: not an overlay module"),
         ("qml/components/widgets/Old.qml", qml(), "qml/components/widgets/Old.qml: lives under retired"),
@@ -448,6 +449,14 @@ class CheckStructure(unittest.TestCase):
         ("qml/services/core/Held.qml", qml("OwnerRegistry {}\n    property var rows: []", head="pragma Singleton"), None),
         ("qml/shell/HeldModel.qml", qml("Repeater { model: Held.rows }"),
          "qml/shell/HeldModel.qml:6: a Repeater model from live values (Held.rows)"),
+        ("qml/services/core/SomeService.qml",
+         qml('property var items: []\n    Component.onCompleted: BackendManager.listen("x", v => root.items = v)', head="pragma Singleton"), None),
+        ("qml/shell/PushModel.qml", qml("Repeater { model: SomeService.items }"),
+         "qml/shell/PushModel.qml:6: a Repeater model from live values (SomeService.items)"),
+        ("qml/shell/PushCount.qml", qml("Repeater { model: SomeService.items.length }"), None),
+        ("qml/services/core/KeptService.qml",
+         qml('KeptList { id: _kept }\n    readonly property var items: _kept.items\n    Component.onCompleted: BackendManager.listen("y", v => _kept.set(v))', head="pragma Singleton"), None),
+        ("qml/shell/KeptModel.qml", qml("Repeater { model: KeptService.items }"), None),
         ("qml/shell/LiveRequest.qml", qml("readonly property var req: ({ top: SystemManager.cpu })\n    onReqChanged: SystemManager.acquire(this, req)"),
          "an acquire() request from live values (req → SystemManager.cpu)"),
         ("qml/shell/Stamp.qml", qml('property string s: Qt.formatDateTime(new Date(), "ddd")'), "qml/shell/Stamp.qml:6: Qt.formatDateTime"),
@@ -474,7 +483,7 @@ class CheckStructure(unittest.TestCase):
         ("qml/components/surfaces/osd/systems/Spook/schema.yaml", "label: Spook\n", None),
         ("qml/components/surfaces/osd/systems/Spook/Helper.qml", qml(imports="import qs.services.ui"),
          "systems/Spook/Helper.qml: reads services: only an OSD system's <Type>Watch.qml"),
-        # The config UI's local pieces (scripts/ui-local-pieces.json)
+        # The config UI's local pieces (scripts/ui-local-exceptions.json)
         ("qml/components/views/Local/Tint.qml", qml("StateLayer {}"), "views/Local/Tint.qml:6: StateLayer"),
         ("qml/components/views/Local/Space.qml", qml("Keys.onSpacePressed: x()"), "views/Local/Space.qml:6: Keys.onSpacePressed"),
         ("qml/components/views/Local/Well.qml", qml('Surface { tone: "sunken" }'), "views/Local/Well.qml:6: tone-sunken"),
@@ -486,20 +495,20 @@ class CheckStructure(unittest.TestCase):
          "views/Local/Pushed.qml:8: restore-text"),
         ("qml/components/content/Local/Loose.qml", qml("RowLayout {\n      SegmentButton {}\n    }"), "content/Local/Loose.qml:7: SegmentButton"),
         ("qml/components/content/Local/InRow.qml", qml("SegmentRow {\n      SegmentButton {}\n    }"), None),
-        # The bar widget template (check_structure.bar_widget_template): T2 and T3 are
+        # The bar widget template (check_structure.bar_widget_template): resolved-color and opacity-fade are
         # planted in copies of real widgets
-        ("qml/components/bar/widgets/Tone/Tone.qml", qml(), "Tone/Tone.qml: T1"),
-        ("qml/components/bar/widgets/DevMode/DevMode.qml", DEV_MODE, f"DevMode/DevMode.qml:{DEV_MODE_AT}: T2"),
-        ("qml/components/bar/widgets/LockKeys/LockKeys.qml", LOCK_KEYS, f"LockKeys/LockKeys.qml:{LOCK_KEYS_AT}: T3"),
-        ("qml/components/bar/widgets/Tfive/Tfive.qml", widget("colors: ({})"), "Tfive/Tfive.qml:6: T5"),
-        ("qml/components/bar/widgets/Button/Helper.qml", qml(), "Button/: T6"),
-        ("qml/components/bar/widgets/Tseven/Tseven.qml", widget("id: root\n  text: root.box"), "Tseven/Tseven.qml:7: T7"),
-        ("qml/components/bar/widgets/Ttwoa/Ttwoa.qml", widget("property var c: '#fff'"), "Ttwoa/Ttwoa.qml:6: T2"),
-        ("qml/components/bar/widgets/Ttwob/Ttwob.qml", widget('property var c: "red"'), "Ttwob/Ttwob.qml:6: T2"),
-        ("qml/components/bar/widgets/Ttwoc/Ttwoc.qml", widget("property var c: Qt.rgba (1, 0, 0, 1)"), "Ttwoc/Ttwoc.qml:6: T2"),
-        ("qml/components/bar/widgets/Tfiveb/Tfiveb.qml", widget("onClicked: pulse = 1"), "Tfiveb/Tfiveb.qml:6: T5"),
-        ("qml/components/bar/widgets/Tsevenb/Tsevenb.qml", widget("text: box"), "Tsevenb/Tsevenb.qml:6: T7"),
-        ("qml/components/bar/widgets/Teight/Teight.qml", widget('stateColorName: "error"'), "Teight/Teight.qml:6: T8"),
+        ("qml/components/bar/widgets/WidgetRoot/WidgetRoot.qml", qml(), "WidgetRoot/WidgetRoot.qml: widget-root"),
+        ("qml/components/bar/widgets/DevMode/DevMode.qml", DEV_MODE, f"DevMode/DevMode.qml:{DEV_MODE_AT}: resolved-color"),
+        ("qml/components/bar/widgets/LockKeys/LockKeys.qml", LOCK_KEYS, f"LockKeys/LockKeys.qml:{LOCK_KEYS_AT}: opacity-fade"),
+        ("qml/components/bar/widgets/BaseOutput/BaseOutput.qml", widget("colors: ({})"), "BaseOutput/BaseOutput.qml:6: base-output"),
+        ("qml/components/bar/widgets/Button/Helper.qml", qml(), "Button/: folder-files"),
+        ("qml/components/bar/widgets/BoxRead/BoxRead.qml", widget("id: root\n  text: root.box"), "BoxRead/BoxRead.qml:7: box-read"),
+        ("qml/components/bar/widgets/ResolvedColor/ResolvedColor.qml", widget("property var c: '#fff'"), "ResolvedColor/ResolvedColor.qml:6: resolved-color"),
+        ("qml/components/bar/widgets/ResolvedColorB/ResolvedColorB.qml", widget('property var c: "red"'), "ResolvedColorB/ResolvedColorB.qml:6: resolved-color"),
+        ("qml/components/bar/widgets/ResolvedColorC/ResolvedColorC.qml", widget("property var c: Qt.rgba (1, 0, 0, 1)"), "ResolvedColorC/ResolvedColorC.qml:6: resolved-color"),
+        ("qml/components/bar/widgets/BaseOutputB/BaseOutputB.qml", widget("onClicked: pulse = 1"), "BaseOutputB/BaseOutputB.qml:6: base-output"),
+        ("qml/components/bar/widgets/BoxReadB/BoxReadB.qml", widget("text: box"), "BoxReadB/BoxReadB.qml:6: box-read"),
+        ("qml/components/bar/widgets/StateColorName/StateColorName.qml", widget('stateColorName: "error"'), "StateColorName/StateColorName.qml:6: state-color-name"),
     ]
     # The layer service's structure (check_structure.layer_service): a window with no row
     # and the ways to set a layer or namespace, read a layer fact or WlrLayer, or give backsOn a literal
@@ -537,16 +546,17 @@ class CheckStructure(unittest.TestCase):
         "tool page Keybinds isn't in the Overlay.items default",
         "schema gates on supports.ghostCapability, which docs/dev/compositor/contract.md › Capabilities doesn't list",
         "qml/services/core/Gone.qml no longer uses Socket",
-        "ui-local-pieces.json: qml/components/views/Gone.qml no longer breaks StateLayer",
-        "ui-local-pieces.json: qml/components/views/NoReason.qml has no reason",
+        "ui-local-exceptions.json: qml/components/views/Gone.qml no longer breaks StateLayer",
+        "ui-local-exceptions.json: qml/components/views/NoReason.qml has no reason",
+        "ui-local-exceptions.json: qml/components/views/Unruled.qml names Ghost, not a rule",
         "qml/components/surfaces/osd/systems/Ghost/: an OSD system without GhostWatch.qml",
         "qml/components/surfaces/osd/systems/Ghost/: an OSD system without schema.yaml",
-        "DevMode/: T4 ghostColor is a colour field of DevMode that nothing uses",
+        "DevMode/: color-field ghostColor is a colour field of DevMode that nothing uses",
         "Updates/Updates.qml:",
-        "T4 names failedColor, not a colour field of Updates",
-        "Button lists T8, which it no longer breaks",
+        "color-field names failedColor, not a colour field of Updates",
+        "Button lists state-color-name, which it no longer breaks",
         "Spacer has no reason",
-        "Time names T9, not a rule",
+        "Time names ghost-rule, not a rule",
         "Weather lists fieldsReadIn, which supplies none of its otherwise-unused colour fields",
         # x-popoutModule: (a) names a popoutName the widget opens (Volume's is in its base file), (b) declared when the popout is a module
         "bar/widgets/Volume: x-popoutModule.type Caffeine is not a popoutName it opens (AudioMixer)",
@@ -581,13 +591,14 @@ class CheckStructure(unittest.TestCase):
             edit_json(root / "qml/config/json/config.schema.json", schema)
             edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["Socket"]}))
             edit_json(root / "scripts/chrome-drawing-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["HoledCopy"]}))
-            edit_json(root / "scripts/ui-local-pieces.json", lambda a: a["files"].update({
+            edit_json(root / "scripts/ui-local-exceptions.json", lambda a: a["files"].update({
                 "qml/components/views/Gone.qml": {"rules": ["StateLayer"], "reason": "planted"},
-                "qml/components/views/NoReason.qml": {"rules": [], "reason": ""}}))
+                "qml/components/views/NoReason.qml": {"rules": [], "reason": ""},
+                "qml/components/views/Unruled.qml": {"rules": ["Ghost"], "reason": "planted"}}))
             edit_json(root / "scripts/bar-widget-exceptions.json", lambda a: a["types"].update({
-                "Button": {"reason": "planted", "rules": ["T8"]},
-                "Spacer": {"reason": "", "rules": ["T5"]},
-                "Time": {"reason": "planted", "rules": ["T9"]},
+                "Button": {"reason": "planted", "rules": ["state-color-name"]},
+                "Spacer": {"reason": "", "rules": ["base-output"]},
+                "Time": {"reason": "planted", "rules": ["ghost-rule"]},
                 "Weather": {"reason": "planted", "rules": [], "fieldsReadIn": ["qml/config/BarsConfig.qml"]}}))
             code, out = run_check(root, "check_structure.py", files=[(p, text) for p, text, _ in self.FILES])
         self.assertEqual(code, 1)
@@ -710,10 +721,22 @@ class CheckStructure(unittest.TestCase):
 
     def test_live_tree_passes(self):
         # The real widgets break no template rule, so each plant above is what fails
+        sys.path.insert(0, str(SCRIPTS))
+        import check_structure
         with tempfile.TemporaryDirectory() as tmp:
             root = fixture_root(tmp, "qml", "docs/dev/compositor/contract.md")
             _, out = run_check(root, "check_structure.py")
-        self.assertEqual([line for line in out.splitlines() if ": T" in line or "bar-widget-exceptions" in line], [], out)
+        self.assertEqual([line for line in out.splitlines() if any(f": {rule}" in line for rule in check_structure.WIDGET_RULES) or "bar-widget-exceptions" in line], [], out)
+
+    def test_retired_widget_rule_ids_fail_as_unknown(self):
+        # The ids the template rules had before they were named; built here so none is written out
+        old = [f"T{n}" for n in range(1, 9)]
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "qml", "docs/dev/compositor/contract.md")
+            edit_json(root / "scripts/bar-widget-exceptions.json", lambda a: a["types"].update({"Button": {"reason": "planted", "rules": old}}))
+            code, out = run_check(root, "check_structure.py")
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, [f"bar-widget-exceptions.json: Button names {o}, not a rule" for o in old]), [], out)
 
 
 class CheckI18n(unittest.TestCase):
@@ -1667,6 +1690,24 @@ class CheckNames(unittest.TestCase):
         self.assertEqual(check_names.retired_sites() & moved, set())
         self.assertNotIn("Bar", check_names.retired_sites())
 
+    @staticmethod
+    def misnamed_scripts(scripts):
+        """The files under `scripts` that break its naming: a `.py` named `generate_*`, a `.sh` not snake_case,
+        a `.json` directly in it not kebab-case."""
+        bad = [p for p in scripts.rglob("*.py") if p.name.startswith("generate_")]
+        bad += [p for p in scripts.rglob("*.sh") if not re.fullmatch(r"[a-z0-9_]+\.sh", p.name)]
+        bad += [p for p in scripts.glob("*.json") if not re.fullmatch(r"[a-z0-9-]+\.json", p.name)]
+        return sorted(str(p.relative_to(scripts)) for p in bad)
+
+    def test_scripts_folder_names(self):
+        self.assertEqual(self.misnamed_scripts(SCRIPTS), [])
+        with tempfile.TemporaryDirectory() as tmp:
+            scripts = Path(tmp) / "scripts"
+            (scripts / "dev").mkdir(parents=True)
+            for name in ("generate_x.py", "dev/a-b.sh", "My_Exceptions.json", "ok_name.sh", "ok-name.json"):
+                (scripts / name).write_text("")
+            self.assertEqual(self.misnamed_scripts(scripts), ["My_Exceptions.json", "dev/a-b.sh", "generate_x.py"])
+
 
 class GenDocsEngines(unittest.TestCase):
     """scripts/gen_docs.py renders the engine pages from the manifest: the fixture engines' manifest, API and
@@ -1882,7 +1923,7 @@ class CheckSizes(unittest.TestCase):
 
 
 class CheckStyle(unittest.TestCase):
-    """scripts/check_style.py: each rule R1 to R20 on a fixture file, the waivers, the scope, every hit failing and the role check."""
+    """scripts/check_style.py: each rule on a fixture file, the waivers, the scope, every hit failing and the role check."""
     HEAD = "pragma ComponentBehavior: Bound\nimport QtQuick\nimport qs.config\n// A fixture.\n"
     UI = "qml/components/reusable/X.qml"
     STYLED = {"qml/components/reusable/StyledText.qml": HEAD + "Text {\n}\n",
@@ -1914,217 +1955,226 @@ class CheckStyle(unittest.TestCase):
     def rule(self, body, rule, **kw):
         return self.hits(body, **kw).count(rule)
 
-    def test_r1_theme_reads(self):
-        self.assertEqual(self.rule("  color: Theme.accent", "R1"), 1)
-        self.assertEqual(self.rule("  property var x: [Theme.baseColorNames, Theme.roles, Theme.name]", "R1"), 0)
-        self.assertEqual(self.rule("  property string x: CursorThemeManager.xcursorTheme.startsWith('a')", "R1"), 0)
-        self.assertEqual(self.rule("  property var x: [Theme.a, Theme.b]", "R1"), 2)
+    def test_theme_read(self):
+        self.assertEqual(self.rule("  color: Theme.accent", "theme-read"), 1)
+        self.assertEqual(self.rule("  property var x: [Theme.baseColorNames, Theme.roles, Theme.name]", "theme-read"), 0)
+        self.assertEqual(self.rule("  property string x: CursorThemeManager.xcursorTheme.startsWith('a')", "theme-read"), 0)
+        self.assertEqual(self.rule("  property var x: [Theme.a, Theme.b]", "theme-read"), 2)
 
-    def test_r2_raw_colours(self):
+    def test_raw_color(self):
         for text in ("Qt.alpha(Style.text, 0.5)", "Qt.rgba(0, 0, 0, 1)", "Qt.lighter(Style.text)", '"#ff0000"', '"black"'):
-            self.assertEqual(self.rule(f"  property var x: {text}", "R2"), 1, text)
-        self.assertEqual(self.rule('  property var x: "transparent"', "R2"), 0)
+            self.assertEqual(self.rule(f"  property var x: {text}", "raw-color"), 1, text)
+        self.assertEqual(self.rule('  property var x: "transparent"', "raw-color"), 0)
 
-    def test_r3_opacity(self):
-        self.assertEqual(self.rule("  opacity: 0.5", "R3"), 1)
-        self.assertEqual(self.rule("  inkOpacity: x ? 0.6 : 1", "R3"), 1)
-        self.assertEqual(self.rule("  property real fillOpacity: .45", "R3"), 1)
-        self.assertEqual(self.rule("  opacity: x ? 0 : 1", "R3"), 0)
-        self.assertEqual(self.rule('  NumberAnimation { property: "opacity"; to: 0.35 }', "R3"), 1)
-        self.assertEqual(self.rule("  NumberAnimation on opacity { from: 0; to: 1 }", "R3"), 0)
+    def test_fractional_opacity(self):
+        self.assertEqual(self.rule("  opacity: 0.5", "fractional-opacity"), 1)
+        self.assertEqual(self.rule("  inkOpacity: x ? 0.6 : 1", "fractional-opacity"), 1)
+        self.assertEqual(self.rule("  property real fillOpacity: .45", "fractional-opacity"), 1)
+        self.assertEqual(self.rule("  opacity: x ? 0 : 1", "fractional-opacity"), 0)
+        self.assertEqual(self.rule('  NumberAnimation { property: "opacity"; to: 0.35 }', "fractional-opacity"), 1)
+        self.assertEqual(self.rule("  NumberAnimation on opacity { from: 0; to: 1 }", "fractional-opacity"), 0)
 
-    def test_r4_sizes(self):
-        self.assertEqual(self.rule("  textSize: Appearance.fontSizeBy(2)", "R4"), 1)
-        self.assertEqual(self.rule("  textSize: Appearance.fontSize", "R4"), 1)
-        self.assertEqual(self.rule("  textSize: 14", "R4"), 1)
-        self.assertEqual(self.rule("  textSize: Style.iconSm", "R4"), 0)
-        self.assertEqual(self.rule("  font.pixelSize: Appearance.fontSizeLarge", "R4"), 1)
-        self.assertEqual(self.rule("  fontSizeMode: Text.Fit", "R4"), 1)
-        self.assertEqual(self.rule("  fontSizeMode: Text.Fit\n  minimumPixelSize: Style.typeMicro", "R4"), 0)
-        self.assertEqual(self.rule("  textSize: Math.max(Style.typeMicro, box * 0.5) // fitted: the box", "R4"), 0)
-        self.assertEqual(self.rule("  textSize: box * 0.5 // fitted: the box", "R4"), 1)
-        self.assertEqual(self.rule("  textSize: Math.max(Style.typeMicro, Tone.x(box)) // fitted: the box", "R4"), 0)
-        self.assertEqual(self.rule("  textSize: Math.max(Style.typeMicro, Tone.x(box)) // fitted: the box", "R6"), 1)
+    def test_text_size(self):
+        self.assertEqual(self.rule("  textSize: Appearance.fontSizeBy(2)", "text-size"), 1)
+        self.assertEqual(self.rule("  textSize: Appearance.fontSize", "text-size"), 1)
+        self.assertEqual(self.rule("  textSize: 14", "text-size"), 1)
+        self.assertEqual(self.rule("  textSize: Style.iconSm", "text-size"), 0)
+        self.assertEqual(self.rule("  font.pixelSize: Appearance.fontSizeLarge", "text-size"), 1)
+        self.assertEqual(self.rule("  fontSizeMode: Text.Fit", "text-size"), 1)
+        self.assertEqual(self.rule("  fontSizeMode: Text.Fit\n  minimumPixelSize: Style.typeMicro", "text-size"), 0)
+        self.assertEqual(self.rule("  textSize: Math.max(Style.typeMicro, box * 0.5) // fitted: the box", "text-size"), 0)
+        self.assertEqual(self.rule("  textSize: box * 0.5 // fitted: the box", "text-size"), 1)
+        self.assertEqual(self.rule("  textSize: Math.max(Style.typeMicro, Tone.x(box)) // fitted: the box", "text-size"), 0)
+        self.assertEqual(self.rule("  textSize: Math.max(Style.typeMicro, Tone.x(box)) // fitted: the box", "color-function"), 1)
 
-    def test_r5_weights(self):
-        self.assertEqual(self.rule("  font.bold: true", "R5"), 1)
-        self.assertEqual(self.rule("  font.weight: x ? Style.weightMedium : Style.weightNormal", "R5"), 0)
-        self.assertEqual(self.rule("  font.weight: x ? Style.weightMedium : Font.Bold", "R5"), 1)
-        self.assertEqual(self.rule("  font.weight: Style.roleLabel.weight", "R5"), 0)
-        self.assertEqual(self.rule("  font.bold: true", "R5", path="qml/components/bar/widgets/base/X.qml"), 1)
-        self.assertEqual(self.rule("  font.bold: true", "R5", path="qml/components/bar/widgets/Clock/X.qml"), 0)
+    def test_font_weight(self):
+        self.assertEqual(self.rule("  font.bold: true", "font-weight"), 1)
+        self.assertEqual(self.rule("  font.weight: x ? Style.weightMedium : Style.weightNormal", "font-weight"), 0)
+        self.assertEqual(self.rule("  font.weight: x ? Style.weightMedium : Font.Bold", "font-weight"), 1)
+        self.assertEqual(self.rule("  font.weight: Style.roleLabel.weight", "font-weight"), 0)
+        self.assertEqual(self.rule("  font.bold: true", "font-weight", path="qml/components/bar/widgets/base/X.qml"), 1)
+        self.assertEqual(self.rule("  font.bold: true", "font-weight", path="qml/components/bar/widgets/Clock/X.qml"), 0)
 
-    def test_r6_colour_functions(self):
-        self.assertEqual(self.rule("  property var x: Tone.mix(a, b, 0.5)", "R6"), 1)
-        self.assertEqual(self.rule("  property var x: Utils.contrast(a, b)", "R6"), 1)
-        self.assertEqual(self.rule("  property var x: Style.inkOf('raised').text", "R6"), 0)
+    def test_color_function(self):
+        self.assertEqual(self.rule("  property var x: Tone.mix(a, b, 0.5)", "color-function"), 1)
+        self.assertEqual(self.rule("  property var x: Utils.contrast(a, b)", "color-function"), 1)
+        self.assertEqual(self.rule("  property var x: Style.inkOf('raised').text", "color-function"), 0)
         service = "qml/services/core/X.qml"
-        self.assertEqual(self.rule('  property var x: ({ "c": String(WindowLookConfig.activeBorder) })', "R6", path=service), 1)
-        self.assertEqual(self.rule("  property var x: String(ThemeManager.wallpaper)", "R6", path=service), 0)
+        self.assertEqual(self.rule('  property var x: ({ "c": String(WindowLookConfig.activeBorder) })', "color-function", path=service), 1)
+        self.assertEqual(self.rule("  property var x: String(ThemeManager.wallpaper)", "color-function", path=service), 0)
 
-    def test_r7_colour_operands(self):
-        self.assertEqual(self.rule("  color: x ? Style.accent : Style.textMuted", "R7"), 0)
-        self.assertEqual(self.rule("  color: x ? Style.accent : Theme.foreground", "R7"), 1)
-        self.assertEqual(self.rule("  color: c && Style.accent", "R7"), 0)
-        self.assertEqual(self.rule("  color: Theme.a ?? Style.accent", "R7"), 1)
-        self.assertEqual(self.rule("  color: Theme.a ? Style.accent : Style.text", "R7"), 0)
-        self.assertEqual(self.rule("  color: chip.ink.text\n  Item { id: chip }", "R7"), 0)
-        self.assertEqual(self.rule("  color: changedEntry.ink\n  Item { id: changedEntry }", "R7"), 0)
-        self.assertEqual(self.rule("  color: other.ink", "R7"), 1)
-        self.assertEqual(self.rule("  color: WorkspaceOverlayConfig.color", "R7"), 0)
-        self.assertEqual(self.rule("  textColor: MenusConfig.colorsOf(root.menu).fill", "R7"), 0)
-        self.assertEqual(self.rule('  border.color: "transparent"', "R7"), 0)
-        self.assertEqual(self.rule("  iconColor: Style.edgeFill(Style.accent, true)", "R7"), 0)
-        self.assertEqual(self.rule("  iconColor: Style.edgeFill(Theme.accent, true)", "R7"), 1)
+    def test_color_property(self):
+        self.assertEqual(self.rule("  color: x ? Style.accent : Style.textMuted", "color-property"), 0)
+        self.assertEqual(self.rule("  color: x ? Style.accent : Theme.foreground", "color-property"), 1)
+        self.assertEqual(self.rule("  color: c && Style.accent", "color-property"), 0)
+        self.assertEqual(self.rule("  color: Theme.a ?? Style.accent", "color-property"), 1)
+        self.assertEqual(self.rule("  color: Theme.a ? Style.accent : Style.text", "color-property"), 0)
+        self.assertEqual(self.rule("  color: chip.ink.text\n  Item { id: chip }", "color-property"), 0)
+        self.assertEqual(self.rule("  color: changedEntry.ink\n  Item { id: changedEntry }", "color-property"), 0)
+        self.assertEqual(self.rule("  color: other.ink", "color-property"), 1)
+        self.assertEqual(self.rule("  color: WorkspaceOverlayConfig.color", "color-property"), 0)
+        self.assertEqual(self.rule("  textColor: MenusConfig.colorsOf(root.menu).fill", "color-property"), 0)
+        self.assertEqual(self.rule('  border.color: "transparent"', "color-property"), 0)
+        self.assertEqual(self.rule("  iconColor: Style.edgeFill(Style.accent, true)", "color-property"), 0)
+        self.assertEqual(self.rule("  iconColor: Style.edgeFill(Theme.accent, true)", "color-property"), 1)
 
-    def test_r8_clipping_rectangle(self):
-        self.assertEqual(self.rule("  ClippingRectangle {\n    radius: 4\n  }", "R8"), 1)
-        self.assertEqual(self.rule('  ClippingRectangle {\n    color: "transparent"\n  }', "R8"), 0)
+    def test_clip_color(self):
+        self.assertEqual(self.rule("  ClippingRectangle {\n    radius: 4\n  }", "clip-color"), 1)
+        self.assertEqual(self.rule('  ClippingRectangle {\n    color: "transparent"\n  }', "clip-color"), 0)
 
-    def test_r9_palette_parts(self):
-        self.assertEqual(self.rule("  ScrollIndicator {\n  }", "R9"), 1)
-        self.assertEqual(self.rule("  ScrollIndicator {\n    contentItem: Item {}\n  }", "R9"), 0)
-        self.assertEqual(self.rule("  TextField {\n  }", "R9"), 1)
-        self.assertEqual(self.rule("  TextField {\n    selectionColor: Style.accent\n  }", "R9"), 0)
-        self.assertEqual(self.rule("  Popup {\n  }", "R9"), 1)
+    def test_palette_part(self):
+        self.assertEqual(self.rule("  ScrollIndicator {\n  }", "palette-part"), 1)
+        self.assertEqual(self.rule("  ScrollIndicator {\n    contentItem: Item {}\n  }", "palette-part"), 0)
+        self.assertEqual(self.rule("  TextField {\n  }", "palette-part"), 1)
+        self.assertEqual(self.rule("  TextField {\n    selectionColor: Style.accent\n  }", "palette-part"), 0)
+        self.assertEqual(self.rule("  Popup {\n  }", "palette-part"), 1)
 
-    def test_r10_canvas(self):
+    def test_canvas_revision(self):
         body = "  Canvas {\n    onPaint: { var c = Style.text; }\n  }"
-        self.assertEqual(self.rule(body, "R10"), 1)
-        self.assertEqual(self.rule(body + "\n  property int k: Style.revision", "R10"), 0)
+        self.assertEqual(self.rule(body, "canvas-revision"), 1)
+        self.assertEqual(self.rule(body + "\n  property int k: Style.revision", "canvas-revision"), 0)
         self.assertEqual(self.rule("  Canvas {\n    property color lineColor: 'red'\n    onLineColorChanged: requestPaint()\n"
-                                   "    onPaint: { var c = root.lineColor; }\n  }", "R10"), 0)
+                                   "    onPaint: { var c = root.lineColor; }\n  }", "canvas-revision"), 0)
 
-    def test_r11_redeclared_property(self):
+    def test_redeclared_property(self):
         extra = {"qml/components/reusable/Base.qml": self.HEAD + "Item {\n  property int count: 0\n  signal picked\n}\n",
                  "qml/components/reusable/Mid.qml": self.HEAD + "Base {\n}\n"}
         self.put(extra)
         self.put({self.UI: self.HEAD + "Mid {\n  property string count: ''\n  signal picked\n}\n"})
         code, out = run_check(self.root, "check_style.py", "--files", self.UI)
-        self.assertEqual(out.count("R11"), 2, out)
+        self.assertEqual(out.count("redeclared-property"), 2, out)
         self.put({self.UI: self.HEAD + "Item {\n  component Inner: Mid {\n    property int count: 1\n  }\n}\n"})
         code, out = run_check(self.root, "check_style.py", "--files", self.UI)
-        self.assertEqual(out.count("R11"), 1, out)
+        self.assertEqual(out.count("redeclared-property"), 1, out)
         # two blocks opened on one line, and a block named in a comment
         self.put({self.UI: self.HEAD + "Item {\n  Item { Base { property int count: 1 } }\n  /* Base { property int count: 1 } */\n}\n"})
         code, out = run_check(self.root, "check_style.py", "--files", self.UI)
-        self.assertEqual(out.count("R11"), 1, out)
+        self.assertEqual(out.count("redeclared-property"), 1, out)
 
-    def test_r12_inherited_ink(self):
+    def test_global_text_role(self):
         surface = {"qml/components/reusable/Surface.qml": self.HEAD + "Rectangle {\n  property string tone: 'surface'\n}\n"}
-        self.assertEqual(self.rule('  Surface {\n    tone: "highest"\n    StyledText { textColor: Style.text }\n  }', "R12",
+        self.assertEqual(self.rule('  Surface {\n    tone: "highest"\n    StyledText { textColor: Style.text }\n  }', "global-text-role",
                                    extra={**surface, **self.STYLED}), 1)
-        self.assertEqual(self.rule('  Surface {\n    tone: "accentContainer"\n    StyledText {\n      tone: "error"\n    }\n  }', "R12",
+        self.assertEqual(self.rule('  Surface {\n    tone: "accentContainer"\n    StyledText {\n      tone: "error"\n    }\n  }', "global-text-role",
                                    extra={**surface, **self.STYLED}), 1)
-        self.assertEqual(self.rule('  Surface {\n    tone: "accent"\n    Item { border.color: Style.focusRing }\n  }', "R12",
+        self.assertEqual(self.rule('  Surface {\n    tone: "accent"\n    Item { border.color: Style.focusRing }\n  }', "global-text-role",
                                    extra={**surface, **self.STYLED}), 1)
         self.assertEqual(self.rule('  Surface {\n    tone: "highest"\n    StyledText { text: x }\n    StyledText {\n      tone: "muted"\n    }\n'
-                                   '    Item { color: Style.accentContainer }\n    Item { color: Style.accentWash }\n  }', "R12",
+                                   '    Item { color: Style.accentContainer }\n    Item { color: Style.accentWash }\n  }', "global-text-role",
                                    extra={**surface, **self.STYLED}), 0)
         self.assertEqual(self.rule('  Surface {\n    tone: "highest"\n    Surface {\n      tone: "surface"\n      Item { color: Style.text }\n    }\n  }',
-                                   "R12", extra=surface), 0)
+                                   "global-text-role", extra=surface), 0)
 
-    def test_r13_bold_on_styled_text(self):
-        self.assertEqual(self.rule("  StyledLabel { font.bold: true }", "R13", extra=self.STYLED), 1)
-        self.assertEqual(self.rule("  component X: StyledText {\n    font.bold: true\n  }", "R13", extra=self.STYLED), 1)
-        self.assertEqual(self.rule("  StyledText { font { bold: true } }", "R13", extra=self.STYLED), 1)
-        self.assertEqual(self.rule("  Text { font.bold: true }", "R13", extra=self.STYLED), 0)
-        self.assertEqual(self.rule("  FontMetrics { font.bold: true }", "R13", extra=self.STYLED), 0)
-        self.assertEqual(self.rule("  StyledLabel { font.bold: true }", "R13", extra=self.STYLED, path="qml/components/bar/widgets/Clock/X.qml"), 1)
+    def test_bold_styled_text(self):
+        self.assertEqual(self.rule("  StyledLabel { font.bold: true }", "bold-styled-text", extra=self.STYLED), 1)
+        self.assertEqual(self.rule("  component X: StyledText {\n    font.bold: true\n  }", "bold-styled-text", extra=self.STYLED), 1)
+        self.assertEqual(self.rule("  StyledText { font { bold: true } }", "bold-styled-text", extra=self.STYLED), 1)
+        self.assertEqual(self.rule("  Text { font.bold: true }", "bold-styled-text", extra=self.STYLED), 0)
+        self.assertEqual(self.rule("  FontMetrics { font.bold: true }", "bold-styled-text", extra=self.STYLED), 0)
+        self.assertEqual(self.rule("  StyledLabel { font.bold: true }", "bold-styled-text", extra=self.STYLED, path="qml/components/bar/widgets/Clock/X.qml"), 1)
 
-    def test_r14_raw_wrap_and_elide(self):
-        self.assertEqual(self.rule("  StyledLabel { wrapMode: Text.WordWrap }", "R14", extra=self.STYLED), 1)
-        self.assertEqual(self.rule("  StyledLabel { elide: Text.ElideRight; maximumLineCount: 2 }", "R14", extra=self.STYLED), 2)
-        self.assertEqual(self.rule("  TextMetrics { elide: Text.ElideRight }", "R14", extra=self.STYLED), 0)
-        self.assertEqual(self.rule("  StyledLabel { elide: Text.ElideMiddle } // style-exempt: middle", "R14", extra=self.STYLED), 0)
-        self.assertEqual(self.rule('  StyledLabel { overflow: "wrap" }', "R14", extra=self.STYLED), 0)
+    def test_styled_text_overflow(self):
+        self.assertEqual(self.rule("  StyledLabel { wrapMode: Text.WordWrap }", "styled-text-overflow", extra=self.STYLED), 1)
+        self.assertEqual(self.rule("  StyledLabel { elide: Text.ElideRight; maximumLineCount: 2 }", "styled-text-overflow", extra=self.STYLED), 2)
+        self.assertEqual(self.rule("  TextMetrics { elide: Text.ElideRight }", "styled-text-overflow", extra=self.STYLED), 0)
+        self.assertEqual(self.rule("  StyledLabel { elide: Text.ElideMiddle } // style-exempt: middle", "styled-text-overflow", extra=self.STYLED), 0)
+        self.assertEqual(self.rule('  StyledLabel { overflow: "wrap" }', "styled-text-overflow", extra=self.STYLED), 0)
 
-    def test_r15_dead_elide(self):
+    def test_dead_elide(self):
         row = "  RowLayout {\n    StyledLabel { %s }\n  }"
-        self.assertEqual(self.rule(row % "elide: Text.ElideRight", "R15", extra=self.STYLED), 1)
-        self.assertEqual(self.rule(row % 'overflow: "line"', "R15", extra=self.STYLED), 1)
-        self.assertEqual(self.rule(row % "elide: Text.ElideRight; Layout.fillWidth: true", "R15", extra=self.STYLED), 0)
-        self.assertEqual(self.rule(row % "elide: Text.ElideRight; Layout.maximumWidth: 100", "R15", extra=self.STYLED), 0)
-        self.assertEqual(self.rule("  ColumnLayout {\n    StyledLabel { elide: Text.ElideRight }\n  }", "R15", extra=self.STYLED), 0)
+        self.assertEqual(self.rule(row % "elide: Text.ElideRight", "dead-elide", extra=self.STYLED), 1)
+        self.assertEqual(self.rule(row % 'overflow: "line"', "dead-elide", extra=self.STYLED), 1)
+        self.assertEqual(self.rule(row % "elide: Text.ElideRight; Layout.fillWidth: true", "dead-elide", extra=self.STYLED), 0)
+        self.assertEqual(self.rule(row % "elide: Text.ElideRight; Layout.maximumWidth: 100", "dead-elide", extra=self.STYLED), 0)
+        self.assertEqual(self.rule("  ColumnLayout {\n    StyledLabel { elide: Text.ElideRight }\n  }", "dead-elide", extra=self.STYLED), 0)
 
-    def test_r16_render_type(self):
+    def test_text_render_type(self):
         line = "renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)"
-        self.assertEqual(self.rule("  Text {\n  }", "R16"), 1)
-        self.assertEqual(self.rule(f"  Text {{\n    {line}\n  }}", "R16"), 0)
-        self.assertEqual(self.rule("  Text {\n    renderType: Text.NativeRendering\n  }", "R16"), 2)
-        self.assertEqual(self.rule("  Text {\n  }", "R16", path="qml/components/bar/widgets/Clock/X.qml"), 1)
+        self.assertEqual(self.rule("  Text {\n  }", "text-render-type"), 1)
+        self.assertEqual(self.rule(f"  Text {{\n    {line}\n  }}", "text-render-type"), 0)
+        self.assertEqual(self.rule("  Text {\n    renderType: Text.NativeRendering\n  }", "text-render-type"), 2)
+        self.assertEqual(self.rule("  Text {\n  }", "text-render-type", path="qml/components/bar/widgets/Clock/X.qml"), 1)
         # an inline definition counts once, its uses not at all
-        self.assertEqual(self.rule("  component D: Text {\n  }\n  D {}\n  D {}", "R16"), 1)
+        self.assertEqual(self.rule("  component D: Text {\n  }\n  D {}\n  D {}", "text-render-type"), 1)
         # StyledText's own root states it from its zoom walk
         self.put({"qml/components/reusable/StyledText.qml":
                   self.HEAD + "Text {\n  renderType: TextRender.typeFor(root._drawnZoom, false, 0)\n}\n"})
         code, out = run_check(self.root, "check_style.py", "--files", "qml/components/reusable/StyledText.qml")
-        self.assertNotIn("R16", out)
+        self.assertNotIn("text-render-type", out)
 
-    def test_r17_layers(self):
-        self.assertEqual(self.rule("  layer.enabled: true", "R17"), 1)
-        self.assertEqual(self.rule("  layer.enabled: false", "R17"), 0)
-        self.assertEqual(self.rule("  layer.effect: MultiEffect {\n  }", "R17"), 1)
-        self.assertEqual(self.rule("  layer.effect: MultiEffect { // style-exempt: no text\n  }", "R17"), 0)
+    def test_layer_over_content(self):
+        self.assertEqual(self.rule("  layer.enabled: true", "layer-over-content"), 1)
+        self.assertEqual(self.rule("  layer.enabled: false", "layer-over-content"), 0)
+        self.assertEqual(self.rule("  layer.effect: MultiEffect {\n  }", "layer-over-content"), 1)
+        self.assertEqual(self.rule("  layer.effect: MultiEffect { // style-exempt: no text\n  }", "layer-over-content"), 0)
 
-    def test_r20_glide_to_transparent(self):
+    def test_transparent_glide(self):
         glide = "  ColorGlide on color {}"
-        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n' + glide, "R20"), 1)
-        self.assertEqual(self.rule('  border.color: root.on ? Style.accent : "transparent"\n  ColorGlide on border.color {}', "R20"), 1)
-        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n  Behavior on color {\n    ColorAnimation {\n    }\n  }', "R20"), 1)
-        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n  ColorAnimation on color {\n  }', "R20"), 1)
-        self.assertEqual(self.rule('  color: "transparent"\n' + glide, "R20"), 1)
-        self.assertEqual(self.rule('  color: root.on ? Style.accent : Qt.alpha(Style.accent, 0) // style-exempt: rests on its hue\n' + glide, "R20"), 0)
-        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"', "R20"), 0)
-        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n  Glide on width {}', "R20"), 0)
-        self.assertEqual(self.rule('  color: "transparent"\n  border.color: Style.accent\n  ColorGlide on border.color {}', "R20"), 0)
-        self.assertEqual(self.rule('  color: root.on ? "transparent" : Style.accent\n' + glide, "R20"), 1)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n' + glide, "transparent-glide"), 1)
+        self.assertEqual(self.rule('  border.color: root.on ? Style.accent : "transparent"\n  ColorGlide on border.color {}', "transparent-glide"), 1)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n  Behavior on color {\n    ColorAnimation {\n    }\n  }', "transparent-glide"), 1)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n  ColorAnimation on color {\n  }', "transparent-glide"), 1)
+        self.assertEqual(self.rule('  color: "transparent"\n' + glide, "transparent-glide"), 1)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : Qt.alpha(Style.accent, 0) // style-exempt: rests on its hue\n' + glide, "transparent-glide"), 0)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"', "transparent-glide"), 0)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n  Glide on width {}', "transparent-glide"), 0)
+        self.assertEqual(self.rule('  color: "transparent"\n  border.color: Style.accent\n  ColorGlide on border.color {}', "transparent-glide"), 0)
+        self.assertEqual(self.rule('  color: root.on ? "transparent" : Style.accent\n' + glide, "transparent-glide"), 1)
 
-    def test_r19_widget_radius(self):
-        self.assertEqual(self.rule("  radius: Widget.radius", "R19"), 1)
-        self.assertEqual(self.rule("  radius: Widget.radius / 2", "R19"), 1)
-        self.assertEqual(self.rule("  radius: Style.radius", "R19"), 0)
-        self.assertEqual(self.rule("  // Widget.radius in a comment", "R19"), 0)
-        self.assertEqual(self.rule("  radius: Widget.radius", "R19", path="qml/config/X.qml"), 0)
+    def test_widget_radius(self):
+        self.assertEqual(self.rule("  radius: Widget.radius", "widget-radius"), 1)
+        self.assertEqual(self.rule("  radius: Widget.radius / 2", "widget-radius"), 1)
+        self.assertEqual(self.rule("  radius: Style.radius", "widget-radius"), 0)
+        self.assertEqual(self.rule("  // Widget.radius in a comment", "widget-radius"), 0)
+        self.assertEqual(self.rule("  radius: Widget.radius", "widget-radius", path="qml/config/X.qml"), 0)
 
-    def test_r21_trough(self):
-        self.assertEqual(self.rule("  color: Style.trough", "R21"), 1)
-        self.assertEqual(self.rule("  color: Style.trough", "R21", path="qml/components/content/X/X.qml"), 1)
+    def test_trough_read(self):
+        self.assertEqual(self.rule("  color: Style.trough", "trough-read"), 1)
+        self.assertEqual(self.rule("  color: Style.trough", "trough-read", path="qml/components/content/X/X.qml"), 1)
         for piece in ("StyledVolumeBar", "StyledSlider", "LevelMeter", "SegmentMeter", "PercentageCircle"):
-            self.assertEqual(self.rule("  color: Style.trough", "R21", path=f"qml/components/reusable/{piece}.qml"), 0, piece)
-        self.assertEqual(self.rule("  // Style.trough in a comment", "R21"), 0)
-        self.assertEqual(self.rule("  color: Style.trough // style-exempt: a band, not a meter", "R21"), 0)
-        self.assertEqual(self.rule("  color: Style.trough", "R21", path="qml/config/X.qml"), 0)
+            self.assertEqual(self.rule("  color: Style.trough", "trough-read", path=f"qml/components/reusable/{piece}.qml"), 0, piece)
+        self.assertEqual(self.rule("  // Style.trough in a comment", "trough-read"), 0)
+        self.assertEqual(self.rule("  color: Style.trough // style-exempt: a band, not a meter", "trough-read"), 0)
+        self.assertEqual(self.rule("  color: Style.trough", "trough-read", path="qml/config/X.qml"), 0)
 
-    def test_r18_scale(self):
-        self.assertEqual(self.rule("  scale: 0.92", "R18"), 1)
-        self.assertEqual(self.rule("  scale: 1", "R18"), 0)
-        self.assertEqual(self.rule("  scale: root.zoom\n  readonly property real contentZoom: scale", "R18"), 0)
-        self.assertEqual(self.rule("  readonly property real contentZoom: scale\n  scale: root.zoom", "R18"), 0)
-        self.assertEqual(self.rule("  readonly property real contentZoom: scale\n  Item {\n    scale: 0.5\n  }", "R18"), 0)
-        self.assertEqual(self.rule("  property var x: ({ a: 1, scale: 2, b: 3 })", "R18"), 0)
-        self.assertEqual(self.rule("  scale: 0.5 // style-exempt: no text", "R18"), 0)
-        self.assertEqual(self.rule("  transform: Scale { xScale: s }", "R18"), 1)
-        self.assertEqual(self.rule("  property real contentZoom: 1\n  transform: Scale { xScale: s }", "R18"), 0)
-        self.assertEqual(self.rule('  NumberAnimation { property: "scale" }', "R18"), 1)
-        self.assertEqual(self.rule('  NumberAnimation { properties: "x,scale" }', "R18"), 1)
-        self.assertEqual(self.rule('  NumberAnimation { property: "opacity" }', "R18"), 0)
+    def test_unhosted_scale(self):
+        self.assertEqual(self.rule("  scale: 0.92", "unhosted-scale"), 1)
+        self.assertEqual(self.rule("  scale: 1", "unhosted-scale"), 0)
+        self.assertEqual(self.rule("  scale: root.zoom\n  readonly property real contentZoom: scale", "unhosted-scale"), 0)
+        self.assertEqual(self.rule("  readonly property real contentZoom: scale\n  scale: root.zoom", "unhosted-scale"), 0)
+        self.assertEqual(self.rule("  readonly property real contentZoom: scale\n  Item {\n    scale: 0.5\n  }", "unhosted-scale"), 0)
+        self.assertEqual(self.rule("  property var x: ({ a: 1, scale: 2, b: 3 })", "unhosted-scale"), 0)
+        self.assertEqual(self.rule("  scale: 0.5 // style-exempt: no text", "unhosted-scale"), 0)
+        self.assertEqual(self.rule("  transform: Scale { xScale: s }", "unhosted-scale"), 1)
+        self.assertEqual(self.rule("  property real contentZoom: 1\n  transform: Scale { xScale: s }", "unhosted-scale"), 0)
+        self.assertEqual(self.rule('  NumberAnimation { property: "scale" }', "unhosted-scale"), 1)
+        self.assertEqual(self.rule('  NumberAnimation { properties: "x,scale" }', "unhosted-scale"), 1)
+        self.assertEqual(self.rule('  NumberAnimation { property: "opacity" }', "unhosted-scale"), 0)
 
     def test_waivers(self):
-        self.assertEqual(self.rule('  property var x: "black" // style-exempt: mask', "R2"), 0)
+        self.assertEqual(self.rule('  property var x: "black" // style-exempt: mask', "raw-color"), 0)
         # a file's exception waives its rule
-        self.put({"scripts/style-exceptions.json": json.dumps({self.UI: {"rules": ["R1"], "reason": "a fixture"}}),
+        self.put({"scripts/style-exceptions.json": json.dumps({self.UI: {"rules": ["theme-read"], "reason": "a fixture"}}),
                   self.UI: self.HEAD + "Item {\n  property var x: Theme.accent\n}\n"})
         self.assertEqual(run_check(self.root, "check_style.py")[0], 0)
 
-    def test_a_file_level_r21_exception_is_accepted(self):
-        self.put({"scripts/style-exceptions.json": json.dumps({self.UI: {"rules": ["R21"], "reason": "a fixture"}}),
+    def test_a_file_level_trough_read_exception_is_accepted(self):
+        self.put({"scripts/style-exceptions.json": json.dumps({self.UI: {"rules": ["trough-read"], "reason": "a fixture"}}),
                   self.UI: self.HEAD + "Item {\n  color: Style.trough\n}\n"})
         code, out = run_check(self.root, "check_style.py")
         self.assertEqual(code, 0, out)
 
+    def test_retired_rule_ids_fail_as_unknown(self):
+        # The ids the rules had before they were named; built here so none is written out
+        old = [f"R{n}" for n in range(1, 22)]
+        self.put({"scripts/style-exceptions.json": json.dumps({self.UI: {"rules": old, "reason": "planted"}}),
+                  self.UI: self.HEAD + "Item {\n}\n"})
+        code, out = run_check(self.root, "check_style.py")
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, [f"style-exceptions.json: {self.UI} names {o}, not a rule" for o in old]), [], out)
+
     def test_a_malformed_exception_is_an_error_not_a_traceback(self):
-        self.put({"scripts/style-exceptions.json": json.dumps({self.UI: "R1"}),
+        self.put({"scripts/style-exceptions.json": json.dumps({self.UI: "theme-read"}),
                   self.UI: self.HEAD + "Item {\n}\n"})
         code, out = run_check(self.root, "check_style.py")
         self.assertNotEqual(code, 0)
@@ -2134,18 +2184,18 @@ class CheckStyle(unittest.TestCase):
     def test_scope(self):
         for path in ("qml/config/Style.qml", "qml/components/methods/X.qml", "qml/components/reusable/Surface.qml",
                      "qml/components/bar/widgets/Clock/X.qml", "qml/components/bar/widgets/base/X.qml"):
-            self.assertEqual(self.rule("  property var x: Theme.accent", "R1", path=path), 0, path)
-        self.assertEqual(self.rule("  property var x: Theme.a", "R1", path="qml/services/core/Y.qml"), 1)
-        self.assertEqual(self.rule("  font.bold: true", "R13", path="qml/config/Style.qml"), 0)
-        # only R1, R2 and R6 reach a service
-        self.assertEqual(self.rule("  color: Theme.accent", "R7", path="qml/services/core/Y.qml"), 0)
+            self.assertEqual(self.rule("  property var x: Theme.accent", "theme-read", path=path), 0, path)
+        self.assertEqual(self.rule("  property var x: Theme.a", "theme-read", path="qml/services/core/Y.qml"), 1)
+        self.assertEqual(self.rule("  font.bold: true", "bold-styled-text", path="qml/config/Style.qml"), 0)
+        # only theme-read, raw-color and color-function reach a service
+        self.assertEqual(self.rule("  color: Theme.accent", "color-property", path="qml/services/core/Y.qml"), 0)
 
     def test_files(self):
         self.put({self.UI: self.HEAD + "Item {\n  property var x: Theme.accent\n}\n",
                   "qml/components/reusable/Y.qml": self.HEAD + "Item {\n  property var x: Theme.accent\n}\n"})
         code, out = run_check(self.root, "check_style.py", "--files", self.UI)
         self.assertEqual(code, 1)
-        self.assertIn(f"{self.UI}:6: R1", out)
+        self.assertIn(f"{self.UI}:6: theme-read", out)
         self.assertNotIn("Y.qml", out)
 
     def check(self, *args):
@@ -2155,7 +2205,7 @@ class CheckStyle(unittest.TestCase):
         self.put({self.UI: self.HEAD + 'Item {\n  property var x: "#ff0000"\n}\n'})
         code, out = self.check()
         self.assertEqual(code, 1)
-        self.assertIn(f"{self.UI}:6: R2", out)
+        self.assertIn(f"{self.UI}:6: raw-color", out)
 
     def test_counting_unit(self):
         text = self.HEAD + ("Item {\n  property var a: [Theme.a, Theme.b]\n  // property var b: Theme.c\n"
@@ -2165,7 +2215,7 @@ class CheckStyle(unittest.TestCase):
         code, out = self.check()
         self.assertEqual(code, 1)
         # a comment's match and a waived line's count nothing; a match inside a string literal stays
-        self.assertEqual(out.count(": R1 "), 3, out)
+        self.assertEqual(out.count(": theme-read "), 3, out)
 
     def test_unused_role_fails(self):
         self.put({"qml/config/Style.qml": self.HEAD + "Item {\n  readonly property color unusedRole: \"red\"\n}\n"})
@@ -2200,11 +2250,11 @@ class CheckStyle(unittest.TestCase):
         self.assertIn("stale waiver", out)
         # an exception whose file is gone, or whose rule no file under it hits
         self.put({self.UI: self.HEAD + "Item {\n}\n", "scripts/style-exceptions.json": json.dumps(
-            {self.UI: {"rules": ["R1"], "reason": "x"}, "qml/components/reusable/Gone.qml": {"rules": ["R1"], "reason": "x"}})})
+            {self.UI: {"rules": ["theme-read"], "reason": "x"}, "qml/components/reusable/Gone.qml": {"rules": ["theme-read"], "reason": "x"}})})
         code, out = self.check()
         self.assertEqual(code, 1)
         self.assertIn("Gone.qml matches no file", out)
-        self.assertIn("lists R1, which no file", out)
+        self.assertIn("lists theme-read, which no file", out)
 
     def test_scope_covers_inventory(self):
         """The scanned UI files are the UI set, walked here independently of the script's walker: every .qml under

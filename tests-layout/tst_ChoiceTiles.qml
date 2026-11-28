@@ -376,7 +376,7 @@ TestCase {
     }
   }
 
-  function test_menus_emits_menuRequested() {
+  function test_menus_emits_menu_requested() {
     harness.configure({});
     const tile = createTemporaryObject(bareTileComp, root, {
       "menus": true

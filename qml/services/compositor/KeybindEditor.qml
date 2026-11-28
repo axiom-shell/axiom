@@ -124,7 +124,7 @@ QtObject {
     return KeybindManager.displayCombo(bind?.key) || (KeybindManager.actionLabels[bind?.action] ?? String(bind?.action ?? ""));
   }
 
-  // --- Where each bind came from, and undo ---
+  // -- Where each bind came from, and undo --
 
   // Per draft bind, its index in the saved list, or -1 for a new one: what
   // a row's unsaved dot and Revert compare with. Every edit that adds,
@@ -232,7 +232,7 @@ QtObject {
       root.selectedIndex--;
   }
 
-  // --- Editing ---
+  // -- Editing --
 
   // Adds a bind at the end and selects it. Returns its index.
   function addBind(bind) {
@@ -574,7 +574,7 @@ QtObject {
     }
   }
 
-  // --- Presets ---
+  // -- Presets --
 
   // Presets leave descriptions empty: each bind gets its action's label
   // and section (the daemon's render.DescriptionFor)
@@ -836,7 +836,7 @@ QtObject {
     });
   }
 
-  // --- Recording a key combo ---
+  // -- Recording a key combo --
 
   // The bind whose key is being recorded, or -1; lookupIndex while
   // recording the page's lookup combo (KeybindsPageState.lookupCombo)
