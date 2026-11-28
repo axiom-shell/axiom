@@ -26,9 +26,6 @@ running anything:
   - a module on the lock screen (or a part it uses) calls only reads and
     the service methods its `x-lockActions` cover, but a call marked
     `// lock-inert: <reason>`
-  - only the files in scripts/quickshell-io-allowlist.json use Process,
-    FileView, Socket or Quickshell.execDetached directly, and
-    the list only shrinks (these move to the axiom daemon)
   - the deleted chrome-drawing constructs stay deleted: no HoledItem or
     shadowHoles in qml/; HoledCopy, OutsideShadow and Appearance.translucent
     only in the files scripts/chrome-drawing-allowlist.json lists for each
@@ -46,11 +43,8 @@ running anything:
     scripts/ui-local-exceptions.json with a reason (special drawing); the list
     only shrinks
   - nothing formats a date with Qt.formatDateTime / formatDate /
-    formatTime (I18n.formatDate follows the language), and only General
-    reads Quickshell.screens (its outputs leave out the stand-ins shown
-    while no monitor is connected), but a line marked
-    `// allowed: <reason>` (a file name, a window that must exist with no
-    monitor)
+    formatTime (I18n.formatDate follows the language), but a line marked
+    `// allowed: <reason>` (a file name)
   - no property is named on<X> beside a property, signal or function <x>
     (its file's, or a Qt type's it inherits: width, a window's screen, …): Qt never
     gives it its value
@@ -78,6 +72,23 @@ running anything:
 and warns about files in the loaded directories that nothing registers or
 uses. A new rule gets its breaking file in tests/scripts/test_scripts.py's
 CheckStructure.
+
+The Quickshell boundary (quickshell-use): Quickshell APIs are for Wayland
+(windows, screens, layers, focus, the session lock, capture, blur) and for
+running the QML, in the files scripts/quickshell-exceptions.json lists, each
+with its reason; four types (ShellScreen, ClippingRectangle, SystemClock,
+ScriptModel) are allowed anywhere. Every use id of QUICKSHELL_USES is in one
+of three sets: Wayland and toolkit uses a `files` entry can grant, and
+daemon-set uses (system data, compositor IPC, files, processes) no file can
+be granted. It fails on: (1) a use no entry grants and the baseline doesn't
+list; (2) a `files` grant the file no longer uses; (3) an import of a module
+the list's `never` bans; (4) `import Quickshell` with no use, or a
+`Quickshell.<member>` it doesn't know; (5) a broken list; (6) a `files` path
+that doesn't exist; (7) a daemon-set use in an entry. Each use id names its
+home, the one place that owns the concern (Paths for the environment,
+CompositorManager for compositor state, the surface's window file for a
+window, a `*Manager` for a service module). A new use of a Quickshell API goes
+in its concern's home; a new concern gets a home and an entry with its reason.
 
 The naming and structure rules in `RULES` (one statement each, printed under
 the failures) are held to scripts/structure-baseline.json, which only shrinks:
@@ -159,15 +170,6 @@ GROUPING_PARENTS = ("qml/components/surfaces", "qml/components/content/parts")
 WINDOW_TYPE = re.compile(r"(?<![\w.])\w+Window\s*\{")
 # Directories retired by restructuring: nothing may live or be imported there
 RETIRED = ["qml/components/widgets", "qml/components/stolen"]
-# Quickshell.Io's side effects, frozen to the files that use them now
-IO_ALLOWLIST = ROOT / "scripts" / "quickshell-io-allowlist.json"
-IO_KINDS = {
-    "Process": re.compile(r"(?<![\w.])Process\s*\{"),
-    "FileView": re.compile(r"(?<![\w.])FileView\s*\{"),
-    "Socket": re.compile(r"(?<![\w.])Socket\s*\{"),
-    "execDetached": re.compile(r"\bQuickshell\.execDetached\("),
-}
-
 # The files allowed Quickshell APIs, each with its reason (quickshell-use)
 QUICKSHELL_EXCEPTIONS = ROOT / "scripts" / "quickshell-exceptions.json"
 # {use id: (pattern over a file's code, set, home, advice)}: set is "wayland", "toolkit" or "daemon" (only the
@@ -835,30 +837,6 @@ def main():
                 if other != f and re.search(r"\b" + re.escape(other.stem) + r"\s*\{", text):
                     errors.append(f"{rel(f)}: uses {other.stem} of its own OSD system's folder: load it by URL (Paths.osdSystemUrl)")
 
-    # Processes, file views, sockets and IPC handlers are moving to the
-    # axiom daemon: only the files listed in quickshell-io-allowlist.json
-    # use them directly, each only the kinds listed, and the list only
-    # shrinks (an entry no longer used is an error too). New code goes
-    # through CommandManager, FileManager, StateManager or IpcTarget
-    allowed = json.loads(IO_ALLOWLIST.read_text())["files"]
-    used = {}
-    for path, text in sources.items():
-        if path.startswith("tests/"):
-            continue
-        code = re.sub(r"//[^\n]*", "", text)
-        kinds = [kind for kind, pattern in IO_KINDS.items() if pattern.search(code)]
-        if kinds:
-            used[path] = kinds
-    for path, kinds in sorted(used.items()):
-        for kind in kinds:
-            if kind not in allowed.get(path, []):
-                errors.append(f"{path}: uses {kind} directly (only the files in {rel(IO_ALLOWLIST)} may; "
-                              "go through CommandManager, FileManager, StateManager or IpcTarget, or the axiom daemon)")
-    for path, kinds in sorted(allowed.items()):
-        for kind in kinds:
-            if kind not in used.get(path, []):
-                errors.append(f"{rel(IO_ALLOWLIST)}: {path} no longer uses {kind}: remove it from the list (it only shrinks)")
-
     # The chrome-drawing constructs the one chrome path replaced stay
     # deleted (HoledItem, shadowHoles) or stay in the files
     # chrome-drawing-allowlist.json lists (HoledCopy, OutsideShadow,
@@ -1163,35 +1141,19 @@ def main():
             if not target.is_dir():
                 errors.append(f"{path}: import {m.group(1)} — no such directory")
 
-    # Only the Hyprland* services read Quickshell.Hyprland: the rest goes
-    # through HyprlandManager (docs/dev/hyprland/ipc.md)
-    for path, text in sources.items():
-        if re.search(r"^import Quickshell\.Hyprland\b", text, re.M) and not re.fullmatch(r"qml/services/compositor/Hyprland\w*\.qml", path):
-            errors.append(f"{path}: imports Quickshell.Hyprland (only the Hyprland* services may; use CompositorManager)")
-
-    # Bluetooth is the daemon's (backend/internal/bluez): nothing reads
-    # Quickshell.Bluetooth, whose calls would run on another BlueZ client
-    # than the daemon's (docs/dev/features/networking-bluetooth.md)
-    for path, text in sources.items():
-        if re.search(r"^import Quickshell\.Bluetooth\b", text, re.M):
-            errors.append(f"{path}: imports Quickshell.Bluetooth (Bluetooth is the daemon's: use BluetoothManager)")
-
-    # Likewise only a backend's own services talk to its compositor: read
-    # its Quickshell module, run its CLI, use its socket or its services
-    # directly (docs/dev/compositor/README.md): (prefix, the compositor,
-    # its Quickshell module or None, what talks to it)
+    # Likewise only a backend's own services talk to its compositor: run its
+    # CLI, use its socket or its services directly
+    # (docs/dev/compositor/README.md): (prefix, the compositor, what talks to it)
     backends = [
-        ("Sway", "sway", "I3", r"\bSwayManager\.|\bSwayIpcManager\.|\"swaymsg\""),
-        ("Niri", "niri", None, r"\bNiriManager\.|\"NIRI_SOCKET\"|\[\"niri\","),  # its CLI: ["niri", "msg", …]
+        ("Sway", "sway", r"\bSwayManager\.|\bSwayIpcManager\.|\"swaymsg\""),
+        ("Niri", "niri", r"\bNiriManager\.|\"NIRI_SOCKET\"|\[\"niri\","),  # its CLI: ["niri", "msg", …]
     ]
-    for prefix, name, module, talks in backends:
+    for prefix, name, talks in backends:
         for path, text in sources.items():
             # (CompositorKind names the variables that say which one runs)
             if re.fullmatch(rf"qml/services/compositor/{prefix}\w*\.qml", path) or path in ("qml/services/compositor/CompositorManager.qml", "qml/components/methods/CompositorKind.qml"):
                 continue
             code = "\n".join(line.split("//", 1)[0] for line in text.splitlines())
-            if module and re.search(rf"^import Quickshell\.{module}\b", text, re.M):
-                errors.append(f"{path}: imports Quickshell.{module} (only the {prefix}* services may; use CompositorManager)")
             if re.search(talks, code):
                 errors.append(f"{path}: talks to {name} directly (only the {prefix}* services may; use CompositorManager)")
 
@@ -1214,7 +1176,7 @@ def main():
             continue
         if not re.fullmatch(r"qml/(services/compositor|components/methods(/\w+)?)/Hypr\w*\.qml", path) and re.search(r"\bHyprState\.", code):
             errors.append(f"{path}: uses a Hyprland helper (only the Hyprland* services and helpers may; go through CompositorManager / CompositorConfigManager)")
-        for prefix, name, _, _ in backends:
+        for prefix, name, _ in backends:
             if not re.fullmatch(rf"qml/(services/compositor|components/methods(/\w+)?)/{prefix}\w*\.qml", path) and re.search(rf"\b{prefix}State\.", code):
                 errors.append(f"{path}: uses a {name} helper (only the {prefix}* services and helpers may; go through CompositorManager / CompositorConfigManager)")
 
@@ -1292,10 +1254,7 @@ def main():
 
     # Dates the user reads follow the language: I18n.formatDate(date,
     # I18n.dateFormat(name)), never Qt.formatDateTime (CLAUDE.md › Theme, animation, text).
-    # Surfaces go on General.outputs / screensFor(target): Quickshell.screens
-    # holds stand-ins while no monitor is connected, and a window left on
-    # one can crash qs when they come back (General filters them). A use
-    # that must stay says why on its line
+    # A use that must stay says why on its line
     for path, text in sources.items():
         if path.startswith("tests/"):
             continue
@@ -1305,8 +1264,6 @@ def main():
                 continue
             if re.search(r"\bQt\.format(?:DateTime|Date|Time)\(", code):
                 errors.append(f"{path}:{n}: Qt.formatDateTime: format dates through I18n.formatDate(date, I18n.dateFormat(name)) (or mark a use that must stay `// allowed: <reason>`)")
-            if path != "qml/config/General.qml" and re.search(r"\bQuickshell\.screens\b", code):
-                errors.append(f"{path}:{n}: Quickshell.screens: build on General.outputs or General.screensFor(target) (or mark a window that must exist with no monitor `// allowed: <reason>`)")
 
     # A property named on<X> next to a property, signal or function <x> (in
     # its file, or inherited from the Qt types the shell builds on) never

@@ -404,7 +404,6 @@ class CheckStructure(unittest.TestCase):
         ("qml/components/views/Reach/Reach.qml", qml(imports="import qs.components.lonely"),
          "Reach.qml needs qs.components.lonely, which no file reached from shell.qml imports"),
         # (Reach is also no OverlayView type and nothing uses it: the warning below)
-        ("qml/services/core/Spawner.qml", qml("Process {}"), "qml/services/core/Spawner.qml: uses Process directly"),
         ("qml/services/Direct.qml", qml(), "qml/services/Direct.qml: directly in services/"),
         ("qml/shell/Holed.qml", qml("// HoledItem\n    Item {}"), "qml/shell/Holed.qml:6: HoledItem or shadowHoles"),
         ("qml/shell/Copy.qml", qml("HoledCopy {}"), "qml/shell/Copy.qml: uses HoledCopy"),
@@ -428,9 +427,6 @@ class CheckStructure(unittest.TestCase):
         ("qml/components/widgets/Old.qml", qml(), "qml/components/widgets/Old.qml: lives under retired"),
         ("qml/shell/NoPragma.qml", qml(head=""), "qml/shell/NoPragma.qml: doesn't start with pragma"),
         ("qml/shell/BadImport.qml", qml(imports="import qs.nowhere"), "import qs.nowhere — no such directory"),
-        ("qml/shell/Hypr.qml", qml(imports="import Quickshell.Hyprland"), "qml/shell/Hypr.qml: imports Quickshell.Hyprland"),
-        ("qml/shell/I3.qml", qml(imports="import Quickshell.I3"), "qml/shell/I3.qml: imports Quickshell.I3"),
-        ("qml/shell/Blue.qml", qml(imports="import Quickshell.Bluetooth"), "qml/shell/Blue.qml: imports Quickshell.Bluetooth"),
         ("qml/shell/Swaymsg.qml", qml('property var c: ["swaymsg"]'), "qml/shell/Swaymsg.qml: talks to sway directly"),
         ("qml/shell/NiriCli.qml", qml('property var c: ["niri", "msg"]'), "qml/shell/NiriCli.qml: talks to niri directly"),
         ("qml/shell/Hyprm.qml", qml("property var w: HyprlandManager.windows"), "qml/shell/Hyprm.qml: uses HyprlandManager"),
@@ -460,7 +456,6 @@ class CheckStructure(unittest.TestCase):
         ("qml/shell/LiveRequest.qml", qml("readonly property var req: ({ top: SystemManager.cpu })\n    onReqChanged: SystemManager.acquire(this, req)"),
          "an acquire() request from live values (req → SystemManager.cpu)"),
         ("qml/shell/Stamp.qml", qml('property string s: Qt.formatDateTime(new Date(), "ddd")'), "qml/shell/Stamp.qml:6: Qt.formatDateTime"),
-        ("qml/shell/Screens.qml", qml("property var s: Quickshell.screens"), "qml/shell/Screens.qml:6: Quickshell.screens"),
         ("qml/shell/Toggle.qml", qml("function f() { NotificationManager.toggleDnd() }"),
          "qml/shell/Toggle.qml:6: NotificationManager.toggleDnd: run the action through ActionsManager.run"),
         ("qml/shell/Corner.qml", qml('function f() { ShellManager.runAction("lock", "", "toggle") }'),
@@ -545,7 +540,6 @@ class CheckStructure(unittest.TestCase):
         "schema x-intro 'GhostIntro' has no qml/components/views/Settings/GhostIntro.qml",
         "tool page Keybinds isn't in the Overlay.items default",
         "schema gates on supports.ghostCapability, which docs/dev/compositor/contract.md › Capabilities doesn't list",
-        "qml/services/core/Gone.qml no longer uses Socket",
         "ui-local-exceptions.json: qml/components/views/Gone.qml no longer breaks StateLayer",
         "ui-local-exceptions.json: qml/components/views/NoReason.qml has no reason",
         "ui-local-exceptions.json: qml/components/views/Unruled.qml names Ghost, not a rule",
@@ -589,7 +583,6 @@ class CheckStructure(unittest.TestCase):
                 defs["WeatherWidget"]["x-popoutModule"] = {"type": "WeatherForecast"}
                 del defs["MicrophoneWidget"]["x-popoutModule"]
             edit_json(root / "qml/config/json/config.schema.json", schema)
-            edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["Socket"]}))
             edit_json(root / "scripts/chrome-drawing-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["HoledCopy"]}))
             edit_json(root / "scripts/ui-local-exceptions.json", lambda a: a["files"].update({
                 "qml/components/views/Gone.qml": {"rules": ["StateLayer"], "reason": "planted"},
