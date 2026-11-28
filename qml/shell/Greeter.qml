@@ -38,7 +38,7 @@ Scope {
       title: "axiom greeter"
 
       GreeterSurface {
-        screen: Quickshell.screens[0] // allowed: the window must exist even with no monitor connected (a stand-in screen then)
+        screen: Quickshell.screens[0]
       }
     }
   }

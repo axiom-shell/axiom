@@ -404,7 +404,6 @@ class CheckStructure(unittest.TestCase):
         ("qml/components/views/Reach/Reach.qml", qml(imports="import qs.components.lonely"),
          "Reach.qml needs qs.components.lonely, which no file reached from shell.qml imports"),
         # (Reach is also no OverlayView type and nothing uses it: the warning below)
-        ("qml/services/core/Spawner.qml", qml("Process {}"), "qml/services/core/Spawner.qml: uses Process directly"),
         ("qml/services/Direct.qml", qml(), "qml/services/Direct.qml: directly in services/"),
         ("qml/shell/Holed.qml", qml("// HoledItem\n    Item {}"), "qml/shell/Holed.qml:6: HoledItem or shadowHoles"),
         ("qml/shell/Copy.qml", qml("HoledCopy {}"), "qml/shell/Copy.qml: uses HoledCopy"),
@@ -428,9 +427,6 @@ class CheckStructure(unittest.TestCase):
         ("qml/components/widgets/Old.qml", qml(), "qml/components/widgets/Old.qml: lives under retired"),
         ("qml/shell/NoPragma.qml", qml(head=""), "qml/shell/NoPragma.qml: doesn't start with pragma"),
         ("qml/shell/BadImport.qml", qml(imports="import qs.nowhere"), "import qs.nowhere — no such directory"),
-        ("qml/shell/Hypr.qml", qml(imports="import Quickshell.Hyprland"), "qml/shell/Hypr.qml: imports Quickshell.Hyprland"),
-        ("qml/shell/I3.qml", qml(imports="import Quickshell.I3"), "qml/shell/I3.qml: imports Quickshell.I3"),
-        ("qml/shell/Blue.qml", qml(imports="import Quickshell.Bluetooth"), "qml/shell/Blue.qml: imports Quickshell.Bluetooth"),
         ("qml/shell/Swaymsg.qml", qml('property var c: ["swaymsg"]'), "qml/shell/Swaymsg.qml: talks to sway directly"),
         ("qml/shell/NiriCli.qml", qml('property var c: ["niri", "msg"]'), "qml/shell/NiriCli.qml: talks to niri directly"),
         ("qml/shell/Hyprm.qml", qml("property var w: HyprlandManager.windows"), "qml/shell/Hyprm.qml: uses HyprlandManager"),
@@ -460,7 +456,6 @@ class CheckStructure(unittest.TestCase):
         ("qml/shell/LiveRequest.qml", qml("readonly property var req: ({ top: SystemManager.cpu })\n    onReqChanged: SystemManager.acquire(this, req)"),
          "an acquire() request from live values (req → SystemManager.cpu)"),
         ("qml/shell/Stamp.qml", qml('property string s: Qt.formatDateTime(new Date(), "ddd")'), "qml/shell/Stamp.qml:6: Qt.formatDateTime"),
-        ("qml/shell/Screens.qml", qml("property var s: Quickshell.screens"), "qml/shell/Screens.qml:6: Quickshell.screens"),
         ("qml/shell/Toggle.qml", qml("function f() { NotificationManager.toggleDnd() }"),
          "qml/shell/Toggle.qml:6: NotificationManager.toggleDnd: run the action through ActionsManager.run"),
         ("qml/shell/Corner.qml", qml('function f() { ShellManager.runAction("lock", "", "toggle") }'),
@@ -545,7 +540,6 @@ class CheckStructure(unittest.TestCase):
         "schema x-intro 'GhostIntro' has no qml/components/views/Settings/GhostIntro.qml",
         "tool page Keybinds isn't in the Overlay.items default",
         "schema gates on supports.ghostCapability, which docs/dev/compositor/contract.md › Capabilities doesn't list",
-        "qml/services/core/Gone.qml no longer uses Socket",
         "ui-local-exceptions.json: qml/components/views/Gone.qml no longer breaks StateLayer",
         "ui-local-exceptions.json: qml/components/views/NoReason.qml has no reason",
         "ui-local-exceptions.json: qml/components/views/Unruled.qml names Ghost, not a rule",
@@ -589,7 +583,6 @@ class CheckStructure(unittest.TestCase):
                 defs["WeatherWidget"]["x-popoutModule"] = {"type": "WeatherForecast"}
                 del defs["MicrophoneWidget"]["x-popoutModule"]
             edit_json(root / "qml/config/json/config.schema.json", schema)
-            edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["Socket"]}))
             edit_json(root / "scripts/chrome-drawing-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["HoledCopy"]}))
             edit_json(root / "scripts/ui-local-exceptions.json", lambda a: a["files"].update({
                 "qml/components/views/Gone.qml": {"rules": ["StateLayer"], "reason": "planted"},
@@ -655,6 +648,7 @@ class CheckStructure(unittest.TestCase):
             "qml/shell/Reach.qml: private-reach g:host._drawn: not in the baseline",
             "qml/shell/Reach.qml: private-reach Reach:id _soon: not in the baseline",
             "qml/shell/Edge.qml: suffix-rules Edge:Window: not in the baseline",
+            "qml/shell/Tip.qml: quickshell-use window (PopupWindow):",
             "qml/shell/RootId.qml: root-id RootId:copies: not in the baseline",
             "qml/shell/WorkspaceCell.qml: stem-unique stem:WorkspaceCell: not in the baseline",
             "qml/shell/FooPanel.qml: suffix-rules FooPanel:Panel: not in the baseline",
@@ -672,6 +666,88 @@ class CheckStructure(unittest.TestCase):
         lines = out.splitlines()
         for rule, statement in check_structure.RULES.items():
             self.assertEqual(lines.count(f"error    {rule}: {statement}"), 1, rule + "\n" + out)
+
+    def test_quickshell_use(self):
+        files = [
+            ("qml/components/reusable/PowerChip.qml", qml(imports="import Quickshell.Services.UPower")),
+            ("qml/services/system/PowerManager.qml", qml(imports="import Quickshell.Services.UPower")),
+            ("qml/shell/Hypr.qml", qml("property var w: Hyprland.workspaces", imports="import Quickshell.Hyprland")),
+            ("qml/services/core/FileManager.qml", qml()),
+            ("qml/shell/Blue.qml", qml(imports="import Quickshell.Bluetooth")),
+            ("qml/shell/Bare.qml", qml(imports="import Quickshell")),
+            ("qml/shell/Screens.qml", qml("property var s: Quickshell.screens")),
+            ("qml/services/core/Spawner.qml", qml("Process {}")),
+            ("qml/shell/SwayUse.qml", qml("property var w: I3.workspaces", imports="import Quickshell.I3")),
+            ("qml/shell/GhostMember.qml", qml("property var x: Quickshell.ghostMember")),
+            ("qml/components/reusable/TrayUse.qml", qml("property var m: QsMenuOpener {}", imports="import Quickshell.Services.SystemTray")),
+            ("qml/shell/HyprType.qml", qml("HyprlandMonitor {}\n    ClippingRectangle {}", imports="import Quickshell.Hyprland\nimport Quickshell.Widgets")),
+            ("qml/shell/I3Type.qml", qml("I3Workspace {}\n    SystemClock {}", imports="import Quickshell.I3")),
+        ]
+
+        def lists(data):
+            grants = data["files"]
+            data["anywhere"]["window"] = {"rules": ["window"], "reason": "a fixture"}
+            data["anywhere"]["foo"] = {"rules": ["screen-type"], "reason": "a fixture"}
+            grants["qml/shell"] = {"rules": ["window"], "reason": "a fixture"}
+            grants["qml/config/Paths.qml"]["rules"] += ["socket", "ghost"]
+            grants.update({
+                "qml/shell/NoReason.qml": {"rules": [], "reason": ""},
+                "qml/shell/Gone.qml": {"rules": ["window"], "reason": "a fixture"},
+                "qml/services/system/BatteryManager.qml": {"rules": ["upower"], "reason": "a fixture"}})
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, *self.NAMING_PATHS)
+            edit_json(root / "scripts/quickshell-exceptions.json", lists)
+            edit_json(root / "scripts/structure-exceptions.json", lambda data: data.update({
+                "qml/shell/Hypr.qml": {"rules": ["quickshell-use"], "reason": "a fixture"}}))
+            code, out = run_check(root, "check_structure.py", "--base", base, files=files)
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, [
+            "qml/components/reusable/PowerChip.qml: quickshell-use upower (import Quickshell.Services.UPower): read it through that service (BatteryManager is upower's home)",
+            "qml/services/system/PowerManager.qml: quickshell-use upower (import Quickshell.Services.UPower): system data comes from the daemon, not a Quickshell module: extend BatteryManager over BackendManager",
+            "qml/shell/Hypr.qml: quickshell-use hyprland (Hyprland): go through CompositorManager",
+            "qml/services/core/FileManager.qml: quickshell-use file-view: fixed, still baselined",
+            "qml/shell/Blue.qml: quickshell-use Quickshell.Bluetooth: Bluetooth is the daemon's",
+            "qml/shell/Bare.qml: quickshell-use import: imports Quickshell but uses nothing QUICKSHELL_USES knows: drop the import",
+            "qml/shell/Screens.qml: quickshell-use screens (Quickshell.screens): only the files scripts/quickshell-exceptions.json lists may (General is screens's home): build on General.outputs",
+            "qml/services/core/Spawner.qml: quickshell-use process (",
+            "go through CommandManager, FileManager, StateManager or IpcTarget",
+            "qml/shell/SwayUse.qml: quickshell-use i3 (",
+            "go through CompositorManager",
+            "qml/shell/GhostMember.qml: quickshell-use Quickshell.ghostMember:",
+            "qml/components/reusable/TrayUse.qml: quickshell-use tray-menu (QsMenuOpener): move it into TrayMenuList",
+            "quickshell-exceptions.json: qml/shell/NoReason.qml has no reason",
+            "scripts/quickshell-exceptions.json: qml/shell/Gone.qml is not a file",
+            "scripts/quickshell-exceptions.json: qml/shell is not a file",
+            "scripts/quickshell-exceptions.json: window is not an anywhere type: anywhere holds only clock, diff-model, rounded-clip, screen-type, each listing itself",
+            "scripts/quickshell-exceptions.json: foo is not an anywhere type",
+            "qml/shell/HyprType.qml: quickshell-use import: imports Quickshell.Hyprland but uses nothing QUICKSHELL_USES knows of it",
+            "qml/shell/I3Type.qml: quickshell-use import: imports Quickshell.I3 but uses nothing QUICKSHELL_USES knows of it",
+            "scripts/quickshell-exceptions.json: qml/config/Paths.qml no longer uses socket: remove it: the list only shrinks",
+            "quickshell-exceptions.json: qml/config/Paths.qml names ghost, not a rule",
+            "scripts/quickshell-exceptions.json: qml/services/system/BatteryManager.qml lists upower, a daemon-set use: it can't be granted",
+            "structure-exceptions.json: qml/shell/Hypr.qml names quickshell-use, not a rule",
+            "error    quickshell-use: a Quickshell API only in the files",
+        ]), [], out)
+        for quiet in ("PowerChip.qml: quickshell-use upower (import Quickshell.Services.UPower): only the files",
+                      "qml/shell/Blue.qml: quickshell-use import", "no longer uses window", "no longer uses ghost",
+                      "BatteryManager.qml: quickshell-use upower", "qml/shell/Hypr.qml: quickshell-use import",
+                      "qml/shell/SwayUse.qml: quickshell-use import", "qml/shell/Bare.qml: quickshell-use import: imports Quickshell.",
+                      "NoReason.qml lists no use", "qml/shell no longer uses window"):
+            self.assertEqual([l for l in out.splitlines() if quiet in l], [], quiet + "\n" + out)
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, *self.NAMING_PATHS, plant=lambda root: [
+                p.write_text(p.read_text().replace("ScriptModel", "ListModel")) for p in (root / "qml").rglob("*.qml")])
+            edit_json(root / "scripts/quickshell-exceptions.json", lambda data: data["files"].update(
+                {"qml/shell/Bar.qml": {"rules": [], "reason": "a fixture"}}))
+            _, out = run_check(root, "check_structure.py", "--base", base, files=[("qml/shell/Bar.qml", qml())])
+        self.assertEqual(missed(out, [
+            "scripts/quickshell-exceptions.json: diff-model is used nowhere: remove it: the list only shrinks",
+            "scripts/quickshell-exceptions.json: qml/shell/Bar.qml lists no use: remove it: the list only shrinks"]), [], out)
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = fixture_repo(tmp, *self.NAMING_PATHS)
+            (root / "scripts/quickshell-exceptions.json").write_text("{")
+            _, out = run_check(root, "check_structure.py", "--base", base, files=[])
+        self.assertEqual(len([l for l in out.splitlines() if "quickshell-exceptions.json: not JSON" in l]), 1, out)
 
     def test_naming_baseline_and_new_rules(self):
         def without_root_id(root):
@@ -860,6 +936,19 @@ class Ratchet(unittest.TestCase):
         out = self.ratchet({"a.qml": {"purity": ["f:Date.now", "f:Date.now#2"]}})
         self.assertEqual(out, ["a.qml: purity f:Date.now#2: not in the baseline (fix it, or add an exception with its reason to engines-exceptions.json)"])
         self.assertEqual(self.ratchet({}), ["a.qml: purity f:Date.now: fixed, still baselined (delete the entry)"])
+
+    def test_unlisted_hook(self):
+        write(self.root, self.PATH, json.dumps({**self.KNOWN, "c.qml": {"dag": ["x:y"]}}))
+        found = {"b.qml": {"purity": ["g:console"]}, "c.qml": {"dag": ["x:y"]}}
+        others = ["a.qml: purity f:Date.now: fixed, still baselined (delete the entry)",
+                  f"c.qml: dag x:y: added to the baseline since {self.base} (a baseline only shrinks)"]
+        generic = "b.qml: purity g:console: not in the baseline (fix it, or add an exception with its reason to engines-exceptions.json)"
+
+        def hooked(unlisted):
+            return self.qm.ratchet(found, self.PATH, self.base, set(), root=self.root, unlisted=unlisted)
+        self.assertEqual(hooked(lambda f, r, s: f"{f}: custom {s}"), ["b.qml: custom g:console", *others])
+        self.assertEqual(hooked(lambda f, r, s: None), [generic, *others])
+        self.assertEqual(hooked(None), [generic, *others])
 
     def test_malformed_baseline(self):
         write(self.root, self.PATH, json.dumps({"f:Date.now": "tag"}))

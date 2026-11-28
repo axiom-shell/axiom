@@ -33,7 +33,7 @@ A Quickshell desktop for Hyprland, niri and sway: `qml/` (run by `qs`, no build 
 
 ### Services
 - One singleton `*Manager` per domain, never shadowing a Quickshell singleton.
-- Quickshell.Io only in `scripts/quickshell-io-allowlist.json`'s four files; everything else uses `CommandManager`, `FileManager`, `StateManager`, `IpcTarget` or a daemon method.
+- Quickshell APIs only for Wayland (windows, screens, layers, focus, the session lock, capture, blur) and running the QML, in the files `scripts/quickshell-exceptions.json` lists, each with its reason (four types anywhere). System data, compositor IPC, files and processes are the daemon's: a new `Quickshell.Services.*`, `Quickshell.Networking`, `DesktopEntries`, Hyprland or i3 state, or `Quickshell.Io` use fails (the remaining ones are `structure-baseline.json` entries and only shrink); everything else uses `CommandManager`, `FileManager`, `StateManager`, `IpcTarget`, a daemon method or the domain's service.
 - Polled data: `acquire(owner, request)` in `Component.onCompleted`, `release(owner)` in `onDestruction`.
 - Config writes only through `ConfigManager` or, from UI, `SettingsManager`; editors edit a `ConfigDraft`.
 - One-tap actions through `ActionsManager.run`; the compositor only through `CompositorManager`, gated on `CompositorManager.supports`, never on which compositor. A layer-shell window states its place through the layer service (its `LayerSlot` and `LayerStack` row) and never sets its own layer; only the service's per-compositor parts (the backends' layer facts, the daemon's compositor writers) differ by compositor (`docs/dev/compositor/layer-arrangement.md`).

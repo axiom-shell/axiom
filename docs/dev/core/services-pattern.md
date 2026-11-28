@@ -1,6 +1,6 @@
 # Services pattern
 
-> **Files:** `qml/services/*/*.qml`, `scripts/quickshell-io-allowlist.json`, `qml/services/core/OwnerRegistry.qml`, `qml/services/core/KeptList.qml`, `qml/services/core/CommandManager.qml`, `qml/services/system/SystemManager.qml`, `qml/services/system/UpdatesManager.qml`, `qml/config/Paths.qml`, `qml/shell.qml`
+> **Files:** `qml/services/*/*.qml`, `scripts/quickshell-exceptions.json`, `qml/services/core/OwnerRegistry.qml`, `qml/services/core/KeptList.qml`, `qml/services/core/CommandManager.qml`, `qml/services/system/SystemManager.qml`, `qml/services/system/UpdatesManager.qml`, `qml/config/Paths.qml`, `qml/shell.qml`
 > **Config:** none of its own
 > **Related:** [Config manager](config-manager.md), [Config readers](config-readers.md), [Editors pattern](editors-pattern.md), [Shell manager and screen targeting](shell-manager-targeting.md)
 
@@ -52,7 +52,7 @@ How `qml/services/` is built: one singleton per domain, owning state and side ef
   - `load(fallback)` gives the state if it has the fallback's kind (array, object, or the primitive; a `null` fallback takes any object or array: `StateShape`), else the fallback. A handler caches the file's TEXT after the first load or any save, so a caller changing what `load` returned changes nothing, and an edit of the file by hand during a run isn't seen (never put a handler on a watched file).
   - A file that isn't JSON is copied to `<file>.bad` once per run (warned) and the fallback used; a later save replaces it.
   - `save(data, done)` writes at once (so does `update(patch)`: `Object.assign({}, load({}), patch)` saved and returned). `saveLater(data)` (or a function building it) writes within 500 ms of the first unsaved call, for frequent changes (window sizes, notification history); `flush()` / `StateManager.flushAll()` write a pending one now. A singleton's `onDestruction` does NOT run at a QML reload (Quickshell interrupts the engine first), so a `saveLater` change in the last 500 ms before a reload is lost: anything that must survive uses `save`.
-- So services keep no `Process` of their own. Direct `Process`, `FileView`, `Socket` and `Quickshell.execDetached` are frozen to the files in `scripts/quickshell-io-allowlist.json` (`check_structure`), which shrinks as those side effects move to the axiom daemon ([protocol](../backend/protocol.md)). Funnelling through `CommandManager`, `FileManager` and `StateManager` let each switch to the daemon in one place.
+- So services keep no `Process` of their own. Direct `Process`, `FileView`, `Socket` and `Quickshell.execDetached` are `quickshell-use` uses (`check_structure`) that only the files `scripts/quickshell-exceptions.json` lists and the entries in `scripts/structure-baseline.json` hold; the baseline entries shrink as those side effects move to the axiom daemon ([protocol](../backend/protocol.md)). Funnelling through `CommandManager`, `FileManager` and `StateManager` let each switch to the daemon in one place.
 
 ### Other domain services
 They follow the same pattern:

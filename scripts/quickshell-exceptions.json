@@ -1,0 +1,643 @@
+{
+  "_comment": "Files allowed to use a Quickshell API, each with what it is the platform's home for. `scripts/check_structure.py` fails on a use not listed here or in `structure-baseline.json`'s `quickshell-use`, and on an entry no longer used.",
+  "anywhere": {
+    "screen-type": {
+      "rules": [
+        "screen-type"
+      ],
+      "reason": "a screen is a value every surface and host passes; it names no behaviour"
+    },
+    "rounded-clip": {
+      "rules": [
+        "rounded-clip"
+      ],
+      "reason": "CLAUDE.md › UI: ClippingRectangle for rounded clips; Qt has no antialiased rounded clip without a layer or shader"
+    },
+    "clock": {
+      "rules": [
+        "clock"
+      ],
+      "reason": "a relative time that stays current reads a SystemClock; it ticks aligned to the wall clock with no Timer in UI"
+    },
+    "diff-model": {
+      "rules": [
+        "diff-model"
+      ],
+      "reason": "keeps delegates alive across list updates by key; KeptList keeps array identity, not delegates"
+    }
+  },
+  "never": {
+    "Quickshell.Bluetooth": {
+      "rules": [],
+      "reason": "Bluetooth is the daemon's (backend/internal/bluez): use BluetoothManager"
+    }
+  },
+  "files": {
+    "qml/components/bar/BarPanel.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the bar's window: a window of its own kind"
+    },
+    "qml/components/content/parts/TrayMenuList.qml": {
+      "rules": [
+        "window"
+      ],
+      "reason": "anchors a popup to the window it sits in"
+    },
+    "qml/components/hosts/overlay/OverlayPanel.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the overlay's window: a window of its own kind"
+    },
+    "qml/components/hosts/overlay/ReservedAreaWindow.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the reserved area's window: a window of its own kind"
+    },
+    "qml/components/hosts/popout/BarPopouts.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the bar popouts's window: a window of its own kind"
+    },
+    "qml/components/hosts/popout/EdgePopout.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the edge popout's window: a window of its own kind"
+    },
+    "qml/components/hosts/popout/EdgeTrigger.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the edge trigger's window: a window of its own kind"
+    },
+    "qml/components/hosts/popout/PopoutAnchor.qml": {
+      "rules": [
+        "window"
+      ],
+      "reason": "anchors a popup to the window it sits in"
+    },
+    "qml/components/hosts/popout/SubPopout.qml": {
+      "rules": [
+        "window"
+      ],
+      "reason": "the sub-popout's window: a window of its own kind"
+    },
+    "qml/components/hosts/window/LayerOrigin.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the layer origin's window: a window of its own kind"
+    },
+    "qml/components/hosts/window/PageWindow.qml": {
+      "rules": [
+        "window"
+      ],
+      "reason": "a page's window: a window of its own kind"
+    },
+    "qml/components/reusable/BlurRegion.qml": {
+      "rules": [
+        "window",
+        "instances"
+      ],
+      "reason": "a window's blur region"
+    },
+    "qml/components/reusable/BoxBlurRegion.qml": {
+      "rules": [
+        "window"
+      ],
+      "reason": "a window's blur region"
+    },
+    "qml/components/reusable/StyledComboEntry.qml": {
+      "rules": [
+        "window"
+      ],
+      "reason": "anchors a popup to the window it sits in"
+    },
+    "qml/components/reusable/StyledToolTip.qml": {
+      "rules": [
+        "window"
+      ],
+      "reason": "the tooltip's window: a window of its own kind"
+    },
+    "qml/components/surfaces/backdrop/ScreenBackdrop.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the screen backdrop's window: a window of its own kind"
+    },
+    "qml/components/surfaces/border/BorderPanel.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the screen border's window: a window of its own kind"
+    },
+    "qml/components/surfaces/border/RoundedBorders.qml": {
+      "rules": [
+        "window",
+        "instances",
+        "layer-shell"
+      ],
+      "reason": "the rounded borders's window: a window of its own kind"
+    },
+    "qml/components/surfaces/desktop/DesktopWindow.qml": {
+      "rules": [
+        "window",
+        "instances",
+        "layer-shell"
+      ],
+      "reason": "the desktop's window: a window of its own kind"
+    },
+    "qml/components/surfaces/dock/DockMenu.qml": {
+      "rules": [
+        "window"
+      ],
+      "reason": "anchors a popup to the window it sits in"
+    },
+    "qml/components/surfaces/dock/DockWindow.qml": {
+      "rules": [
+        "window",
+        "instances",
+        "layer-shell"
+      ],
+      "reason": "the dock's window: a window of its own kind"
+    },
+    "qml/components/surfaces/greeter/GreeterPreviewWindow.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the greeter preview's window: a window of its own kind"
+    },
+    "qml/components/surfaces/greeter/GreeterWindow.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the greeter's window: a window of its own kind"
+    },
+    "qml/components/surfaces/launcher/Launcher.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "the Scope root of a multi-window surface"
+    },
+    "qml/components/surfaces/lockscreen/LockPreviewWindow.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the lock screen preview's window: a window of its own kind"
+    },
+    "qml/components/surfaces/menu/FreeMenu.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "a free menu's window: a window of its own kind"
+    },
+    "qml/components/surfaces/menu/IntegratedEdgeMenu.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "an integrated edge menu's window: a window of its own kind"
+    },
+    "qml/components/surfaces/menu/MenuHosts.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "the Scope root of a multi-window surface"
+    },
+    "qml/components/surfaces/monitors/MonitorPromptWindow.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the monitor prompt's window: a window of its own kind"
+    },
+    "qml/components/surfaces/notifications/ToastStack.qml": {
+      "rules": [
+        "window",
+        "instances",
+        "layer-shell"
+      ],
+      "reason": "the toasts's window: a window of its own kind"
+    },
+    "qml/components/surfaces/powermenu/PowerMenuWindow.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the power menu's window: a window of its own kind"
+    },
+    "qml/components/surfaces/prompt/PromptWindow.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the prompt's window: a window of its own kind"
+    },
+    "qml/components/surfaces/screenshare/ScreenSharePickerWindow.qml": {
+      "rules": [
+        "window",
+        "layer-shell",
+        "screencopy"
+      ],
+      "reason": "shows a live output or window"
+    },
+    "qml/components/surfaces/screenshot/ScreenshotPickerWindow.qml": {
+      "rules": [
+        "window",
+        "layer-shell",
+        "screencopy"
+      ],
+      "reason": "shows a live output or window"
+    },
+    "qml/components/surfaces/wallpaper/WallpaperWindow.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the wallpaper's window: a window of its own kind"
+    },
+    "qml/components/surfaces/workspaces/WindowPreview.qml": {
+      "rules": [
+        "screencopy"
+      ],
+      "reason": "shows a live output or window"
+    },
+    "qml/components/views/Keybinds/KeyRecorder.qml": {
+      "rules": [
+        "window",
+        "shortcut-inhibit"
+      ],
+      "reason": "inhibits compositor shortcuts while recording, and anchors the inhibitor to the window it sits in"
+    },
+    "qml/config/General.qml": {
+      "rules": [
+        "screens"
+      ],
+      "reason": "filters the stand-in screens"
+    },
+    "qml/config/I18n.qml": {
+      "rules": [
+        "runtime"
+      ],
+      "reason": "reads the runtime's shellPath"
+    },
+    "qml/config/Paths.qml": {
+      "rules": [
+        "runtime",
+        "env"
+      ],
+      "reason": "the environment the daemon starts the shell with, and the runtime's shellDir"
+    },
+    "qml/greeter.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "the greeter shell's per-screen wiring"
+    },
+    "qml/services/apps/CalculatorManager.qml": {
+      "rules": [
+        "persist"
+      ],
+      "reason": "survives a config reload"
+    },
+    "qml/services/apps/DeadlineTicker.qml": {
+      "rules": [
+        "instances",
+        "persist"
+      ],
+      "reason": "survives a config reload"
+    },
+    "qml/services/compositor/CompositorConfigManager.qml": {
+      "rules": [
+        "persist"
+      ],
+      "reason": "survives a config reload"
+    },
+    "qml/services/compositor/CompositorManager.qml": {
+      "rules": [
+        "env"
+      ],
+      "reason": "which compositor runs"
+    },
+    "qml/services/compositor/FocusGrab.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "builds a protocol object only while active"
+    },
+    "qml/services/compositor/HyprlandGrab.qml": {
+      "rules": [
+        "focus-grab"
+      ],
+      "reason": "Hyprland's focus-grab protocol"
+    },
+    "qml/services/compositor/HyprlandManager.qml": {
+      "rules": [
+        "persist"
+      ],
+      "reason": "survives a config reload"
+    },
+    "qml/services/compositor/LayerManager.qml": {
+      "rules": [
+        "layer-shell"
+      ],
+      "reason": "maps a LayerStack row to the Wayland layer, and the keyboard mode to WlrKeyboardFocus"
+    },
+    "qml/services/compositor/MonitorManager.qml": {
+      "rules": [
+        "persist"
+      ],
+      "reason": "survives a config reload"
+    },
+    "qml/services/compositor/SwayManager.qml": {
+      "rules": [
+        "persist"
+      ],
+      "reason": "survives a config reload"
+    },
+    "qml/services/core/BackendManager.qml": {
+      "rules": [
+        "runtime",
+        "env",
+        "socket"
+      ],
+      "reason": "the daemon connection: its socket, and the runtime's processId, below Paths in the layering"
+    },
+    "qml/services/core/ConfigManager.qml": {
+      "rules": [
+        "env"
+      ],
+      "reason": "its data dirs and snapshot, below Paths in the layering"
+    },
+    "qml/services/core/DailySchedule.qml": {
+      "rules": [
+        "instances",
+        "persist"
+      ],
+      "reason": "survives a config reload"
+    },
+    "qml/services/core/DependencyManager.qml": {
+      "rules": [
+        "persist"
+      ],
+      "reason": "survives a config reload"
+    },
+    "qml/services/core/DevManager.qml": {
+      "rules": [
+        "persist"
+      ],
+      "reason": "survives a config reload"
+    },
+    "qml/services/core/SelfUpdateManager.qml": {
+      "rules": [
+        "persist"
+      ],
+      "reason": "survives a config reload"
+    },
+    "qml/services/session/LockManager.qml": {
+      "rules": [
+        "runtime"
+      ],
+      "reason": "reads the runtime's reload"
+    },
+    "qml/services/session/OnboardingManager.qml": {
+      "rules": [
+        "persist"
+      ],
+      "reason": "survives a config reload"
+    },
+    "qml/services/session/PolkitManager.qml": {
+      "rules": [
+        "instances",
+        "persist"
+      ],
+      "reason": "builds a protocol object only while active, and survives a config reload"
+    },
+    "qml/services/session/RecommendedSetupManager.qml": {
+      "rules": [
+        "persist"
+      ],
+      "reason": "survives a config reload"
+    },
+    "qml/services/system/NightLightManager.qml": {
+      "rules": [
+        "persist"
+      ],
+      "reason": "survives a config reload"
+    },
+    "qml/services/ui/MenuManager.qml": {
+      "rules": [
+        "persist"
+      ],
+      "reason": "survives a config reload"
+    },
+    "qml/services/ui/PageWindowManager.qml": {
+      "rules": [
+        "persist",
+        "runtime"
+      ],
+      "reason": "survives a config reload, and reads the runtime's appId"
+    },
+    "qml/shell.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "the shell's per-screen wiring"
+    },
+    "qml/shell/AppLauncher.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/Backdrops.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/Bar.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/BlurBacking.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/BlurBackingWindow.qml": {
+      "rules": [
+        "window",
+        "layer-shell"
+      ],
+      "reason": "the chrome backing's window: a window of its own kind"
+    },
+    "qml/shell/Desktop.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/Dock.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/Greeter.qml": {
+      "rules": [
+        "window",
+        "instances",
+        "screens"
+      ],
+      "reason": "the windowed greeter's per-screen wiring: it must exist even with no monitor connected (a stand-in screen then)"
+    },
+    "qml/shell/GreeterPreview.qml": {
+      "rules": [
+        "instances",
+        "screens"
+      ],
+      "reason": "the preview window's per-screen wiring: it has a screen to open on even with no monitor connected (a stand-in one then)"
+    },
+    "qml/shell/HotCorners.qml": {
+      "rules": [
+        "window",
+        "instances",
+        "layer-shell"
+      ],
+      "reason": "the hot corners's window: a window of its own kind"
+    },
+    "qml/shell/Lockscreen.qml": {
+      "rules": [
+        "instances",
+        "persist",
+        "screens",
+        "session-lock"
+      ],
+      "reason": "the lock is a Wayland session lock, its state survives a config reload (a reload never unlocks), and its per-screen wiring; its preview window has a screen to open on even with no monitor connected (a stand-in one then)"
+    },
+    "qml/shell/Menus.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/MonitorPrompt.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/NoParentNotice.qml": {
+      "rules": [
+        "window",
+        "instances",
+        "env",
+        "screens",
+        "layer-shell"
+      ],
+      "reason": "runs without the daemon or config: its window, and the screens it reads with no General to ask"
+    },
+    "qml/shell/Notifications.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/OSD.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/Onboarding.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/Overlay.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/PageWindows.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/PowerMenu.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/Prompt.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/ScreenBorder.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/ScreenSharePicker.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/Screenshot.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/Wallpaper.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/WindowSwitcher.qml": {
+      "rules": [
+        "instances"
+      ],
+      "reason": "per-screen wiring"
+    },
+    "qml/shell/WorkspaceOverlay.qml": {
+      "rules": [
+        "window",
+        "instances",
+        "layer-shell"
+      ],
+      "reason": "the workspace overlay's window: a window of its own kind"
+    }
+  }
+}

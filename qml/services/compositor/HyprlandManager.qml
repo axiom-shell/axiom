@@ -14,8 +14,8 @@ import qs.services.core
 // Hyprland's state as the compositor-neutral shapes (HyprState), and the
 // primitives CompositorManager builds on. Also what only the Hyprland
 // features use (options, binds, outputs as Hyprland has them). The
-// only reader of Quickshell.Hyprland outside the Hyprland* services
-// (docs/dev/hyprland/ipc.md).
+// only reader of Quickshell.Hyprland's state (HyprlandGrab only builds
+// its focus grab; docs/dev/hyprland/ipc.md).
 Singleton {
   id: root
 

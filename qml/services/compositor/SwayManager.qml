@@ -14,7 +14,7 @@ import qs.services.core
 // compositor-neutral shapes (SwayState), and the primitives CompositorManager
 // builds on. Outputs and workspaces come live from Quickshell.I3; the windows
 // from sway's tree (get_tree), read again on its events. The only reader of
-// Quickshell.I3 outside the Sway* services.
+// Quickshell.I3's state (SwayIpcManager only dispatches).
 Singleton {
   id: root
 
